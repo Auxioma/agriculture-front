@@ -1,0 +1,28 @@
+<nav>Accueil / Authentification</nav>
+
+<div>
+  <button
+    type="button"
+    [class.active]="authRole.role() === 'client'"
+    (click)="authRole.selectRole('client')"
+  >
+    Client
+  </button>
+  <button
+    type="button"
+    [class.active]="authRole.role() === 'producer'"
+    (click)="authRole.selectRole('producer')"
+  >
+    Producteur
+  </button>
+</div>
+
+<h1>{{ authRole.pageTitle() }}</h1>
+<p>{{ authRole.titleDesc() }}</p>
+
+<div>
+  <a routerLink="login" routerLinkActive="active">Se connecter</a>
+  <a routerLink="register" routerLinkActive="active">Créer un compte</a>
+</div>
+
+<router-outlet></router-outlet>

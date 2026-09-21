@@ -1,0 +1,67 @@
+<section>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Champs communs -->
+    <div>
+      <label for="firstName">Prénom</label>
+      <input id="firstName" type="text" formControlName="firstName" />
+      @if (form.controls.firstName.invalid && form.controls.firstName.touched) {
+        <p>Le prénom est requis.</p>
+      }
+    </div>
+
+    <div>
+      <label for="lastName">Nom</label>
+      <input id="lastName" type="text" formControlName="lastName" />
+      @if (form.controls.lastName.invalid && form.controls.lastName.touched) {
+        <p>Le nom est requis.</p>
+      }
+    </div>
+
+    <div>
+      <label for="email">Adresse email</label>
+      <input id="email" type="email" formControlName="email" />
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <p>Email invalide.</p>
+      }
+    </div>
+
+    <div>
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" formControlName="password" />
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <p>12 caractères minimum.</p>
+      }
+    </div>
+
+    <!-- Champs producteur : affichés uniquement si authRole.role() === 'producer' -->
+    @if (authRole.role() === 'producer') {
+      <div>
+        <label for="farmName">Nom de l'exploitation</label>
+        <input id="farmName" type="text" formControlName="farmName" />
+        @if (form.controls.farmName.invalid && form.controls.farmName.touched) {
+          <p>Le nom de l'exploitation est requis.</p>
+        }
+      </div>
+
+      <div>
+        <label for="countryCode">Pays</label>
+        <input
+          id="countryCode"
+          type="text"
+          formControlName="countryCode"
+          placeholder="FR, BE, ..."
+        />
+        @if (form.controls.countryCode.invalid && form.controls.countryCode.touched) {
+          <p>Le pays est requis.</p>
+        }
+      </div>
+    }
+
+    <!-- Erreur globale renvoyée par l'API (409, 422, etc.) -->
+    @if (errorMessage) {
+      <p>{{ errorMessage }}</p>
+    }
+
+    <button type="submit" [disabled]="form.invalid">S'inscrire</button>
+  </form>
+</section>

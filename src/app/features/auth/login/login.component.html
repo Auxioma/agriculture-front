@@ -1,0 +1,28 @@
+<section>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div>
+      <label for="email">Adresse email</label>
+      <input id="email" type="email" formControlName="email" />
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <p>Email invalide.</p>
+      }
+    </div>
+
+    <div>
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" formControlName="password" />
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <p>Mot de passe requis.</p>
+      }
+    </div>
+
+    <!-- Erreur globale renvoyée par l'API (401, etc.) -->
+    @if (errorMessage) {
+      <p>{{ errorMessage }}</p>
+    }
+
+    <button type="submit" [disabled]="form.invalid">
+      {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
+    </button>
+  </form>
+</section>
