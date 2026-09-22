@@ -8,6 +8,8 @@ import {
   RegisterProducerRequest,
   AuthResponse,
   CurrentUser,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
 } from './auth.models';
 import { tap } from 'rxjs';
 
@@ -36,6 +38,14 @@ export class AuthService {
 
   registerProducer(payload: RegisterProducerRequest) {
     return this.http.post<{ id: string }>(`${this.apiUrl}/auth/register-producer`, payload);
+  }
+
+  forgotPassword(payload: ForgotPasswordRequest) {
+    return this.http.post<void>(`${this.apiUrl}/auth/forgot-password`, payload);
+  }
+
+  resetPassword(payload: ResetPasswordRequest) {
+    return this.http.post<void>(`${this.apiUrl}/auth/reset-password`, payload);
   }
 
   fetchCurrentUser() {
