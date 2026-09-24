@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthRoleService } from './auth-role.service';
-import { guestGuard } from '../../core/auth/guest.gard';
+import { guestGuard } from '../../core/auth/guest.guard';
 
 export const AUTH_ROUTES: Routes = [
   {
