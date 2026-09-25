@@ -59,7 +59,7 @@
 
     <!-- Erreur globale renvoyée par l'API (409, 422, etc.) -->
     @if (errorMessage) {
-      <p>{{ errorMessage }}</p>
+      <p class="form-error">{{ errorMessage }}</p>
     }
 
     <button type="submit" [disabled]="form.invalid">S'inscrire</button>

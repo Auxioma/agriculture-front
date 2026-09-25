@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, inject, effect } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -28,6 +28,22 @@ export class RegisterComponent {
   });
 
   errorMessage: string | null = null;
+
+  constructor() {
+    // Réagit à chaque changement de rôle (venant de ce composant OU de LoginComponent,
+    // puisque le signal est partagé via AuthRoleService) pour activer/désactiver
+    // les validators producteur en conséquence.
+    effect(() => {
+      const isProducer = this.authRole.role() === 'producer';
+      const producerControls = ['farmName', 'countryCode'] as const;
+
+      producerControls.forEach((name) => {
+        const control = this.form.controls[name];
+        isProducer ? control.setValidators(Validators.required) : control.clearValidators();
+        control.updateValueAndValidity();
+      });
+    });
+  }
 
   onSubmit(): void {
     if (this.form.invalid) return;

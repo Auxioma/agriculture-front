@@ -6,5 +6,6 @@ export default defineConfig({
   test: {
     // Empêche le localStorage natif expérimental de Node de masquer celui de jsdom
     execArgv: ['--no-experimental-webstorage'],
+    isolate: true,
   },
 });
