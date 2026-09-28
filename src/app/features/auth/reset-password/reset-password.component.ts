@@ -70,7 +70,7 @@ export class ResetPasswordComponent {
         error: (err: HttpErrorResponse) => {
           this.isSubmitting = false;
           this.errorMessage =
-            err.status === 422 ? 'Lien invalide ou expiré' : 'Une erreur est survenue, réessayez';
+            err.status === 422 ? 'Lien invalide ou expiré.' : 'Une erreur est survenue, réessayez.';
         },
       });
   }
