@@ -1,29 +1,60 @@
-<section>
-  <form [formGroup]="form" (ngSubmit)="onSubmit()">
-    <div>
-      <label for="email">Adresse email</label>
-      <input id="email" type="email" formControlName="email" />
-      @if (form.controls.email.invalid && form.controls.email.touched) {
-        <p>Email invalide.</p>
+<section class="flex items-center justify-center py-8">
+  <div class="w-full max-w-md">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
+      <div>
+        <label for="email">Adresse email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Adress email"
+          class="w-full rounded-lg border border-grey-400 bg-white px-4 py-2.5 placeholder:text-grey-700 focus:outline-none focus:ring-2 focus:ring-agri focus:border-agri transition-colors"
+        />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <p class="mt-1.5 text-xs text-danger">Email invalide.</p>
+        }
+      </div>
+
+      <div>
+        <label for="password">Mot de passe</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Mot de passe"
+          class="w-full rounded-lg border border-grey-400 bg-white px-4 py-2.5 placeholder:text-grey-700 focus:outline-none focus:ring-2 focus:ring-agri focus:border-agri transition-colors"
+        />
+        @if (form.controls.password.invalid && form.controls.password.touched) {
+          <p class="mt-1.5 text-xs text-danger">Mot de passe requis.</p>
+        }
+        <div class="mt-1.5 text-right">
+          <a
+            routerLink="/auth/forgot-password"
+            class="text-sm text-agri font-semibold hover:opacity-80 transition-colors"
+            >Mot de passe oublié ?</a
+          >
+        </div>
+      </div>
+
+      <!-- Erreur globale renvoyée par l'API (401, etc.) -->
+      @if (errorMessage) {
+        <p class="form-error mt-1.5 text-xs text-danger">{{ errorMessage }}</p>
       }
-    </div>
 
-    <div>
-      <label for="password">Mot de passe</label>
-      <input id="password" type="password" formControlName="password" />
-      @if (form.controls.password.invalid && form.controls.password.touched) {
-        <p>Mot de passe requis.</p>
-      }
-      <a routerLink="/auth/forgot-password">Mot de passe oublié ?</a>
-    </div>
+      <button
+        type="submit"
+        [disabled]="form.invalid"
+        class="w-full rounded-lg bg-agri py-3 font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
+      </button>
 
-    <!-- Erreur globale renvoyée par l'API (401, etc.) -->
-    @if (errorMessage) {
-      <p class="form-error">{{ errorMessage }}</p>
-    }
-
-    <button type="submit" [disabled]="form.invalid">
-      {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
-    </button>
-  </form>
+      <p class="text-center text-sm font-semibold">
+        Pas encore de compte ?
+        <a routerLink="/auth/register" class="text-agri hover:opacity-80 transition-colors"
+          >Créer un compte</a
+        >
+      </p>
+    </form>
+  </div>
 </section>

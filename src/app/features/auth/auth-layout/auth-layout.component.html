@@ -1,28 +1,65 @@
-<nav>Accueil / Authentification</nav>
+<section class="min-h-screen flex items-center justify-center px-4 py-8">
+  <div class="w-full max-w-md p-8 sm:p-10">
+    <nav class="text-sm mb-6">
+      <a routerLink="/" class="hover:text-grey-700">Accueil</a> /
+      <span class="text-agri">Authentification</span>
+    </nav>
 
-<div class="role-tabs">
-  <button
-    type="button"
-    [class.active]="authRole.role() === 'client'"
-    (click)="authRole.selectRole('client')"
-  >
-    Client
-  </button>
-  <button
-    type="button"
-    [class.active]="authRole.role() === 'producer'"
-    (click)="authRole.selectRole('producer')"
-  >
-    Producteur
-  </button>
-</div>
+    <div class="role-tabs grid grid-cols-2 gap-3 mb-8">
+      <button
+        type="button"
+        (click)="authRole.selectRole('client')"
+        [class]="
+          authRole.role() === 'client'
+            ? 'bg-agri text-white'
+            : 'bg-grey-200 text-grey-700 hover:bg-grey-400'
+        "
+        class="rounded-lg py-2.5 text-sm font-medium transition-colors"
+      >
+        Client
+      </button>
+      <button
+        type="button"
+        (click)="authRole.selectRole('producer')"
+        [class]="
+          authRole.role() === 'producer'
+            ? 'bg-agri text-white'
+            : 'bg-grey-200 text-grey-700 hover:bg-grey-400'
+        "
+        class="rounded-lg py-2.5 text-sm font-medium transition-colors"
+      >
+        Producteur
+      </button>
+    </div>
 
-<h1>{{ authRole.pageTitle() }}</h1>
-<p>{{ authRole.titleDesc() }}</p>
+    <h1 class="text-2xl font-semibold">{{ authRole.pageTitle() }}</h1>
+    <p class="mt-1.5 text-sm">{{ authRole.titleDesc() }}</p>
 
-<div class="auth-toggle">
-  <a routerLink="login" routerLinkActive="active">Se connecter</a>
-  <a routerLink="register" routerLinkActive="active">Créer un compte</a>
-</div>
+    <div class="auth-toggle mt-6 flex gap-6 border-b border-grey-200">
+      <a
+        routerLink="login"
+        routerLinkActive
+        #loginTab="routerLinkActive"
+        [class]="
+          loginTab.isActive ? 'font-semibold border-agri' : 'border-transparent hover:text-agri'
+        "
+        class="pb-3 text-sm border-b-2 transition-colors"
+      >
+        Se connecter
+      </a>
+      <a
+        routerLink="register"
+        routerLinkActive
+        #registerTab="routerLinkActive"
+        [class]="
+          registerTab.isActive ? 'font-semibold border-agri' : 'border-transparent  hover:text-agri'
+        "
+        class="pb-3 text-sm border-b-2 transition-colors"
+      >
+        Créer un compte
+      </a>
+    </div>
 
-<router-outlet></router-outlet>
+    <router-outlet></router-outlet>
+  </div>
+</section>
