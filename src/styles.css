@@ -1,3 +1,35 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+
+  --color-agri: #42750c;
+  --color-gold-wheat: #d8a848;
+  --color-earth: #7a4e2d;
+
+  --color-fonts: #000000;
+  --color-badge-bg: #eaf3e6;
+
+  --color-grey-700: #495057;
+  --color-grey-500: #adb5bd;
+  --color-grey-400: #ced4da;
+  --color-grey-200: #e9ecef;
+
+  --color-primary: #0d6efd;
+  --color-secondary: #6c757d;
+  --color-success: #198754;
+  --color-warning: #ffc107;
+  --color-danger: #dc3545;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  color: var(--color-fonts);
+}
