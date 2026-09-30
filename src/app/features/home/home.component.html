@@ -1,1 +1,37 @@
-<h1>TrouveMoi Agri</h1>
+<section
+  class="relative flex min-h-[480px] items-center overflow-hidden bg-[url('/images/hero-mobile.jpg')] bg-cover bg-center px-4 py-10 lg:min-h-[560px] lg:bg-[url('/images/hero-desktop.jpg')] lg:px-16"
+>
+  <div class="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent lg:bg-gradient-to-r"></div>
+
+  <div class="relative flex max-w-xl flex-col gap-4">
+    <h1 class="text-3xl font-bold leading-tight lg:text-5xl">
+      Tout le monde <span class="text-agri">agricole réuni</span> au même endroit
+    </h1>
+    <p class="text-sm text-grey-700 lg:text-base">
+      Achetez, vendez, louez ou trouvez des services agricoles près de chez vous, en toute
+      confiance.
+    </p>
+    <div class="flex flex-col gap-3 sm:flex-row">
+      <a
+        routerLink="/requests/new"
+        class="flex items-center justify-center gap-2 rounded-full bg-agri px-5 py-3 text-sm font-semibold text-white"
+      >
+        Demander un prix en direct
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+      <a
+        routerLink="/auth/register"
+        class="flex items-center justify-center gap-2 rounded-full border border-agri bg-white px-5 py-3 text-sm font-semibold text-agri"
+      >
+        Je suis producteur
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
