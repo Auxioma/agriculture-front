@@ -117,49 +117,16 @@
       </div>
     </form>
 
-    <!-- menu déroulant "Catégories" desktop, réutilisé dans les 2 branches en dessous -->
-    <ng-template #desktopCategoriesDropdown>
-      <div class="relative">
-        <button
-          type="button"
-          (click)="toggleDesktopCategories()"
-          [attr.aria-expanded]="desktopCategoriesOpen()"
-          class="flex items-center gap-1"
-        >
-          Catégories
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            class="h-3 w-3 transition-transform"
-            [class.rotate-180]="desktopCategoriesOpen()"
-          >
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        @if (desktopCategoriesOpen()) {
-          <ul
-            class="absolute left-0 top-full mt-2 w-56 divide-y divide-grey-200 overflow-hidden rounded-lg border border-grey-200 bg-white text-sm shadow-lg"
-          >
-            @for (category of categories; track category) {
-              <li class="bg-badge-bg">
-                <a routerLink="/categories" (click)="closeDesktopCategories()" class="block px-4 py-2.5">
-                  {{ category }}
-                </a>
-              </li>
-            }
-          </ul>
-        }
-      </div>
-    </ng-template>
-
     <!--! Liens : aucune de ces routes n'existe encore dans app.routes.ts, seuls "/" et "/auth/*" sont réels -->
     <div class="hidden shrink-0 items-center gap-6 whitespace-nowrap text-sm font-medium text-grey-700 lg:flex">
       @if (!authService.isAuthenticated()) {
-        <ng-container *ngTemplateOutlet="desktopCategoriesDropdown"></ng-container>
+        <ng-container
+          *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: false, green: true }"
+        ></ng-container>
         <a routerLink="/producers">Producteurs</a>
-        <a routerLink="/about">A propos</a>
+        <ng-container
+          *ngTemplateOutlet="dropdown; context: { menu: 'about', label: 'A propos', items: aboutLinks, mobile: false, green: false }"
+        ></ng-container>
         <a routerLink="/pricing">Tarif producteurs</a>
       } @else if (isProducer()) {
         <a routerLink="/requests">Demandes</a>
@@ -168,7 +135,9 @@
         <a routerLink="/pricing">Tarif producteurs</a>
         <a routerLink="/messages">Messagerie</a>
       } @else {
-        <ng-container *ngTemplateOutlet="desktopCategoriesDropdown"></ng-container>
+        <ng-container
+          *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: false, green: true }"
+        ></ng-container>
         <a routerLink="/producers">Producteurs</a>
         <a routerLink="/my-requests">Mes annonces</a>
         <a routerLink="/account">Mon compte</a>
@@ -262,32 +231,41 @@
     </div>
   </div>
 
-  <!-- accordeon catégories du menu mobile, capture donnée par le client -->
-  <ng-template #mobileCategoriesAccordion>
-    <div>
+  <!-- menu deroulant/accordeon reutilise pour Catégories fond vert et A propos
+       desktop = dropdown absolu, mobile =
+       accordeon en ligne, meme template pour les deux (voir mobile/green en contexte) -->
+  <ng-template #dropdown let-menu="menu" let-label="label" let-items="items" let-mobile="mobile" let-green="green">
+    <div [class.relative]="!mobile">
       <button
         type="button"
-        (click)="toggleMobileCategories()"
-        [attr.aria-expanded]="mobileCategoriesOpen()"
-        class="flex w-full items-center gap-2 text-sm font-medium text-grey-700">
-        Catégories
+        (click)="toggleMenu(menu)"
+        [attr.aria-expanded]="isMenuOpen(menu)"
+        [class]="mobile ? 'flex w-full items-center gap-2 text-sm font-medium text-grey-700' : 'flex items-center gap-1'"
+      >
+        {{ label }}
         <svg
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           stroke-width="2"
           class="h-3 w-3 shrink-0 transition-transform"
-          [class.rotate-180]="mobileCategoriesOpen()">
-          
+          [class.rotate-180]="isMenuOpen(menu)"
+        >
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </button>
-      @if (mobileCategoriesOpen()) {
-        <ul class="-mx-4 mt-2 divide-y divide-grey-200 text-sm text-grey-700">
-          @for (category of categories; track category) {
-            <li class="bg-badge-bg">
-              <a routerLink="/categories" (click)="closeMobileMenu()" class="block px-4 py-2.5">
-                {{ category }}
+      @if (isMenuOpen(menu)) {
+        <ul
+          [class]="
+            mobile
+              ? '-mx-4 mt-2 divide-y divide-grey-200 text-sm text-grey-700'
+              : 'absolute left-0 top-full mt-2 w-56 divide-y divide-grey-200 overflow-hidden rounded-lg border border-grey-200 bg-white text-sm shadow-lg'
+          "
+        >
+          @for (item of items; track item.path + item.label) {
+            <li [class.bg-badge-bg]="green" [class.hover:bg-grey-200]="!green">
+              <a [routerLink]="item.path" (click)="mobile ? closeMobileMenu() : closeMenu()" class="block px-4 py-2.5">
+                {{ item.label }}
               </a>
             </li>
           }
@@ -331,9 +309,13 @@
 
       <div class="flex flex-col gap-3 text-sm font-medium text-grey-700">
         @if (!authService.isAuthenticated()) {
-          <ng-container *ngTemplateOutlet="mobileCategoriesAccordion"></ng-container>
+          <ng-container
+            *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: true, green: true }"
+          ></ng-container>
           <a routerLink="/producers" (click)="closeMobileMenu()">Producteurs</a>
-          <a routerLink="/about" (click)="closeMobileMenu()">A propos</a>
+          <ng-container
+            *ngTemplateOutlet="dropdown; context: { menu: 'about', label: 'A propos', items: aboutLinks, mobile: true, green: false }"
+          ></ng-container>
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
         } @else if (isProducer()) {
           <a routerLink="/requests" (click)="closeMobileMenu()">Demandes</a>
@@ -342,7 +324,9 @@
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
           <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
         } @else {
-          <ng-container *ngTemplateOutlet="mobileCategoriesAccordion"></ng-container>
+          <ng-container
+            *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: true, green: true }"
+          ></ng-container>
           <a routerLink="/producers" (click)="closeMobileMenu()">Producteurs</a>
           <a routerLink="/my-requests" (click)="closeMobileMenu()">Mes annonces</a>
           <a routerLink="/account" (click)="closeMobileMenu()">Mon compte</a>

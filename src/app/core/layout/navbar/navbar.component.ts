@@ -3,26 +3,20 @@ import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 
-// * Seules Default (invité), Client et Producteur sont reprises ici
-// * la variante Admin n'a pas pu être récupérée (timeout répété de l'API Figma) et les admins
-// * n'utilisent de toute façon pas ce front public (back-office Symfony séparé, avec sa propre
-// * connexion 2FA) : un compte ROLE_ADMIN qui se connecterait quand même ici verra la navigation
-// * "client" par défaut (voir isProducer ci-dessous).
+// * Seules Default (invité), Client et Producteur sont reprises ici -! pas la variante Admin
+// * (les admins n'utilisent pas ce front public de toute facon).
 //
-// mobile first (demande du client) : les classes sans prefix dans le html = version mobile de base,
-// md:/lg: rajoutent le desktop par dessus. pas l'inverse.
+// mobile first : classes sans prefix = mobile de base, md:/lg: ajoutent le
+// desktop par dessus.
 //
-// menu mobile (accordéon catégories) fait à partir d'une capture donnée par le client, fond vert
-// pleine largeur sur chaque ligne + petit trait gris, aligné a gauche comme le reste du menu.
+// "Catégories" et "A propos" partagent le meme mecanisme de menu deroulant/accordeon
+// (voir openMenu + le template #dropdown dans le html). Les autres fleches (Mon compte, Demandes,
+// etc) restent des liens simples
 //
-// menu déroulant catégories en desktop : même liste et meme style que la version mobile (pas eu
-// le contenu figma exact pour celui-la, api figma plantait dessus). les autres menus avec une
-// fleche (A propos, Mon compte, Demandes, etc) restent des liens simples pour l'instant, contenu
-// pas connu.
-//
-// panneau filtres (bouton "Filtres" a cote de la recherche), capture donnée par le client : produit
-// (chips categories), localisation, date de publication, bouton rechercher. pas de vraie recherche
-// branchee derriere pour l'instant, juste le visuel + la selection des chips.
+// panneau filtres (capture client) : produit (chips), localisation, date, bouton rechercher --
+// pas de vraie recherche branchee, juste le visuel + la selection des chips.
+
+type MenuId = 'categories' | 'about';
 
 @Component({
   selector: 'app-navbar',
@@ -33,27 +27,34 @@ import { AuthService } from '../../auth/auth.service';
 export class NavbarComponent {
   authService = inject(AuthService);
   mobileMenuOpen = signal(false);
-  mobileCategoriesOpen = signal(false);
-  desktopCategoriesOpen = signal(false);
+  openMenu = signal<MenuId | null>(null);
   filtersOpen = signal(false);
   selectedFilterCategories = signal<string[]>([]);
 
-  // * L'authentification (AuthService, core/auth/*) - ce calcul de rôle
-  // * reste donc local à la navbar plutôt que d'ajouter un `isProducer` sur AuthService. Voir NOTES.md
-  // * pour la suggestion de le faire remonter là-bas si un autre écran en a besoin (garde de route, etc.)
+  // * Le rôle reste calculé ici plutôt que sur AuthService voir NOTES.md.
   isProducer = computed(() => {
     const roles = this.authService.currentUser()?.roles ?? [];
     return roles.includes('ROLE_PRODUCER') || roles.includes('ROLE_PRODUCER_TEAM');
   });
 
-  // liste reprise des fixtures symfony (CatalogFixtures.php), pas encore de vrai service catégorie
-  // cote front donc a resynchro le jour ou ca bouge
+  // catégories = fixtures symfony (CatalogFixtures.php) ; categoryLinks = memes chips, format
+  // reutilisable par le template #dropdown (label + destination)
   readonly categories = [
     'Fruits',
     'Légumes',
     'Produits laitiers',
     'Viandes & Volailles',
     'Miel & Produits de la ruche',
+  ];
+  readonly categoryLinks = this.categories.map((label) => ({ label, path: '/categories' }));
+
+  // codes cgu/mentions-legales/confidentialite repris du docblock de LegalController.php (route
+  // GET /api/legal/{code}), pas inventes. "Qui sommes-nous" reste une supposition, pas de route confirmee
+  readonly aboutLinks = [
+    { label: 'Qui sommes-nous', path: '/about' },
+    { label: 'CGU', path: '/legal/cgu' },
+    { label: 'Mentions légales', path: '/legal/mentions-legales' },
+    { label: 'Confidentialité', path: '/legal/confidentialite' },
   ];
 
   toggleMobileMenu(): void {
@@ -62,20 +63,20 @@ export class NavbarComponent {
 
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
-    this.mobileCategoriesOpen.set(false);
+    this.openMenu.set(null);
     this.filtersOpen.set(false);
   }
 
-  toggleMobileCategories(): void {
-    this.mobileCategoriesOpen.update((open) => !open);
+  toggleMenu(menu: MenuId): void {
+    this.openMenu.update((open) => (open === menu ? null : menu));
   }
 
-  toggleDesktopCategories(): void {
-    this.desktopCategoriesOpen.update((open) => !open);
+  isMenuOpen(menu: MenuId): boolean {
+    return this.openMenu() === menu;
   }
 
-  closeDesktopCategories(): void {
-    this.desktopCategoriesOpen.set(false);
+  closeMenu(): void {
+    this.openMenu.set(null);
   }
 
   toggleFilters(): void {
@@ -84,9 +85,7 @@ export class NavbarComponent {
 
   toggleFilterCategory(category: string): void {
     this.selectedFilterCategories.update((selected) =>
-      selected.includes(category)
-        ? selected.filter((c) => c !== category)
-        : [...selected, category],
+      selected.includes(category) ? selected.filter((c) => c !== category) : [...selected, category],
     );
   }
 
