@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 
@@ -7,6 +7,11 @@ import { AuthService } from '../../auth/auth.service';
 // * n'utilisent de toute façon pas ce front public (back-office Symfony séparé, avec sa propre
 // * connexion 2FA) : un compte ROLE_ADMIN qui se connecterait quand même ici verra la navigation
 // * "client" par défaut (voir isProducer ci-dessous).
+//
+// Pas de maquette mobile pour l'instant, panneau + burger classique en attendant.
+//
+// mobile first (demande du client) : les classes sans prefix dans le html = version mobile de base,
+// md:/lg: rajoutent le desktop par dessus. pas l'inverse.
 
 @Component({
   selector: 'app-navbar',
@@ -16,6 +21,7 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class NavbarComponent {
   authService = inject(AuthService);
+  mobileMenuOpen = signal(false);
 
   // * L'authentification (AuthService, core/auth/*) - ce calcul de rôle
   // * reste donc local à la navbar plutôt que d'ajouter un `isProducer` sur AuthService. Voir NOTES.md
@@ -24,4 +30,12 @@ export class NavbarComponent {
     const roles = this.authService.currentUser()?.roles ?? [];
     return roles.includes('ROLE_PRODUCER') || roles.includes('ROLE_PRODUCER_TEAM');
   });
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
 }

@@ -107,4 +107,23 @@ describe('NavbarComponent', () => {
 
     expect(authServiceMock.logout).toHaveBeenCalled();
   });
+
+  it('devrait ouvrir puis fermer le panneau mobile au clic sur le bouton burger', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
+
+    const burger: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'button[aria-label="Menu"]',
+    );
+    burger.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.mobileMenuOpen()).toBe(true);
+
+    burger.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
+  });
 });
