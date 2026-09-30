@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 
@@ -8,20 +9,22 @@ import { AuthService } from '../../auth/auth.service';
 // * connexion 2FA) : un compte ROLE_ADMIN qui se connecterait quand même ici verra la navigation
 // * "client" par défaut (voir isProducer ci-dessous).
 //
-// Pas de maquette mobile pour l'instant, panneau + burger classique en attendant.
-//
 // mobile first (demande du client) : les classes sans prefix dans le html = version mobile de base,
 // md:/lg: rajoutent le desktop par dessus. pas l'inverse.
+//
+// menu mobile (accordéon catégories) fait à partir d'une capture donnée par le client, fond vert
+// pleine largeur sur chaque ligne + petit trait gris, aligné a gauche comme le reste du menu.
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgTemplateOutlet],
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent {
   authService = inject(AuthService);
   mobileMenuOpen = signal(false);
+  mobileCategoriesOpen = signal(false);
 
   // * L'authentification (AuthService, core/auth/*) - ce calcul de rôle
   // * reste donc local à la navbar plutôt que d'ajouter un `isProducer` sur AuthService. Voir NOTES.md
@@ -31,11 +34,26 @@ export class NavbarComponent {
     return roles.includes('ROLE_PRODUCER') || roles.includes('ROLE_PRODUCER_TEAM');
   });
 
+  // liste reprise des fixtures symfony (CatalogFixtures.php), pas encore de vrai service catégorie
+  // cote front donc a resynchro le jour ou ca bouge
+  readonly categories = [
+    'Fruits',
+    'Légumes',
+    'Produits laitiers',
+    'Viandes & Volailles',
+    'Miel & Produits de la ruche',
+  ];
+
   toggleMobileMenu(): void {
     this.mobileMenuOpen.update((open) => !open);
   }
 
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
+    this.mobileCategoriesOpen.set(false);
+  }
+
+  toggleMobileCategories(): void {
+    this.mobileCategoriesOpen.update((open) => !open);
   }
 }

@@ -126,4 +126,31 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
   });
+
+  it('devrait déplier la liste des catégories dans le menu mobile au clic, et la refermer avec le menu', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('button[aria-label="Menu"]').click();
+    fixture.detectChanges();
+
+    expect(linkTexts()).not.toContain('Fruits');
+
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    const categoriesToggle = Array.from(buttons).find(
+      (btn) => btn.textContent?.trim() === 'Catégories',
+    );
+    categoriesToggle?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.mobileCategoriesOpen()).toBe(true);
+    const texts = linkTexts();
+    expect(texts).toContain('Fruits');
+    expect(texts).toContain('Miel & Produits de la ruche');
+
+    fixture.componentInstance.closeMobileMenu();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.mobileCategoriesOpen()).toBe(false);
+  });
 });
