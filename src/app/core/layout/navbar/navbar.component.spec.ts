@@ -150,14 +150,14 @@ describe('NavbarComponent', () => {
     categoriesToggle?.click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.mobileCategoriesOpen()).toBe(true);
+    expect(fixture.componentInstance.isMenuOpen('categories')).toBe(true);
     const texts = linkTexts();
     expect(texts).toContain('Fruits');
     expect(texts).toContain('Miel & Produits de la ruche');
 
     fixture.componentInstance.closeMobileMenu();
     fixture.detectChanges();
-    expect(fixture.componentInstance.mobileCategoriesOpen()).toBe(false);
+    expect(fixture.componentInstance.isMenuOpen('categories')).toBe(false);
   });
 
   it('devrait déplier le menu déroulant catégories en desktop au clic', () => {
@@ -173,8 +173,44 @@ describe('NavbarComponent', () => {
     categoriesToggle?.click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.desktopCategoriesOpen()).toBe(true);
+    expect(fixture.componentInstance.isMenuOpen('categories')).toBe(true);
     expect(linkTexts()).toContain('Fruits');
+  });
+
+  it('devrait déplier le menu déroulant "A propos" en desktop au clic', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    // menu mobile pas ouvert ici, donc un seul bouton "A propos" dans le dom (le desktop)
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    const aboutToggle = Array.from(buttons).find((btn) => btn.textContent?.trim() === 'A propos');
+    aboutToggle?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isMenuOpen('about')).toBe(true);
+    const texts = linkTexts();
+    expect(texts).toContain('CGU');
+    expect(texts).toContain('Mentions légales');
+    expect(texts).toContain('Confidentialité');
+  });
+
+  it('devrait déplier l\'accordéon "A propos" dans le menu mobile au clic', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('button[aria-label="Menu"]').click();
+    fixture.detectChanges();
+
+    const mobilePanel: HTMLElement = fixture.nativeElement.querySelector('#mobile-panel');
+    const buttons: NodeListOf<HTMLButtonElement> = mobilePanel.querySelectorAll('button');
+    const aboutToggle = Array.from(buttons).find((btn) => btn.textContent?.trim() === 'A propos');
+    aboutToggle?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isMenuOpen('about')).toBe(true);
+    expect(linkTexts()).toContain('Qui sommes-nous');
   });
 
   it('devrait afficher la cloche de notifications pour un invité', () => {
