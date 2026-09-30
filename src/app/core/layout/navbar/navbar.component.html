@@ -182,19 +182,18 @@
         type="button"
         (click)="toggleMobileCategories()"
         [attr.aria-expanded]="mobileCategoriesOpen()"
-        class="flex w-full items-center gap-2 text-sm font-medium text-grey-700"
-      >
+        class="flex w-full items-center gap-2 text-sm font-medium text-grey-700">
+        Catégories
         <svg
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           stroke-width="2"
           class="h-3 w-3 shrink-0 transition-transform"
-          [class.rotate-180]="mobileCategoriesOpen()"
-        >
+          [class.rotate-180]="mobileCategoriesOpen()">
+          
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
-        Catégories
       </button>
       @if (mobileCategoriesOpen()) {
         <ul class="-mx-4 mt-2 divide-y divide-grey-200 text-sm text-grey-700">
