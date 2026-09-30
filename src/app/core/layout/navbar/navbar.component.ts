@@ -19,6 +19,10 @@ import { AuthService } from '../../auth/auth.service';
 // le contenu figma exact pour celui-la, api figma plantait dessus). les autres menus avec une
 // fleche (A propos, Mon compte, Demandes, etc) restent des liens simples pour l'instant, contenu
 // pas connu.
+//
+// panneau filtres (bouton "Filtres" a cote de la recherche), capture donnée par le client : produit
+// (chips categories), localisation, date de publication, bouton rechercher. pas de vraie recherche
+// branchee derriere pour l'instant, juste le visuel + la selection des chips.
 
 @Component({
   selector: 'app-navbar',
@@ -31,6 +35,8 @@ export class NavbarComponent {
   mobileMenuOpen = signal(false);
   mobileCategoriesOpen = signal(false);
   desktopCategoriesOpen = signal(false);
+  filtersOpen = signal(false);
+  selectedFilterCategories = signal<string[]>([]);
 
   // * L'authentification (AuthService, core/auth/*) - ce calcul de rôle
   // * reste donc local à la navbar plutôt que d'ajouter un `isProducer` sur AuthService. Voir NOTES.md
@@ -57,6 +63,7 @@ export class NavbarComponent {
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
     this.mobileCategoriesOpen.set(false);
+    this.filtersOpen.set(false);
   }
 
   toggleMobileCategories(): void {
@@ -69,5 +76,21 @@ export class NavbarComponent {
 
   closeDesktopCategories(): void {
     this.desktopCategoriesOpen.set(false);
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen.update((open) => !open);
+  }
+
+  toggleFilterCategory(category: string): void {
+    this.selectedFilterCategories.update((selected) =>
+      selected.includes(category)
+        ? selected.filter((c) => c !== category)
+        : [...selected, category],
+    );
+  }
+
+  isFilterCategorySelected(category: string): boolean {
+    return this.selectedFilterCategories().includes(category);
   }
 }

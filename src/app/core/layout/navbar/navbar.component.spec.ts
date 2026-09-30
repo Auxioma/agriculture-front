@@ -192,4 +192,44 @@ describe('NavbarComponent', () => {
 
     expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeFalsy();
   });
+
+  it('devrait ouvrir le panneau filtres au clic et afficher produit/localisation/date', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    // menu mobile pas ouvert, donc un seul bouton "Filtres" dans le dom (le desktop)
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    const filtresToggle = Array.from(buttons).find((btn) => btn.textContent?.trim() === 'Filtres');
+    filtresToggle?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.filtersOpen()).toBe(true);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Produit');
+    expect(text).toContain('Localisation');
+    expect(text).toContain('Date de publication');
+  });
+
+  it('devrait selectionner/deselectionner une categorie dans le panneau filtres', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+    fixture.componentInstance.toggleFilters();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isFilterCategorySelected('Fruits')).toBe(false);
+
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    const fruitsChip = Array.from(buttons).find((btn) => btn.textContent?.trim() === 'Fruits');
+    fruitsChip?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isFilterCategorySelected('Fruits')).toBe(true);
+
+    fruitsChip?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isFilterCategorySelected('Fruits')).toBe(false);
+  });
 });
