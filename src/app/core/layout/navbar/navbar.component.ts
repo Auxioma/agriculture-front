@@ -14,6 +14,11 @@ import { AuthService } from '../../auth/auth.service';
 //
 // menu mobile (accordéon catégories) fait à partir d'une capture donnée par le client, fond vert
 // pleine largeur sur chaque ligne + petit trait gris, aligné a gauche comme le reste du menu.
+//
+// menu déroulant catégories en desktop : même liste et meme style que la version mobile (pas eu
+// le contenu figma exact pour celui-la, api figma plantait dessus). les autres menus avec une
+// fleche (A propos, Mon compte, Demandes, etc) restent des liens simples pour l'instant, contenu
+// pas connu.
 
 @Component({
   selector: 'app-navbar',
@@ -25,6 +30,7 @@ export class NavbarComponent {
   authService = inject(AuthService);
   mobileMenuOpen = signal(false);
   mobileCategoriesOpen = signal(false);
+  desktopCategoriesOpen = signal(false);
 
   // * L'authentification (AuthService, core/auth/*) - ce calcul de rôle
   // * reste donc local à la navbar plutôt que d'ajouter un `isProducer` sur AuthService. Voir NOTES.md
@@ -55,5 +61,13 @@ export class NavbarComponent {
 
   toggleMobileCategories(): void {
     this.mobileCategoriesOpen.update((open) => !open);
+  }
+
+  toggleDesktopCategories(): void {
+    this.desktopCategoriesOpen.update((open) => !open);
+  }
+
+  closeDesktopCategories(): void {
+    this.desktopCategoriesOpen.set(false);
   }
 }

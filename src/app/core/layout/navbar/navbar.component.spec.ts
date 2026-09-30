@@ -60,8 +60,11 @@ describe('NavbarComponent', () => {
     const texts = linkTexts();
     expect(texts).toContain('Connexion');
     expect(texts).toContain('Inscription');
-    expect(texts).toContain('Catégories');
     expect(texts).not.toContain('Messagerie');
+
+    // "Catégories" est un bouton (dropdown) maintenant, plus un lien
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    expect(Array.from(buttons).some((btn) => btn.textContent?.trim() === 'Catégories')).toBe(true);
   });
 
   it('devrait afficher la navigation client une fois connecté (sans le rôle producteur)', () => {
@@ -137,7 +140,10 @@ describe('NavbarComponent', () => {
 
     expect(linkTexts()).not.toContain('Fruits');
 
-    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    // il y a aussi un bouton "Catégories" pour le dropdown desktop dans le dom (juste caché en
+    // css) : on cherche celui du panneau mobile precisement, pas le premier trouvé
+    const mobilePanel: HTMLElement = fixture.nativeElement.querySelector('#mobile-panel');
+    const buttons: NodeListOf<HTMLButtonElement> = mobilePanel.querySelectorAll('button');
     const categoriesToggle = Array.from(buttons).find(
       (btn) => btn.textContent?.trim() === 'Catégories',
     );
@@ -152,5 +158,38 @@ describe('NavbarComponent', () => {
     fixture.componentInstance.closeMobileMenu();
     fixture.detectChanges();
     expect(fixture.componentInstance.mobileCategoriesOpen()).toBe(false);
+  });
+
+  it('devrait déplier le menu déroulant catégories en desktop au clic', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    // menu mobile pas ouvert ici, donc un seul bouton "Catégories" dans le dom (le desktop)
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    const categoriesToggle = Array.from(buttons).find(
+      (btn) => btn.textContent?.trim() === 'Catégories',
+    );
+    categoriesToggle?.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.desktopCategoriesOpen()).toBe(true);
+    expect(linkTexts()).toContain('Fruits');
+  });
+
+  it('devrait afficher la cloche de notifications pour un invité', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeTruthy();
+  });
+
+  it('ne devrait pas afficher la cloche de notifications pour un utilisateur connecté', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeFalsy();
   });
 });
