@@ -25,6 +25,8 @@ export class RegisterComponent {
     // champs producteur — ajoutés/retirés dynamiquement selon this.role()
     farmName: [''],
     countryCode: [''],
+    // politique de confidentialité
+    acceptTerms: [false, Validators.requiredTrue],
   });
 
   errorMessage: string | null = null;

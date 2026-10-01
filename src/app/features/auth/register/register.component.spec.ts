@@ -65,6 +65,7 @@ describe('RegisterComponent', () => {
       component.form.controls.lastName.setValue('Dupont');
       component.form.controls.email.setValue('jean@test.com');
       component.form.controls.password.setValue('court1234'); // 9 caractères
+      component.form.controls.acceptTerms.setValue(true);
 
       expect(component.form.invalid).toBe(true);
     });
@@ -74,6 +75,7 @@ describe('RegisterComponent', () => {
       component.form.controls.lastName.setValue('Dupont');
       component.form.controls.email.setValue('jean@test.com');
       component.form.controls.password.setValue('password1234');
+      component.form.controls.acceptTerms.setValue(true);
 
       expect(component.form.valid).toBe(true);
     });
@@ -83,6 +85,7 @@ describe('RegisterComponent', () => {
       component.form.controls.lastName.setValue('Dupont');
       component.form.controls.email.setValue('jean@test.com');
       component.form.controls.password.setValue('password1234');
+      component.form.controls.acceptTerms.setValue(true);
 
       authRoleService.selectRole('producer');
       fixture.detectChanges();
@@ -95,6 +98,7 @@ describe('RegisterComponent', () => {
       component.form.controls.lastName.setValue('Dupont');
       component.form.controls.email.setValue('jean@test.com');
       component.form.controls.password.setValue('password1234');
+      component.form.controls.acceptTerms.setValue(true);
 
       authRoleService.selectRole('producer');
       fixture.detectChanges();
@@ -109,11 +113,31 @@ describe('RegisterComponent', () => {
       component.form.controls.lastName.setValue('Dupont');
       component.form.controls.email.setValue('jean@test.com');
       component.form.controls.password.setValue('password1234');
+      component.form.controls.acceptTerms.setValue(true);
 
       authRoleService.selectRole('producer');
       fixture.detectChanges();
       authRoleService.selectRole('client');
       fixture.detectChanges();
+
+      expect(component.form.valid).toBe(true);
+    });
+
+    it('devrait être invalide si les CGU ne sont pas acceptés', () => {
+      component.form.controls.firstName.setValue('Jean');
+      component.form.controls.lastName.setValue('Dupont');
+      component.form.controls.email.setValue('jean@test.com');
+      component.form.controls.password.setValue('password1234');
+
+      expect(component.form.invalid).toBe(true);
+    });
+
+    it('devrait être valide une fois les CGU acceptés', () => {
+      component.form.controls.firstName.setValue('Jean');
+      component.form.controls.lastName.setValue('Dupont');
+      component.form.controls.email.setValue('jean@test.com');
+      component.form.controls.password.setValue('password1234');
+      component.form.controls.acceptTerms.setValue(true);
 
       expect(component.form.valid).toBe(true);
     });
@@ -125,6 +149,7 @@ describe('RegisterComponent', () => {
       component.form.controls.lastName.setValue('Dupont');
       component.form.controls.email.setValue('jean@test.com');
       component.form.controls.password.setValue('password1234');
+      component.form.controls.acceptTerms.setValue(true);
     });
 
     it('ne devrait rien faire si le formulaire est invalide', () => {

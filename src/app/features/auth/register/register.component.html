@@ -89,6 +89,24 @@
         </div>
       }
 
+      <div class="flex items-start gap-2.5">
+        <input
+          id="acceptTerms"
+          type="checkbox"
+          formControlName="acceptTerms"
+          class="mt-0.5 h-5 w-5 rounded border-fonts accent-fonts focus:ring-2 focus:ring-agri focus:ring-offset-0"
+        />
+        <label for="acceptTerms" class="text-sm font-semibold leading-snug">
+          J'accepte les
+          <a routerLink="/cgu" class="text-agri hover:underline">CGU</a>
+          et la
+          <a routerLink="/cgu" class="text-agri hover:underline">politique de confidentialité</a>
+        </label>
+      </div>
+      @if (form.controls.acceptTerms.invalid && form.controls.acceptTerms.touched) {
+        <p class="mt-1.5 text-xs text-danger">Vous devez accepter les CGU pour continuer.</p>
+      }
+
       <!-- Erreur globale renvoyée par l'API (409, 422, etc.) -->
       @if (errorMessage) {
         <p class="form-error mt-1.5 text-xs text-danger">{{ errorMessage }}</p>
