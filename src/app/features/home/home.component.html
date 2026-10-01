@@ -87,7 +87,7 @@
       #carouselTrack
       (scroll)="updateScrollState()"
       data-carousel="categories"
-      class="flex gap-3 overflow-x-auto pb-2"
+      class="no-scrollbar flex gap-3 overflow-x-auto pb-2"
     >
       @for (category of categories; track category.label) {
         <a
@@ -147,7 +147,7 @@
         #farmersTrack
         (scroll)="updateFarmersScrollState()"
         data-carousel="farmers"
-        class="flex gap-4 overflow-x-auto pb-2"
+        class="no-scrollbar flex gap-4 overflow-x-auto pb-2"
       >
         @for (producer of featuredProducers(); track producer.id) {
           <a
