@@ -13,7 +13,7 @@ import { AuthService } from '../../auth/auth.service';
 // (voir openMenu + le template #dropdown dans le html). Les autres fleches (Mon compte, Demandes,
 // etc) restent des liens simples
 //
-// panneau filtres (capture client) : produit (chips), localisation, date, bouton rechercher --
+// panneau filtres (semblable au figma) : produit (chips), localisation, date, bouton rechercher --
 // pas de vraie recherche branchee, juste le visuel + la selection des chips.
 
 type MenuId = 'categories' | 'about';
