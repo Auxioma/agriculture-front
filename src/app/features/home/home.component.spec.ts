@@ -36,4 +36,13 @@ describe('HomeComponent', () => {
     expect(text).toContain('Pas de commission produit');
     expect(text).toContain('Demandes gratuites pour les clients');
   });
+
+  it('devrait afficher les 5 catégories populaires avec leur photo', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Catégories populaires');
+
+    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('img');
+    expect(images.length).toBe(5);
+    expect(images[0].src).toContain('/images/categories/fruits.jpg');
+  });
 });
