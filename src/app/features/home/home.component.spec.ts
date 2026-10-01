@@ -62,7 +62,7 @@ describe('HomeComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Catégories populaires');
 
-    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('.overflow-x-auto img');
+    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('[data-carousel="categories"] img');
     expect(images.length).toBe(5);
     expect(images[0].src).toContain('/images/categories/fruits.jpg');
   });
@@ -74,7 +74,7 @@ describe('HomeComponent', () => {
   });
 
   it('affiche la flèche droite quand ça déborde, puis la gauche une fois scrollé', () => {
-    const track: HTMLDivElement = fixture.nativeElement.querySelector('.overflow-x-auto');
+    const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="categories"]');
     Object.defineProperty(track, 'scrollWidth', { value: 1000, configurable: true });
     Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true });
     Object.defineProperty(track, 'scrollLeft', { value: 0, configurable: true, writable: true });
@@ -93,7 +93,7 @@ describe('HomeComponent', () => {
   });
 
   it('scrollCarousel fait défiler le carrousel dans le bon sens', () => {
-    const track: HTMLDivElement = fixture.nativeElement.querySelector('.overflow-x-auto');
+    const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="categories"]');
     Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true });
     const scrollBySpy = vi.fn();
     track.scrollBy = scrollBySpy;
@@ -128,6 +128,23 @@ describe('HomeComponent', () => {
 
     const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('Nos agriculteurs du mois');
+  });
+
+  it('affiche les producteurs à la une dans un carrousel horizontal défilable', () => {
+    const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="farmers"]');
+    expect(track).toBeTruthy();
+
+    Object.defineProperty(track, 'scrollWidth', { value: 1000, configurable: true });
+    Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true });
+    fixture.componentInstance.updateFarmersScrollState();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('button[aria-label="Producteurs suivants"]')).toBeTruthy();
+
+    const scrollBySpy = vi.fn();
+    track.scrollBy = scrollBySpy;
+    fixture.componentInstance.scrollFarmersCarousel('right');
+    expect(scrollBySpy).toHaveBeenCalledWith({ left: 240, behavior: 'smooth' });
   });
 
   it('affiche les 3 étapes de "Comment ça marche"', () => {

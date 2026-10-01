@@ -50,6 +50,11 @@ export class HomeComponent {
   canScrollLeft = signal(false);
   canScrollRight = signal(false);
 
+  // meme principe de carroussel que les categories, pour les producteurs a la une en mobile
+  private farmersTrack = viewChild<ElementRef<HTMLDivElement>>('farmersTrack');
+  canScrollFarmersLeft = signal(false);
+  canScrollFarmersRight = signal(false);
+
   // producteurs les mieux notes + verifies, calcule cote back (GET /api/producers/featured)
   private producerService = inject(ProducerService);
   featuredProducers = signal<FeaturedProducer[]>([]);
@@ -60,12 +65,21 @@ export class HomeComponent {
     // les fleches n'apparaissent que si les cards depassent vraiment de l'ecran
     afterNextRender(() => {
       this.updateScrollState();
-      const onResize = () => this.updateScrollState();
+      this.updateFarmersScrollState();
+      const onResize = () => {
+        this.updateScrollState();
+        this.updateFarmersScrollState();
+      };
       window.addEventListener('resize', onResize);
       destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
     });
 
-    this.producerService.getFeatured().subscribe((producers) => this.featuredProducers.set(producers));
+    // les cards des producteurs arrivent apres coup (requete async) : il faut recalculer les fleches
+    // une fois le DOM mis a jour, d'ou le setTimeout(0) le temps que la vue se redessine.
+    this.producerService.getFeatured().subscribe((producers) => {
+      this.featuredProducers.set(producers);
+      setTimeout(() => this.updateFarmersScrollState());
+    });
   }
 
   updateScrollState(): void {
@@ -77,6 +91,20 @@ export class HomeComponent {
 
   scrollCarousel(direction: 'left' | 'right'): void {
     const el = this.carouselTrack()?.nativeElement;
+    if (!el) return;
+    const amount = el.clientWidth * 0.8;
+    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+  }
+
+  updateFarmersScrollState(): void {
+    const el = this.farmersTrack()?.nativeElement;
+    if (!el) return;
+    this.canScrollFarmersLeft.set(el.scrollLeft > 4);
+    this.canScrollFarmersRight.set(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  }
+
+  scrollFarmersCarousel(direction: 'left' | 'right'): void {
+    const el = this.farmersTrack()?.nativeElement;
     if (!el) return;
     const amount = el.clientWidth * 0.8;
     el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
