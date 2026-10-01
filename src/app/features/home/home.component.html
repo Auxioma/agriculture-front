@@ -69,19 +69,47 @@
 <!-- carroussel categories populaires (semblable au figma) -->
 <section class="px-4 py-6 lg:px-16 lg:py-10">
   <h2 class="mb-3 text-lg font-bold lg:text-2xl">Catégories populaires</h2>
-  <div class="flex gap-3 overflow-x-auto pb-2">
-    @for (category of categories; track category.label) {
-      <a
-        routerLink="/categories"
-        class="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl lg:h-40 lg:w-40"
+  <div class="relative">
+    @if (canScrollLeft()) {
+      <button
+        type="button"
+        (click)="scrollCarousel('left')"
+        aria-label="Catégories précédentes"
+        class="absolute left-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-agri shadow-md"
       >
-        <img [src]="category.image" [alt]="category.label" class="h-full w-full object-cover" />
-        <span
-          class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2 text-xs font-semibold text-white"
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+    }
+
+    <div #carouselTrack (scroll)="updateScrollState()" class="flex gap-3 overflow-x-auto pb-2">
+      @for (category of categories; track category.label) {
+        <a
+          routerLink="/categories"
+          class="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl lg:h-40 lg:w-40"
         >
-          {{ category.label }}
-        </span>
-      </a>
+          <img [src]="category.image" [alt]="category.label" class="h-full w-full object-cover" />
+          <span
+            class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2 text-xs font-semibold text-white"
+          >
+            {{ category.label }}
+          </span>
+        </a>
+      }
+    </div>
+
+    @if (canScrollRight()) {
+      <button
+        type="button"
+        (click)="scrollCarousel('right')"
+        aria-label="Catégories suivantes"
+        class="absolute right-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-agri shadow-md"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
     }
   </div>
 </section>
