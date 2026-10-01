@@ -1,0 +1,381 @@
+<nav class="sticky top-0 z-20 border-b border-grey-200 bg-white">
+  <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 lg:px-8">
+    <a routerLink="/" (click)="closeMobileMenu()" class="shrink-0 text-lg font-semibold text-agri">
+      TrouveMoi Agri
+    </a>
+
+    <!-- panneau "Filtres" (produit/localisation/date), semblable au figma. pas de vraie
+         recherche branchee derriere, juste le visuel + la selection des chips categorie -->
+    <ng-template #filtersPanel>
+      <div class="w-72 rounded-xl border border-grey-200 bg-white p-4 shadow-lg">
+        <div class="border-b border-grey-200 pb-3">
+          <div class="mb-2 flex items-center gap-2 text-sm font-medium text-grey-700">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-agri">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 11 12 12 9"></path>
+            </svg>
+            Produit
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @for (category of categories; track category) {
+              <button
+                type="button"
+                (click)="toggleFilterCategory(category)"
+                class="rounded-full border px-3 py-1 text-xs font-medium"
+                [class.border-agri]="isFilterCategorySelected(category)"
+                [class.bg-badge-bg]="isFilterCategorySelected(category)"
+                [class.text-agri]="isFilterCategorySelected(category)"
+                [class.border-grey-400]="!isFilterCategorySelected(category)"
+                [class.text-grey-700]="!isFilterCategorySelected(category)"
+              >
+                {{ category }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="border-b border-grey-200 py-3">
+          <label class="mb-2 flex items-center gap-2 text-sm font-medium text-grey-700">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-agri">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Localisation
+          </label>
+          <input
+            type="text"
+            placeholder="Bordeaux"
+            class="w-full rounded-full border border-grey-400 px-3 py-1.5 text-sm outline-none"
+          />
+        </div>
+
+        <div class="py-3">
+          <label class="mb-2 flex items-center gap-2 text-sm font-medium text-grey-700">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 text-agri">
+              <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Date de publication
+          </label>
+          <input
+            type="date"
+            class="w-full rounded-full border border-grey-400 px-3 py-1.5 text-sm outline-none"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="mt-1 w-full rounded-full bg-agri px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          Rechercher
+        </button>
+      </div>
+    </ng-template>
+
+    <!-- Recherche : pas encore de page de résultats ("/search") ni de service de recherche -->
+    <form class="hidden max-w-md flex-1 items-center gap-2 md:flex" role="search">
+      <div
+        class="relative flex flex-1 items-center gap-2 rounded-full border border-grey-400 bg-white px-3 py-1.5"
+      >
+        <input
+          type="search"
+          name="q"
+          placeholder="Rechercher..."
+          class="min-w-0 flex-1 text-sm outline-none"
+        />
+        <button
+          type="button"
+          (click)="toggleFilters()"
+          class="flex shrink-0 items-center gap-1 text-sm text-grey-700"
+        >
+          Filtres
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-3 w-3 transition-transform"
+            [class.rotate-180]="filtersOpen()"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <button type="submit" aria-label="Rechercher" class="shrink-0 text-grey-700">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+
+        @if (filtersOpen()) {
+          <div class="absolute right-0 top-full z-10 mt-2">
+            <ng-container *ngTemplateOutlet="filtersPanel"></ng-container>
+          </div>
+        }
+      </div>
+    </form>
+
+    <!--! Liens : aucune de ces routes n'existe encore dans app.routes.ts, seuls "/" et "/auth/*" sont réels -->
+    <div class="hidden shrink-0 items-center gap-6 whitespace-nowrap text-sm font-medium text-grey-700 lg:flex">
+      @if (!authService.isAuthenticated()) {
+        <ng-container
+          *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: false, green: true }"
+        ></ng-container>
+        <a routerLink="/producers">Producteurs</a>
+        <ng-container
+          *ngTemplateOutlet="dropdown; context: { menu: 'about', label: 'A propos', items: aboutLinks, mobile: false, green: false }"
+        ></ng-container>
+        <a routerLink="/pricing">Tarif producteurs</a>
+      } @else if (isProducer()) {
+        <a routerLink="/requests">Demandes</a>
+        <a routerLink="/farm">Mon exploitation</a>
+        <a routerLink="/my-quotes">Mes devis</a>
+        <a routerLink="/pricing">Tarif producteurs</a>
+        <a routerLink="/messages">Messagerie</a>
+      } @else {
+        <ng-container
+          *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: false, green: true }"
+        ></ng-container>
+        <a routerLink="/producers">Producteurs</a>
+        <a routerLink="/my-requests">Mes annonces</a>
+        <a routerLink="/account">Mon compte</a>
+        <a routerLink="/messages">Messagerie</a>
+      }
+    </div>
+
+    <!--! Actions : pareil pour "/requests/new", "/notifications" etc. sont des routes à créer -->
+    <div class="hidden shrink-0 items-center gap-4 whitespace-nowrap lg:flex">
+      @if (!authService.isAuthenticated()) {
+        <a routerLink="/auth/login" class="flex items-center gap-1 text-sm font-medium text-grey-700">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>
+          </svg>
+          Connexion
+        </a>
+        <a routerLink="/auth/register" class="text-sm font-medium text-grey-700">Inscription</a>
+        <a
+          routerLink="/requests/new"
+          class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white"
+        >
+          Publier une annonce
+        </a>
+        <a routerLink="/notifications" aria-label="Notifications" class="text-grey-700">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </a>
+      } @else {
+        <button
+          type="button"
+          (click)="authService.logout()"
+          class="flex items-center gap-1 text-sm font-medium text-grey-700"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Déconnexion
+        </button>
+        @if (isProducer()) {
+          <a routerLink="/requests" class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white">
+            Voir les annonces
+          </a>
+        } @else {
+          <a
+            routerLink="/requests/new"
+            class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white"
+          >
+            Publier une annonce
+          </a>
+        }
+      }
+    </div>
+
+    <!-- cloche visible en mobile aussi (capture "Mobile accueil V2"), dans la barre du haut pas dans le panneau -->
+    <div class="flex items-center gap-3 lg:hidden">
+      @if (!authService.isAuthenticated()) {
+        <a routerLink="/notifications" aria-label="Notifications" class="text-grey-700">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </a>
+      }
+
+      <!-- pas de maquette mobile pour cette navbar : burger + panneau classique -->
+      <button
+        type="button"
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="mobileMenuOpen()"
+        aria-label="Menu"
+        class="text-grey-700"
+      >
+        @if (mobileMenuOpen()) {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- menu deroulant/accordeon reutilise pour Catégories fond vert et A propos
+       desktop = dropdown absolu, mobile =
+       accordeon en ligne, meme template pour les deux (voir mobile/green en contexte) -->
+  <ng-template #dropdown let-menu="menu" let-label="label" let-items="items" let-mobile="mobile" let-green="green">
+    <div [class.relative]="!mobile">
+      <button
+        type="button"
+        (click)="toggleMenu(menu)"
+        [attr.aria-expanded]="isMenuOpen(menu)"
+        [class]="mobile ? 'flex w-full items-center gap-2 text-sm font-medium text-grey-700' : 'flex items-center gap-1'"
+      >
+        {{ label }}
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          class="h-3 w-3 shrink-0 transition-transform"
+          [class.rotate-180]="isMenuOpen(menu)"
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      @if (isMenuOpen(menu)) {
+        <ul
+          [class]="
+            mobile
+              ? '-mx-4 mt-2 divide-y divide-grey-200 text-sm text-grey-700'
+              : 'absolute left-0 top-full mt-2 w-56 divide-y divide-grey-200 overflow-hidden rounded-lg border border-grey-200 bg-white text-sm shadow-lg'
+          "
+        >
+          @for (item of items; track item.path + item.label) {
+            <li [class.bg-badge-bg]="green" [class.hover:bg-grey-200]="!green">
+              <a [routerLink]="item.path" (click)="mobile ? closeMobileMenu() : closeMenu()" class="block px-4 py-2.5">
+                {{ item.label }}
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </ng-template>
+
+  @if (mobileMenuOpen()) {
+    <div id="mobile-panel" class="flex flex-col gap-4 border-t border-grey-200 px-4 py-4 lg:hidden">
+      <div class="relative flex items-center gap-2 rounded-full border border-grey-400 px-3 py-1.5">
+        <input type="search" placeholder="Rechercher..." class="min-w-0 flex-1 text-sm outline-none" />
+        <button
+          type="button"
+          (click)="toggleFilters()"
+          class="flex shrink-0 items-center gap-1 text-sm text-grey-700"
+        >
+          Filtres
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-3 w-3 transition-transform"
+            [class.rotate-180]="filtersOpen()"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0 text-grey-700">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+
+        @if (filtersOpen()) {
+          <div class="absolute right-0 top-full z-10 mt-2">
+            <ng-container *ngTemplateOutlet="filtersPanel"></ng-container>
+          </div>
+        }
+      </div>
+
+      <div class="flex flex-col gap-3 text-sm font-medium text-grey-700">
+        @if (!authService.isAuthenticated()) {
+          <ng-container
+            *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: true, green: true }"
+          ></ng-container>
+          <a routerLink="/producers" (click)="closeMobileMenu()">Producteurs</a>
+          <ng-container
+            *ngTemplateOutlet="dropdown; context: { menu: 'about', label: 'A propos', items: aboutLinks, mobile: true, green: false }"
+          ></ng-container>
+          <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
+        } @else if (isProducer()) {
+          <a routerLink="/requests" (click)="closeMobileMenu()">Demandes</a>
+          <a routerLink="/farm" (click)="closeMobileMenu()">Mon exploitation</a>
+          <a routerLink="/my-quotes" (click)="closeMobileMenu()">Mes devis</a>
+          <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
+          <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
+        } @else {
+          <ng-container
+            *ngTemplateOutlet="dropdown; context: { menu: 'categories', label: 'Catégories', items: categoryLinks, mobile: true, green: true }"
+          ></ng-container>
+          <a routerLink="/producers" (click)="closeMobileMenu()">Producteurs</a>
+          <a routerLink="/my-requests" (click)="closeMobileMenu()">Mes annonces</a>
+          <a routerLink="/account" (click)="closeMobileMenu()">Mon compte</a>
+          <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
+        }
+      </div>
+
+      <div class="flex flex-col gap-3 border-t border-grey-200 pt-4">
+        @if (!authService.isAuthenticated()) {
+          <a routerLink="/auth/login" (click)="closeMobileMenu()" class="text-sm font-medium text-grey-700">
+            Connexion
+          </a>
+          <a routerLink="/auth/register" (click)="closeMobileMenu()" class="text-sm font-medium text-grey-700">
+            Inscription
+          </a>
+          <a
+            routerLink="/requests/new"
+            (click)="closeMobileMenu()"
+            class="rounded-full bg-agri px-4 py-2 text-center text-sm font-semibold text-white"
+          >
+            Publier une annonce
+          </a>
+        } @else {
+          <button
+            type="button"
+            (click)="authService.logout(); closeMobileMenu()"
+            class="text-left text-sm font-medium text-grey-700"
+          >
+            Déconnexion
+          </button>
+          @if (isProducer()) {
+            <a
+              routerLink="/requests"
+              (click)="closeMobileMenu()"
+              class="rounded-full bg-agri px-4 py-2 text-center text-sm font-semibold text-white"
+            >
+              Voir les annonces
+            </a>
+          } @else {
+            <a
+              routerLink="/requests/new"
+              (click)="closeMobileMenu()"
+              class="rounded-full bg-agri px-4 py-2 text-center text-sm font-semibold text-white"
+            >
+              Publier une annonce
+            </a>
+          }
+        }
+      </div>
+    </div>
+  }
+</nav>
