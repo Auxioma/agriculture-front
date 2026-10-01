@@ -29,4 +29,11 @@ describe('HomeComponent', () => {
     expect(texts.some((t) => t?.includes('Demander un prix en direct'))).toBe(true);
     expect(texts.some((t) => t?.includes('Je suis producteur'))).toBe(true);
   });
+
+  it('devrait afficher les 3 badges de confiance', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Producteurs vérifiés');
+    expect(text).toContain('Pas de commission produit');
+    expect(text).toContain('Demandes gratuites pour les clients');
+  });
 });
