@@ -129,4 +129,12 @@ describe('HomeComponent', () => {
     const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('Nos agriculteurs du mois');
   });
+
+  it('affiche les 3 étapes de "Comment ça marche"', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Comment ça marche ?');
+    expect(text).toContain('Etape 1 — Demandez');
+    expect(text).toContain('Etape 2 — Recevez des réponse');
+    expect(text).toContain('Etape 3 — Achetez en direct');
+  });
 });

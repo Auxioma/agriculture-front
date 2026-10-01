@@ -18,6 +18,25 @@ const LABEL_COLORS: Record<string, string> = {
   templateUrl: './home.component.html',
 })
 export class HomeComponent {
+  // semblable au figma ("Comment ça marche ?")
+  readonly howItWorksSteps = [
+    {
+      eyebrow: 'Etape 1 — Demandez',
+      title: 'Exprimez votre besoin',
+      text: 'Recherchez un produit, précisez votre localisation, la date souhaitée et vos préférences. Votre demande est envoyée gratuitement aux producteurs disponibles autour de vous.',
+    },
+    {
+      eyebrow: 'Etape 2 — Recevez des réponse',
+      title: 'Exprimez votre besoin',
+      text: 'Recherchez un produit, précisez votre localisation, la date souhaitée et vos préférences. Votre demande est envoyée gratuitement aux producteurs disponibles autour de vous.',
+    },
+    {
+      eyebrow: 'Etape 3 — Achetez en direct',
+      title: 'Organiez votre achat',
+      text: "Une fois d'accord sur les conditions, vous convenez du prix, du retrait ou de la livraison directement avec le producteur — sans intermédiaire, sans commission.",
+    },
+  ];
+
   // memes categories que la navbar (CatalogFixtures.php), avec une photo par categorie pour le carroussel
   readonly categories = [
     { label: 'Fruits', image: '/images/categories/fruits.jpg' },

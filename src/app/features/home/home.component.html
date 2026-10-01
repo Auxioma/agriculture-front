@@ -171,3 +171,20 @@
     </a>
   </section>
 }
+
+<!-- comment ca marche (semblable au figma) -->
+<section class="px-4 py-6 lg:px-16 lg:py-10">
+  <h2 class="text-lg font-bold lg:text-2xl">Comment ça marche ?</h2>
+  <div class="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3 lg:divide-x lg:divide-dashed lg:divide-grey-400">
+    @for (step of howItWorksSteps; track step.eyebrow; let i = $index) {
+      <div class="lg:px-6 lg:first:pl-0">
+        <span class="flex h-14 w-14 items-center justify-center rounded-full bg-badge-bg text-xl font-bold text-agri">
+          {{ i + 1 }}
+        </span>
+        <p class="mt-4 text-sm font-bold text-agri">{{ step.eyebrow }}</p>
+        <h3 class="mt-1 font-bold">{{ step.title }}</h3>
+        <p class="mt-1 text-sm text-grey-700">{{ step.text }}</p>
+      </div>
+    }
+  </div>
+</section>
