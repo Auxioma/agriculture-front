@@ -1,15 +1,36 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomeComponent } from './home.component';
+import { ProducerService } from './producer.service';
+import { FeaturedProducer } from './producer.model';
+
+const FEATURED_PRODUCERS: FeaturedProducer[] = [
+  {
+    id: 'producer-1',
+    farmName: 'Ferme Dupont',
+    slug: 'ferme-dupont',
+    city: 'Bordeaux',
+    countryCode: 'FR',
+    distanceKm: 8,
+    averageRating: 4.9,
+    reviewCount: 12,
+    photoUrl: '/images/categories/miel.jpg',
+    labels: [{ code: 'bio', name: 'Bio' }, { code: 'local', name: 'Local' }],
+  },
+];
 
 describe('HomeComponent', () => {
   let fixture: ComponentFixture<HomeComponent>;
+  let producerServiceMock: { getFeatured: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    producerServiceMock = { getFeatured: vi.fn(() => of(FEATURED_PRODUCERS)) };
+
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), { provide: ProducerService, useValue: producerServiceMock }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);
@@ -41,7 +62,7 @@ describe('HomeComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Catégories populaires');
 
-    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('img');
+    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('.overflow-x-auto img');
     expect(images.length).toBe(5);
     expect(images[0].src).toContain('/images/categories/fruits.jpg');
   });
@@ -82,5 +103,30 @@ describe('HomeComponent', () => {
 
     fixture.componentInstance.scrollCarousel('left');
     expect(scrollBySpy).toHaveBeenCalledWith({ left: -240, behavior: 'smooth' });
+  });
+
+  it('demande les producteurs à la une au service au chargement', () => {
+    expect(producerServiceMock.getFeatured).toHaveBeenCalled();
+  });
+
+  it('affiche la fiche du producteur à la une avec sa note, sa ville et ses labels', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Nos agriculteurs du mois');
+    expect(text).toContain('Ferme Dupont');
+    expect(text).toContain('Bordeaux');
+    expect(text).toContain('8 km');
+    expect(text).toContain('4.9');
+    expect(text).toContain('Bio');
+    expect(text).toContain('Local');
+  });
+
+  it('ne montre pas la section quand le service ne renvoie aucun producteur', async () => {
+    producerServiceMock.getFeatured.mockReturnValue(of([]));
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('Nos agriculteurs du mois');
   });
 });
