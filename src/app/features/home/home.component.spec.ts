@@ -5,6 +5,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomeComponent } from './home.component';
 import { ProducerService } from './producer.service';
 import { FeaturedProducer } from './producer.model';
+import { FaqService } from './faq.service';
+import { FaqArticle } from './faq.model';
 
 const FEATURED_PRODUCERS: FeaturedProducer[] = [
   {
@@ -21,16 +23,27 @@ const FEATURED_PRODUCERS: FeaturedProducer[] = [
   },
 ];
 
+const FAQ_ARTICLES: FaqArticle[] = [
+  { id: 'faq-1', category: null, question: 'Est-ce gratuit ?', answer: 'Oui, pour les clients.' },
+  { id: 'faq-2', category: null, question: 'Y a-t-il une commission ?', answer: 'Non, jamais.' },
+];
+
 describe('HomeComponent', () => {
   let fixture: ComponentFixture<HomeComponent>;
   let producerServiceMock: { getFeatured: ReturnType<typeof vi.fn> };
+  let faqServiceMock: { getAll: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     producerServiceMock = { getFeatured: vi.fn(() => of(FEATURED_PRODUCERS)) };
+    faqServiceMock = { getAll: vi.fn(() => of(FAQ_ARTICLES)) };
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [provideRouter([]), { provide: ProducerService, useValue: producerServiceMock }],
+      providers: [
+        provideRouter([]),
+        { provide: ProducerService, useValue: producerServiceMock },
+        { provide: FaqService, useValue: faqServiceMock },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);
@@ -186,5 +199,40 @@ describe('HomeComponent', () => {
       a.textContent?.includes('Découvrir les forfaits producteurs'),
     );
     expect(cta?.getAttribute('href')).toBe('/pricing');
+  });
+
+  it('demande la FAQ au service et affiche les questions, réponses repliées par défaut', () => {
+    expect(faqServiceMock.getAll).toHaveBeenCalled();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Questions fréquemment posées');
+    expect(compiled.textContent).toContain('Est-ce gratuit ?');
+    expect(compiled.textContent).toContain('Y a-t-il une commission ?');
+    expect(compiled.textContent).not.toContain('Oui, pour les clients.');
+  });
+
+  it('déplie une question au clic, et la replie si on reclique', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const question = [...compiled.querySelectorAll('button')].find((b) =>
+      b.textContent?.includes('Est-ce gratuit ?'),
+    )!;
+
+    question.click();
+    fixture.detectChanges();
+    expect(compiled.textContent).toContain('Oui, pour les clients.');
+
+    question.click();
+    fixture.detectChanges();
+    expect(compiled.textContent).not.toContain('Oui, pour les clients.');
+  });
+
+  it('ne montre pas la section FAQ quand le service ne renvoie aucun article', () => {
+    faqServiceMock.getAll.mockReturnValue(of([]));
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('Questions fréquemment posées');
   });
 });

@@ -390,3 +390,36 @@
     </svg>
   </a>
 </section>
+
+<!-- FAQ (GET /api/faq) -->
+@if (faqArticles().length > 0) {
+  <section class="px-4 py-10 lg:px-16 lg:py-16">
+    <h2 class="text-2xl font-bold lg:text-3xl">Questions fréquemment posées</h2>
+    <div class="mt-6 divide-y divide-grey-200 border-y border-grey-200">
+      @for (article of faqArticles(); track article.id) {
+        <div>
+          <button
+            type="button"
+            (click)="toggleFaq(article.id)"
+            class="flex w-full items-center justify-between gap-4 py-4 text-left"
+          >
+            <span class="font-medium">{{ article.question }}</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              class="h-4 w-4 shrink-0 text-grey-700 transition-transform"
+              [class.rotate-180]="openFaqId() === article.id"
+            >
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          @if (openFaqId() === article.id) {
+            <p class="pb-4 text-sm text-grey-700">{{ article.answer }}</p>
+          }
+        </div>
+      }
+    </div>
+  </section>
+}

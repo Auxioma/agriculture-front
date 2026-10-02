@@ -3,6 +3,8 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProducerService } from './producer.service';
 import { FeaturedProducer } from './producer.model';
+import { FaqService } from './faq.service';
+import { FaqArticle } from './faq.model';
 
 // une couleur par label (mêmes teintes que les badges de confiance du bandeau)
 const LABEL_COLORS: Record<string, string> = {
@@ -83,6 +85,15 @@ export class HomeComponent {
   private producerService = inject(ProducerService);
   featuredProducers = signal<FeaturedProducer[]>([]);
 
+  // FAQ (GET /api/faq) -- un seul accordeon ouvert a la fois
+  private faqService = inject(FaqService);
+  faqArticles = signal<FaqArticle[]>([]);
+  openFaqId = signal<string | null>(null);
+
+  toggleFaq(id: string): void {
+    this.openFaqId.update((open) => (open === id ? null : id));
+  }
+
   constructor() {
     const destroyRef = inject(DestroyRef);
 
@@ -104,6 +115,8 @@ export class HomeComponent {
       this.featuredProducers.set(producers);
       setTimeout(() => this.updateFarmersScrollState());
     });
+
+    this.faqService.getAll().subscribe((articles) => this.faqArticles.set(articles));
   }
 
   updateScrollState(): void {
