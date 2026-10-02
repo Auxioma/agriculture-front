@@ -175,4 +175,16 @@ describe('HomeComponent', () => {
     );
     expect(cta?.getAttribute('href')).toBe('/auth/register?role=producer');
   });
+
+  it('affiche le bloc "Boostez votre visibilité" avec le CTA vers les forfaits', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Boostez votre visibilité');
+    expect(compiled.textContent).toContain('1 200+');
+    expect(compiled.textContent).toContain('x3');
+
+    const cta = [...compiled.querySelectorAll('a')].find((a) =>
+      a.textContent?.includes('Découvrir les forfaits producteurs'),
+    );
+    expect(cta?.getAttribute('href')).toBe('/pricing');
+  });
 });
