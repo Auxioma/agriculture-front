@@ -6,6 +6,8 @@
 @theme {
   --font-sans: 'Inter', sans-serif;
 
+  --breakpoint-3xl: 112.5rem;
+
   --color-agri: #42750c;
   --color-gold-wheat: #d8a848;
   --color-earth: #7a4e2d;

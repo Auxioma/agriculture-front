@@ -1,0 +1,72 @@
+<footer class="relative overflow-hidden border-t border-grey-200 bg-white">
+  <div
+    class="mx-auto grid max-w-[120rem] px-4 py-8 text-center xl:grid-cols-[22rem_1fr] xl:px-12 xl:text-left 2xl:px-24"
+  >
+    <div class="border-b border-grey-200 pb-6 xl:border-b-0 xl:pb-0">
+      <a routerLink="/" class="text-2xl font-bold text-agri">TrouveMoi Agri</a>
+      <p class="mx-auto mt-4 max-w-sm text-[15px] text-secondary xl:mx-0 xl:max-w-[21.5rem]">
+        La marketplace 100% agricole pour acheter, vendre, louer et trouver les meilleurs services
+        près de chez vous.
+      </p>
+
+      <div class="mt-4 flex justify-center gap-4 text-white xl:justify-start">
+        <a aria-label="Facebook" class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-agri">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+          </svg>
+        </a>
+        <a aria-label="Instagram" class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-agri">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+          </svg>
+        </a>
+        <a aria-label="YouTube" class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-agri">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+            <path
+              d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"
+            ></path>
+            <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" class="fill-agri"></polygon>
+          </svg>
+        </a>
+        <a aria-label="LinkedIn" class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-agri">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+            <rect x="2" y="9" width="4" height="12"></rect>
+            <circle cx="4" cy="4" r="2"></circle>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="py-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:flex xl:items-center xl:justify-center xl:border-l xl:border-grey-200 xl:py-0 2xl:mr-24">
+      <div class="space-y-6 xl:flex xl:space-y-0">
+        @for (group of groups; track group.title) {
+          <nav
+            [attr.aria-label]="group.title"
+            class="xl:border-r xl:border-grey-200 xl:px-4 3xl:px-10"
+          >
+            <h2 class="text-[17px] font-bold">{{ group.title }}</h2>
+            <ul class="mt-2 space-y-1.5 text-[15px]">
+              @for (link of group.links; track link) {
+                <li><a class="cursor-pointer hover:underline">{{ link }}</a></li>
+              }
+            </ul>
+          </nav>
+        }
+      </div>
+    </div>
+
+    <p class="pt-2 text-[13px] text-secondary xl:mt-4 xl:pt-0">
+      {{ year }} TrouveMoi Agri | Tous droits réservés
+    </p>
+  </div>
+
+  <img
+    src="/images/feuilles-footer.png"
+    alt=""
+    aria-hidden="true"
+    class="pointer-events-none absolute bottom-0 right-8 hidden h-64 w-auto 2xl:block"
+  />
+</footer>
