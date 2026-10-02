@@ -37,6 +37,30 @@ export class HomeComponent {
     },
   ];
 
+  // semblable au figma ("Pourquoi acheter en direct ?")
+  readonly whyDirectItems = [
+    {
+      icon: 'sprout',
+      title: 'Fraîcheur',
+      text: 'Des produits récoltés au bon moment, sans intermédiaire ni long transport.',
+    },
+    {
+      icon: 'map-pin',
+      title: 'Origine',
+      text: 'Vous savez exactement quelle exploitation produit ce que vous achetez.',
+    },
+    {
+      icon: 'calendar',
+      title: 'Saisonnalité',
+      text: 'Des produits proposés selon les récoltes réelles, pas un catalogue permanent.',
+    },
+    {
+      icon: 'message-square',
+      title: 'Dialogue',
+      text: 'Posez vos questions directement au producteur avant de vous engager.',
+    },
+  ];
+
   // memes categories que la navbar (CatalogFixtures.php), avec une photo par categorie pour le carroussel
   readonly categories = [
     { label: 'Fruits', image: '/images/categories/fruits.jpg' },

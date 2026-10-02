@@ -154,4 +154,13 @@ describe('HomeComponent', () => {
     expect(text).toContain('Etape 2 — Recevez des réponse');
     expect(text).toContain('Etape 3 — Achetez en direct');
   });
+
+  it('affiche les 4 raisons d\'acheter en direct', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Pourquoi acheter en direct');
+    expect(text).toContain('Fraîcheur');
+    expect(text).toContain('Origine');
+    expect(text).toContain('Saisonnalité');
+    expect(text).toContain('Dialogue');
+  });
 });
