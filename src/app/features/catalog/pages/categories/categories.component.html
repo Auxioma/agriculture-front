@@ -1,0 +1,92 @@
+<section class="mx-auto w-full max-w-7xl px-4 py-6 md:px-16 md:py-8" [attr.aria-busy]="isLoading()">
+  <nav class="text-sm">
+    <a routerLink="/" class="hover:text-grey-700">Accueil</a> /
+    <span class="text-agri">Catégories</span>
+  </nav>
+
+  <h1 class="mt-4 text-4xl font-bold text-fonts">Catégories</h1>
+  <p class="mt-2 max-w-xl text-lg text-grey-700 md:text-sm">
+    Explorez les familles de produits et trouvez des producteurs près de chez vous, prêts à répondre
+    à votre demande.
+  </p>
+
+  <div class="mt-5 flex flex-wrap items-center gap-3">
+    <button
+      type="button"
+      (click)="seasonalOnly.set(!seasonalOnly())"
+      [attr.aria-pressed]="seasonalOnly()"
+      class="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold text-fonts transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agri md:text-xs"
+      [class]="seasonalOnly() ? 'border-agri bg-badge-bg' : 'border-grey-200 bg-white'"
+    >
+      <span
+        class="size-3 rounded-full"
+        [class]="seasonalOnly() ? 'bg-agri' : 'bg-grey-200'"
+        aria-hidden="true"
+      ></span>
+      Produits de saison actuellement
+    </button>
+
+    @if (!isLoading() && !hasError()) {
+      <span class="text-sm text-grey-700 md:text-xs">
+        {{ families().length }} {{ families().length > 1 ? 'familles' : 'famille' }} de produits
+      </span>
+    }
+  </div>
+
+  <div class="mt-6">
+    @if (isLoading()) {
+      <p class="sr-only" role="status">Chargement des catégories…</p>
+      <div
+        class="grid grid-cols-2 gap-4 md:grid-cols-[repeat(auto-fill,minmax(10rem,11rem))]"
+        aria-hidden="true"
+      >
+        @for (n of [1, 2, 3, 4]; track n) {
+          <div class="animate-pulse overflow-hidden rounded-2xl border border-grey-200 bg-white">
+            <div class="aspect-4/3 bg-grey-200"></div>
+            <div class="space-y-2 p-3">
+              <div class="h-4 w-2/3 rounded bg-grey-200"></div>
+              <div class="h-3 w-1/2 rounded bg-grey-200"></div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (hasError()) {
+      <p role="alert" class="rounded-lg border border-danger p-4 text-danger">
+        Impossible de charger les catégories. Réessayez plus tard.
+      </p>
+    } @else {
+      <ul class="grid grid-cols-2 gap-4 md:grid-cols-[repeat(auto-fill,minmax(10rem,11rem))]">
+        @for (category of families(); track category.id) {
+          <li>
+            <a
+              [routerLink]="['/categories', category.slug]"
+              class="group block overflow-hidden rounded-2xl border border-grey-200 bg-white transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agri"
+            >
+              <div class="relative aspect-4/3 bg-badge-bg">
+                @if (category.imageUrl) {
+                  <img
+                    [ngSrc]="category.imageUrl"
+                    [alt]="category.name"
+                    fill
+                    class="object-cover transition-transform group-hover:scale-105"
+                  />
+                }
+              </div>
+              <div class="p-3">
+                <h2 class="text-xl font-semibold text-fonts md:text-sm">{{ category.name }}</h2>
+                @if (category.producerCount !== undefined) {
+                  <p class="text-base text-grey-700 md:text-xs">
+                    {{ category.producerCount }}
+                    {{ category.producerCount > 1 ? 'Producteurs' : 'Producteur' }}
+                  </p>
+                }
+              </div>
+            </a>
+          </li>
+        } @empty {
+          <li class="col-span-full text-grey-700">Aucune catégorie de saison pour le moment.</li>
+        }
+      </ul>
+    }
+  </div>
+</section>

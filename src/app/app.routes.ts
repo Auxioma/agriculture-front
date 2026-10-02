@@ -7,4 +7,8 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
   },
   { path: 'auth', children: AUTH_ROUTES },
+  {
+    path: 'categories',
+    loadChildren: () => import('./features/catalog/catalog.routes').then((m) => m.CATALOG_ROUTES),
+  },
 ];
