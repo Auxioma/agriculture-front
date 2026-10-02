@@ -314,3 +314,38 @@
     }
   </div>
 </section>
+
+<!-- bloc producteurs (semblable au figma, chiffres a faire valider par le client) -->
+<section class="px-4 py-10 lg:px-16 lg:py-16">
+  <div class="lg:text-center">
+    <p class="text-xs font-bold uppercase tracking-wide text-agri">Vous êtes agriculteurs ?</p>
+    <h2 class="mt-2 text-2xl font-bold lg:text-3xl">Recevez des demandes qualifiées, sans commission</h2>
+    <p class="mt-2 text-sm text-grey-700 lg:mx-auto lg:max-w-3xl lg:text-base">
+      Créez votre profil, indiquez vos produits et vos disponibilités. Vous recevrez uniquement des
+      demandes pertinentes autour de vous, et vous répondez quand vous êtes disponible.
+    </p>
+  </div>
+
+  <div class="mt-6 grid grid-cols-2 gap-4 lg:mx-auto lg:max-w-xl">
+    <div class="rounded-lg border border-agri/30 bg-badge-bg px-4 py-6 text-center">
+      <p class="text-3xl font-bold text-agri">0%</p>
+      <p class="mt-1 text-xs font-semibold text-agri">commission sur vos ventes</p>
+    </div>
+    <div class="rounded-lg border border-agri/30 bg-badge-bg px-4 py-6 text-center">
+      <p class="text-3xl font-bold text-agri">9€</p>
+      <p class="mt-1 text-xs font-semibold text-agri">abonnement dès /mois</p>
+    </div>
+  </div>
+
+  <a
+    routerLink="/auth/register"
+    [queryParams]="{ role: 'producer' }"
+    class="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-agri px-5 py-3 text-sm font-semibold text-white lg:mx-auto lg:w-fit"
+  >
+    Je crée mon profil producteur
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+      <polyline points="12 5 19 12 12 19"></polyline>
+    </svg>
+  </a>
+</section>

@@ -163,4 +163,16 @@ describe('HomeComponent', () => {
     expect(text).toContain('Saisonnalité');
     expect(text).toContain('Dialogue');
   });
+
+  it('affiche le bloc producteur avec le CTA vers l\'inscription producteur', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Vous êtes agriculteurs');
+    expect(compiled.textContent).toContain('0%');
+    expect(compiled.textContent).toContain('9€');
+
+    const cta = [...compiled.querySelectorAll('a')].find((a) =>
+      a.textContent?.includes('Je crée mon profil producteur'),
+    );
+    expect(cta?.getAttribute('href')).toBe('/auth/register?role=producer');
+  });
 });
