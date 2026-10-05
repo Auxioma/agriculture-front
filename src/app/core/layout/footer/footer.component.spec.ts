@@ -50,6 +50,15 @@ describe('FooterComponent', () => {
     expect(compiled.textContent).toContain(`${new Date().getFullYear()} TrouveMoi Agri | Tous droits réservés`);
   });
 
+  it('le lien "Comment ça marche ?" mène à sa page, les autres ne redirigent pas encore', () => {
+    const links = [...compiled.querySelectorAll('nav a')];
+    const how = links.find((a) => a.textContent?.includes('Comment ça marche ?'));
+    expect(how?.getAttribute('href')).toBe('/how-it-works');
+
+    const faq = links.find((a) => a.textContent?.trim() === 'FAQ');
+    expect(faq?.getAttribute('href')).toBeNull();
+  });
+
   it('le logo ramène à l\'accueil', () => {
     const logo = compiled.querySelector('a[href="/"]');
     expect(logo?.textContent).toContain('TrouveMoi Agri');

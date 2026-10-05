@@ -1,0 +1,50 @@
+<section class="px-4 py-8 lg:px-16 lg:py-14">
+  <div class="mx-auto max-w-6xl">
+    <div class="lg:text-center">
+      <h1 class="text-xl font-bold lg:text-4xl">Comment ça marche ?</h1>
+      <p class="mt-3 max-w-xl text-sm text-grey-700 lg:mx-auto lg:text-base">
+        Trois étapes simples pour trouver un producteur, obtenir un prix et organiser votre achat en
+        direct — sans commission, sans panier.
+      </p>
+    </div>
+
+    <div class="mt-8 grid gap-10 lg:mt-14 lg:grid-cols-2 lg:gap-0">
+      @for (column of columns; track column.label) {
+        <div class="lg:border-r-4 lg:border-dashed lg:border-grey-200 lg:px-10 lg:first:pl-0">
+          <h2 class="text-xs font-bold uppercase tracking-wide text-agri">{{ column.label }}</h2>
+
+          <ol class="mt-5 space-y-5 lg:mt-6 lg:space-y-8">
+            @for (step of column.steps; track step.title; let i = $index) {
+              <!-- mobile : cercle a gauche du texte et pas de "Etape N" ; desktop : cercle au dessus -->
+              <li class="flex items-start gap-4 lg:block">
+                <span
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-badge-bg text-xl font-bold text-agri lg:h-16 lg:w-16 lg:text-2xl"
+                >
+                  {{ i + 1 }}
+                </span>
+                <div class="lg:mt-4">
+                  <p class="hidden text-sm font-bold text-agri lg:block">Étape {{ i + 1 }}</p>
+                  <h3 class="font-bold lg:mt-1 lg:text-lg">{{ step.title }}</h3>
+                  <p class="mt-1 text-sm text-grey-700">{{ step.text }}</p>
+                </div>
+              </li>
+            }
+          </ol>
+        </div>
+      }
+    </div>
+
+    <div class="mt-10 lg:mt-12 lg:flex lg:justify-center">
+      <a
+        routerLink="/requests/new"
+        class="flex w-full items-center justify-center gap-2 rounded-lg bg-agri px-5 py-3 text-sm font-semibold text-white lg:w-fit"
+      >
+        Demander un prix en direct
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

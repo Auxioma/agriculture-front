@@ -50,7 +50,7 @@
             <h2 class="text-[17px] font-bold">{{ group.title }}</h2>
             <ul class="mt-2 space-y-1.5 text-[15px]">
               @for (link of group.links; track link) {
-                <li><a class="cursor-pointer hover:underline">{{ link }}</a></li>
+                <li><a [routerLink]="paths[link]" class="cursor-pointer hover:underline">{{ link }}</a></li>
               }
             </ul>
           </nav>
