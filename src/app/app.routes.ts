@@ -16,5 +16,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/producer-space/producer-space.component').then((m) => m.ProducerSpaceComponent),
   },
+  {
+    path: 'about',
+    loadComponent: () => import('./features/about/about.component').then((m) => m.AboutComponent),
+  },
   { path: 'auth', children: AUTH_ROUTES },
 ];

@@ -49,7 +49,7 @@ export class NavbarComponent {
   readonly categoryLinks = this.categories.map((label) => ({ label, path: '/categories' }));
 
   // codes cgu/mentions-legales/confidentialite repris du docblock de LegalController.php (route
-  // GET /api/legal/{code}), pas inventes. "Qui sommes-nous" reste une supposition, pas de route confirmee
+  // GET /api/legal/{code}), pas inventes. "Qui sommes-nous" => page /about (faite), les pages legales pas encore
   readonly aboutLinks = [
     { label: 'Qui sommes-nous', path: '/about' },
     { label: 'CGU', path: '/legal/cgu' },

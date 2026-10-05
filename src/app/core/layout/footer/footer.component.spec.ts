@@ -55,6 +55,9 @@ describe('FooterComponent', () => {
     const how = links.find((a) => a.textContent?.includes('Comment ça marche ?'));
     expect(how?.getAttribute('href')).toBe('/how-it-works');
 
+    const about = links.find((a) => a.textContent?.includes('Qui sommes-nous ?'));
+    expect(about?.getAttribute('href')).toBe('/about');
+
     const space = links.find((a) => a.textContent?.includes('Espace producteurs'));
     expect(space?.getAttribute('href')).toBe('/producer-space');
 
