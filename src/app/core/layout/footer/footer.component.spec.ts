@@ -62,7 +62,13 @@ describe('FooterComponent', () => {
     expect(space?.getAttribute('href')).toBe('/producer-space');
 
     const faq = links.find((a) => a.textContent?.trim() === 'FAQ');
-    expect(faq?.getAttribute('href')).toBeNull();
+    expect(faq?.getAttribute('href')).toBe('/faq');
+
+    const contact = links.find((a) => a.textContent?.trim() === 'Contact');
+    expect(contact?.getAttribute('href')).toBe('/contact');
+
+    const resources = links.find((a) => a.textContent?.trim() === 'Ressources');
+    expect(resources?.getAttribute('href')).toBeNull();
   });
 
   it('le logo ramène à l\'accueil', () => {
