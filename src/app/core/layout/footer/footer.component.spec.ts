@@ -68,7 +68,10 @@ describe('FooterComponent', () => {
     expect(contact?.getAttribute('href')).toBe('/contact');
 
     const resources = links.find((a) => a.textContent?.trim() === 'Ressources');
-    expect(resources?.getAttribute('href')).toBeNull();
+    expect(resources?.getAttribute('href')).toBe('/resources');
+
+    const legal = links.find((a) => a.textContent?.trim() === 'Mentions légales');
+    expect(legal?.getAttribute('href')).toBeNull();
   });
 
   it('le logo ramène à l\'accueil', () => {

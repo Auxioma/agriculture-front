@@ -20,5 +20,18 @@ export const routes: Routes = [
     path: 'about',
     loadComponent: () => import('./features/about/about.component').then((m) => m.AboutComponent),
   },
+  {
+    path: 'faq',
+    loadComponent: () => import('./features/faq/faq.component').then((m) => m.FaqComponent),
+  },
+  {
+    path: 'contact',
+    loadComponent: () => import('./features/contact/contact.component').then((m) => m.ContactComponent),
+  },
+  {
+    path: 'resources',
+    loadComponent: () =>
+      import('./features/resources/resources.component').then((m) => m.ResourcesComponent),
+  },
   { path: 'auth', children: AUTH_ROUTES },
 ];
