@@ -50,10 +50,13 @@ describe('FooterComponent', () => {
     expect(compiled.textContent).toContain(`${new Date().getFullYear()} TrouveMoi Agri | Tous droits réservés`);
   });
 
-  it('le lien "Comment ça marche ?" mène à sa page, les autres ne redirigent pas encore', () => {
+  it('les liens des pages existantes mènent à leur page, les autres ne redirigent pas encore', () => {
     const links = [...compiled.querySelectorAll('nav a')];
     const how = links.find((a) => a.textContent?.includes('Comment ça marche ?'));
     expect(how?.getAttribute('href')).toBe('/how-it-works');
+
+    const space = links.find((a) => a.textContent?.includes('Espace producteurs'));
+    expect(space?.getAttribute('href')).toBe('/producer-space');
 
     const faq = links.find((a) => a.textContent?.trim() === 'FAQ');
     expect(faq?.getAttribute('href')).toBeNull();

@@ -13,7 +13,10 @@ import { RouterLink } from '@angular/router';
 })
 export class FooterComponent {
   // seuls les liens listés ici redirigent (les autres pages n'existent pas encore), a completer au fur et a mesure
-  readonly paths: Record<string, string> = { 'Comment ça marche ?': '/how-it-works' };
+  readonly paths: Record<string, string> = {
+    'Comment ça marche ?': '/how-it-works',
+    'Espace producteurs': '/producer-space',
+  };
 
   readonly groups = [
     {

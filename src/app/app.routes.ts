@@ -11,5 +11,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/how-it-works/how-it-works.component').then((m) => m.HowItWorksComponent),
   },
+  {
+    path: 'producer-space',
+    loadComponent: () =>
+      import('./features/producer-space/producer-space.component').then((m) => m.ProducerSpaceComponent),
+  },
   { path: 'auth', children: AUTH_ROUTES },
 ];
