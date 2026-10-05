@@ -10,6 +10,10 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    path: 'legal/:code',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: '**',
     renderMode: RenderMode.Prerender,
   },

@@ -33,5 +33,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/resources/resources.component').then((m) => m.ResourcesComponent),
   },
+  {
+    path: 'legal/:code',
+    loadComponent: () => import('./features/legal/legal.component').then((m) => m.LegalComponent),
+  },
   { path: 'auth', children: AUTH_ROUTES },
 ];

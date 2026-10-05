@@ -17,6 +17,7 @@ export class FooterComponent {
     FAQ: '/faq',
     Contact: '/contact',
     Ressources: '/resources',
+    'Mentions légales': '/legal/mentions-legales',
     'Qui sommes-nous ?': '/about',
     'Comment ça marche ?': '/how-it-works',
     'Espace producteurs': '/producer-space',

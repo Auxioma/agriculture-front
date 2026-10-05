@@ -71,7 +71,10 @@ describe('FooterComponent', () => {
     expect(resources?.getAttribute('href')).toBe('/resources');
 
     const legal = links.find((a) => a.textContent?.trim() === 'Mentions légales');
-    expect(legal?.getAttribute('href')).toBeNull();
+    expect(legal?.getAttribute('href')).toBe('/legal/mentions-legales');
+
+    const privacy = links.find((a) => a.textContent?.trim() === 'Politique de confidentialité');
+    expect(privacy?.getAttribute('href')).toBeNull();
   });
 
   it('le logo ramène à l\'accueil', () => {
