@@ -1,0 +1,247 @@
+<section class="mx-auto w-full max-w-7xl px-4 py-6 md:px-16 md:py-8" [attr.aria-busy]="isLoading()">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="Fil d'Ariane" class="text-sm">
+    <ol class="flex flex-wrap items-center gap-2">
+      <li><a routerLink="/" class="text-fonts hover:text-grey-700">Accueil</a></li>
+      <li aria-hidden="true" class="text-fonts">/</li>
+      <li><a routerLink="/categories" class="text-fonts hover:text-grey-700">Catégories</a></li>
+      @if (category(); as cat) {
+        <li aria-hidden="true" class="text-fonts">/</li>
+        <li aria-current="page" class="text-agri">{{ cat.name }}</li>
+      }
+    </ol>
+  </nav>
+
+  <!-- Titre + compteur -->
+  <h1 class="mt-3 text-3xl font-bold text-fonts md:text-2xl">Producteurs</h1>
+  @if (!isLoading() && !hasError() && !categoryNotFound() && !locationNotFound()) {
+    <p class="text-sm text-grey-700" role="status">
+      {{ total() }} {{ total() > 1 ? 'producteurs trouvés' : 'producteur trouvé' }}
+    </p>
+  }
+
+  <div class="mt-5 grid gap-6 md:grid-cols-[14rem_1fr] md:items-start">
+    <!-- ───────────── Filtres ───────────── -->
+    <aside aria-label="Filtres" class="space-y-4 rounded-2xl bg-badge-bg p-4">
+      <!-- Localisation -->
+      <div class="border-b border-grey-400 pb-4">
+        <label for="location" class="text-xs text-grey-700">Localisation</label>
+        <input
+          #loc
+          id="location"
+          type="text"
+          autocomplete="postal-code"
+          placeholder="Ville, code postal…"
+          [value]="location()"
+          (change)="onLocationChange(loc.value)"
+          class="mt-1 w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm text-fonts placeholder:text-grey-500 focus-visible:outline-2 focus-visible:outline-agri"
+        />
+      </div>
+
+      <div class="border-b border-grey-400 pb-4">
+        <label for="radius" class="text-xs text-grey-700">Rayon</label>
+        <select
+          #rad
+          id="radius"
+          [disabled]="!location().trim()"
+          (change)="radius.set(+rad.value)"
+          class="mt-1 block w-28 rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm text-fonts focus-visible:outline-2 focus-visible:outline-agri disabled:opacity-50"
+        >
+          @for (km of radiusOptions; track km) {
+            <option [value]="km" [selected]="radius() === km">{{ km }} km</option>
+          }
+        </select>
+      </div>
+
+      <!-- Mode de livraison -->
+      <fieldset class="border-b border-grey-400 pb-4">
+        <legend class="text-xs text-grey-700">Mode de livraison</legend>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            [class]="chipClass(pickup())"
+            [attr.aria-pressed]="pickup()"
+            (click)="pickup.set(!pickup())"
+          >
+            <span
+              class="size-2 rounded-full"
+              [class]="pickup() ? 'bg-agri' : 'bg-grey-200'"
+              aria-hidden="true"
+            ></span>
+            Retrait
+          </button>
+          <button
+            type="button"
+            [class]="chipClass(delivery())"
+            [attr.aria-pressed]="delivery()"
+            (click)="delivery.set(!delivery())"
+          >
+            <span
+              class="size-2 rounded-full"
+              [class]="delivery() ? 'bg-agri' : 'bg-grey-200'"
+              aria-hidden="true"
+            ></span>
+            Livraison
+          </button>
+        </div>
+      </fieldset>
+
+      <!-- Labels (un seul à la fois) + producteurs vérifiés -->
+      <fieldset>
+        <legend class="text-xs text-grey-700">Labels</legend>
+        <div class="mt-2 flex flex-wrap gap-2">
+          @for (label of labels(); track label.id) {
+            <button
+              type="button"
+              [class]="chipClass(selectedLabel() === label.code)"
+              [attr.aria-pressed]="selectedLabel() === label.code"
+              (click)="toggleLabel(label.code)"
+            >
+              {{ label.name }}
+            </button>
+          }
+          <button
+            type="button"
+            [class]="chipClass(verifiedOnly())"
+            [attr.aria-pressed]="verifiedOnly()"
+            (click)="verifiedOnly.set(!verifiedOnly())"
+          >
+            Vérifié
+          </button>
+        </div>
+      </fieldset>
+    </aside>
+
+    <!-- ───────────── Résultats ───────────── -->
+    <div>
+      <!-- Tri -->
+      <div class="flex items-center justify-end gap-2 md:justify-start">
+        <label for="sort" class="text-xs text-grey-700">Trier par</label>
+        <select
+          #sortSelect
+          id="sort"
+          (change)="sort.set($any(sortSelect.value))"
+          class="rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm text-fonts focus-visible:outline-2 focus-visible:outline-agri"
+        >
+          @for (option of sortOptions; track option.value) {
+            <option
+              [value]="option.value"
+              [selected]="sort() === option.value"
+              [disabled]="option.value === 'distance' && !location().trim()"
+            >
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <div class="mt-4">
+        @if (categoryNotFound()) {
+          <p role="alert" class="rounded-lg border border-danger p-4 text-danger">
+            Cette catégorie n'existe pas.
+            <a routerLink="/categories" class="font-semibold underline">Retour aux catégories</a>
+          </p>
+        } @else if (isLoading()) {
+          <p class="sr-only" role="status">Chargement des producteurs…</p>
+          <div class="grid gap-4 md:grid-cols-3" aria-hidden="true">
+            @for (n of [1, 2, 3]; track n) {
+              <div
+                class="animate-pulse overflow-hidden rounded-2xl border border-grey-200 bg-white"
+              >
+                <div class="aspect-video bg-grey-200"></div>
+                <div class="space-y-2 p-3">
+                  <div class="h-4 w-2/3 rounded bg-grey-200"></div>
+                  <div class="h-3 w-1/3 rounded bg-grey-200"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (locationNotFound()) {
+          <p role="alert" class="rounded-lg border border-danger p-4 text-danger">
+            Lieu introuvable. Vérifiez l'orthographe de la ville ou le code postal.
+          </p>
+        } @else if (hasError()) {
+          <p role="alert" class="rounded-lg border border-danger p-4 text-danger">
+            Impossible de charger les producteurs. Réessayez plus tard.
+          </p>
+        } @else if (producers().length === 0) {
+          <!-- État vide -->
+          <div class="rounded-2xl border border-grey-200 bg-badge-bg p-6 text-center md:p-10">
+            <div
+              class="mx-auto grid size-16 place-items-center rounded-full bg-grey-200"
+              aria-hidden="true"
+            >
+              <div class="size-8 rounded-full border-2 border-agri"></div>
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-fonts">Aucun producteur trouvé</h2>
+            <p class="mx-auto mt-2 max-w-md text-grey-700">
+              Aucun résultat ne correspond à vos filtres pour « {{ category()?.name }} ». Essayez
+              d'élargir le rayon ou de retirer un label.
+            </p>
+            <button
+              type="button"
+              (click)="resetFilters()"
+              class="mt-6 rounded-lg bg-agri px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agri"
+            >
+              Réinitialiser les filtres
+            </button>
+          </div>
+        } @else {
+          <ul class="grid gap-4 md:grid-cols-3">
+            @for (producer of producers(); track producer.id) {
+              <li>
+                <a
+                  [routerLink]="['/producers', producer.id]"
+                  class="group block overflow-hidden rounded-2xl border border-grey-200 bg-white transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agri"
+                >
+                  <div class="relative aspect-video bg-badge-bg">
+                    @if (producer.photoUrl) {
+                      <img
+                        [ngSrc]="producer.photoUrl"
+                        [alt]="producer.farmName"
+                        fill
+                        class="object-cover transition-transform group-hover:scale-105"
+                      />
+                    }
+                  </div>
+                  <div class="space-y-1 p-3">
+                    <div class="flex items-start justify-between gap-2">
+                      <h2 class="text-sm font-semibold text-fonts">{{ producer.farmName }}</h2>
+                      @if (producer.averageRating != null) {
+                        <span class="flex shrink-0 items-center gap-1 text-xs text-grey-700">
+                          <span class="text-gold-wheat" aria-hidden="true">★</span>
+                          {{ producer.averageRating.toFixed(1) }}
+                          <span class="sr-only">sur 5</span>
+                        </span>
+                      }
+                    </div>
+                    @if (producer.city) {
+                      <p class="text-xs text-grey-500">
+                        {{ producer.city }}
+                        @if (producer.distanceKm !== null) {
+                          · {{ roundKm(producer.distanceKm) }} km
+                        }
+                      </p>
+                    }
+                    @if (producer.labels?.length) {
+                      <ul class="flex flex-wrap gap-1.5 pt-1" aria-label="Labels">
+                        @for (label of producer.labels ?? []; track label.code) {
+                          <li
+                            class="rounded-md px-2 py-0.5 text-[0.65rem] font-semibold"
+                            [class]="labelClass(label.code)"
+                          >
+                            {{ label.name }}
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </div>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+</section>

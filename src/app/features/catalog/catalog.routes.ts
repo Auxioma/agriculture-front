@@ -6,4 +6,11 @@ export const CATALOG_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/categories/categories.component').then((m) => m.CategoriesComponent),
   },
+  {
+    path: ':slug',
+    loadComponent: () =>
+      import('./pages/category-producers/category-producers.component').then(
+        (m) => m.CategoryProducersComponent,
+      ),
+  },
 ];
