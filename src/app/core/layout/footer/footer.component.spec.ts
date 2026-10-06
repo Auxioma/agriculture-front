@@ -77,7 +77,10 @@ describe('FooterComponent', () => {
     expect(terms?.getAttribute('href')).toBe('/legal/cgu');
 
     const privacy = links.find((a) => a.textContent?.trim() === 'Politique de confidentialité');
-    expect(privacy?.getAttribute('href')).toBeNull();
+    expect(privacy?.getAttribute('href')).toBe('/legal/confidentialite');
+
+    const favorites = links.find((a) => a.textContent?.trim() === 'Mes favoris');
+    expect(favorites?.getAttribute('href')).toBeNull();
   });
 
   it('le logo ramène à l\'accueil', () => {
