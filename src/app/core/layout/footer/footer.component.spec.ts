@@ -73,6 +73,9 @@ describe('FooterComponent', () => {
     const legal = links.find((a) => a.textContent?.trim() === 'Mentions légales');
     expect(legal?.getAttribute('href')).toBe('/legal/mentions-legales');
 
+    const terms = links.find((a) => a.textContent?.trim() === "Conditions générales d'utilisation");
+    expect(terms?.getAttribute('href')).toBe('/legal/cgu');
+
     const privacy = links.find((a) => a.textContent?.trim() === 'Politique de confidentialité');
     expect(privacy?.getAttribute('href')).toBeNull();
   });

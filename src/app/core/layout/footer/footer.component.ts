@@ -18,6 +18,7 @@ export class FooterComponent {
     Contact: '/contact',
     Ressources: '/resources',
     'Mentions légales': '/legal/mentions-legales',
+    "Conditions générales d'utilisation": '/legal/cgu',
     'Qui sommes-nous ?': '/about',
     'Comment ça marche ?': '/how-it-works',
     'Espace producteurs': '/producer-space',
