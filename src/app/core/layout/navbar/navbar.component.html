@@ -130,7 +130,6 @@
         <a routerLink="/pricing">Tarif producteurs</a>
       } @else if (isProducer()) {
         <a routerLink="/requests">Demandes</a>
-        <a routerLink="/farm">Mon exploitation</a>
         <a routerLink="/my-quotes">Mes devis</a>
         <a routerLink="/pricing">Tarif producteurs</a>
         <a routerLink="/messages">Messagerie</a>
@@ -182,6 +181,9 @@
           Déconnexion
         </button>
         @if (isProducer()) {
+          <a routerLink="/producer" class="rounded-full bg-gold-wheat px-4 py-2 text-sm font-semibold text-fonts">
+            Mon exploitation
+          </a>
           <a routerLink="/requests" class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white">
             Voir les annonces
           </a>
@@ -319,7 +321,6 @@
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
         } @else if (isProducer()) {
           <a routerLink="/requests" (click)="closeMobileMenu()">Demandes</a>
-          <a routerLink="/farm" (click)="closeMobileMenu()">Mon exploitation</a>
           <a routerLink="/my-quotes" (click)="closeMobileMenu()">Mes devis</a>
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
           <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
@@ -358,6 +359,13 @@
             Déconnexion
           </button>
           @if (isProducer()) {
+            <a
+              routerLink="/producer"
+              (click)="closeMobileMenu()"
+              class="rounded-full bg-gold-wheat px-4 py-2 text-center text-sm font-semibold text-fonts"
+            >
+              Mon exploitation
+            </a>
             <a
               routerLink="/requests"
               (click)="closeMobileMenu()"
