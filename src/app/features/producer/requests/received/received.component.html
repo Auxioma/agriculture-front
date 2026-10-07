@@ -1,0 +1,51 @@
+<div class="flex flex-col">
+  <!-- en mobile le lien passe sous la barre du titre, en desktop il est au-dessus -->
+  <a
+    routerLink="/producer/requests"
+    class="order-2 flex items-center gap-2 px-4 pt-4 text-sm font-semibold lg:order-1 lg:p-0 lg:text-base"
+  >
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-4 w-4 shrink-0">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    Retour aux demandes disponibles
+  </a>
+  <header class="order-1 flex items-center justify-between bg-badge-bg px-4 py-3 lg:order-2 lg:mt-4 lg:block lg:bg-transparent lg:p-0">
+    <a routerLink="/" class="text-lg font-semibold text-agri lg:hidden">TrouveMoi Agri</a>
+    <h1 class="text-right text-lg font-bold lg:text-left lg:text-3xl">Demandes reçues</h1>
+  </header>
+</div>
+
+@if (requests() === null) {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Impossible de charger les demandes pour le moment.</p>
+} @else if (requests()) {
+  <div class="mt-4 flex gap-2 px-4 lg:px-0" role="group" aria-label="Filtrer les demandes reçues">
+    @for (f of filters; track f.id) {
+      <button
+        type="button"
+        (click)="filter.set(f.id)"
+        [attr.aria-pressed]="filter() === f.id"
+        class="cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium"
+        [class]="filter() === f.id ? 'border-agri bg-agri text-white' : 'border-grey-400 bg-white text-grey-700'"
+      >
+        {{ f.label }}
+      </button>
+    }
+  </div>
+
+  <ul class="mt-4 grid gap-3 px-4 lg:grid-cols-2 lg:items-start lg:gap-4 lg:px-0">
+    @for (request of visibleRequests(); track request.requestId) {
+      <!-- mobile : le titre prend toute la largeur, le badge est a droite de la date ; desktop : badge centre a droite -->
+      <li class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 rounded-lg border border-grey-200 bg-white px-4 py-3">
+        <p class="col-span-2 font-semibold lg:col-span-1">{{ title(request) }}</p>
+        <p class="text-xs text-secondary">{{ subtitle(request) }}</p>
+        @if (badge(request); as b) {
+          <span class="rounded-full px-3 py-0.5 text-xs font-semibold lg:col-start-2 lg:row-span-2 lg:row-start-1" [class]="b.style">{{ b.label }}</span>
+        }
+      </li>
+    } @empty {
+      <li class="rounded-lg border border-grey-200 bg-white px-4 py-3 text-sm text-grey-700 lg:col-span-2">
+        {{ filter() === 'all' ? 'Aucune demande reçue pour le moment.' : 'Aucune demande dans cette catégorie.' }}
+      </li>
+    }
+  </ul>
+}
