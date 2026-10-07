@@ -99,6 +99,20 @@ describe('NavbarComponent', () => {
     expect(linkTexts()).toContain('Mon exploitation');
   });
 
+  it('devrait afficher un seul bouton "Mon exploitation" doré, qui mène à /producer', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+
+    const links = (Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[]).filter(
+      (a) => a.textContent?.trim() === 'Mon exploitation',
+    );
+
+    expect(links.length).toBe(1);
+    expect(links[0].getAttribute('href')).toBe('/producer');
+    expect(links[0].classList).toContain('bg-gold-wheat');
+  });
+
   it('devrait appeler authService.logout() au clic sur Déconnexion', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));

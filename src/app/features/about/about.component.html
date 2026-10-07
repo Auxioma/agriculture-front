@@ -1,0 +1,112 @@
+<!-- intro + chiffres -->
+<section class="px-4 py-8 lg:px-16 lg:py-14">
+  <div class="mx-auto max-w-5xl">
+    <div class="lg:text-center">
+      <p class="text-xs font-bold uppercase tracking-wide text-agri">Qui sommes-nous ?</p>
+      <h1 class="mt-2 text-xl font-bold lg:text-4xl">Reconnecter les clients aux producteurs</h1>
+      <p class="mt-3 text-sm text-grey-700 lg:mx-auto lg:max-w-3xl lg:text-lg">
+        TrouveMoi Agri est une plateforme qui met en relation producteurs agricoles, particuliers et
+        professionnels. Notre mission : aider chacun à acheter plus directement, plus localement et avec
+        plus de qualité, et offrir aux producteurs un canal simple pour recevoir des demandes qualifiées
+        et mieux valoriser leur production.
+      </p>
+      <p class="mt-3 text-sm text-grey-700 lg:mx-auto lg:max-w-3xl lg:text-lg">
+        Ici, pas de panier : le client exprime son besoin, reçoit des réponses et discute avec le
+        producteur, puis la vente s'organise directement entre eux. Le producteur ne paie pas de
+        commission : il choisit un petit abonnement pour accéder à des demandes qualifiées.
+      </p>
+    </div>
+
+    <div class="mt-8 grid gap-4 sm:grid-cols-3">
+      @for (stat of stats; track stat.value) {
+        <div class="rounded-lg border border-agri/30 bg-badge-bg px-4 py-6 text-center">
+          <p class="text-3xl font-bold text-agri">{{ stat.value }}</p>
+          <p class="mt-1 text-sm text-agri">{{ stat.label }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- valeurs -->
+<section class="bg-badge-bg px-4 py-10 lg:px-16 lg:py-16">
+  <div class="mx-auto max-w-5xl">
+    <div class="lg:text-center">
+      <p class="text-xs font-bold uppercase tracking-wide text-agri">Nos valeurs</p>
+      <h2 class="mt-2 text-2xl font-bold lg:text-3xl">Une relation directe, humaine et transparente</h2>
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      @for (value of values; track value.title) {
+        <div class="flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-badge-bg text-agri">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+              <path [attr.d]="value.icon"></path>
+            </svg>
+          </span>
+          <div>
+            <h3 class="font-bold">{{ value.title }}</h3>
+            <p class="mt-1 text-sm text-grey-700">{{ value.text }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- confiance, role de la plateforme et CTA -->
+<section class="px-4 py-10 lg:px-16 lg:py-16">
+  <div class="mx-auto max-w-4xl">
+    <p class="text-xs font-bold uppercase tracking-wide text-agri">La confiance</p>
+    <h2 class="mt-2 text-2xl font-bold lg:text-3xl">Des preuves visibles et vérifiables</h2>
+
+    <ul class="mt-6 space-y-3 text-sm">
+      @for (proof of proofs; track proof) {
+        <li class="flex items-center gap-3">
+          <span
+            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-agri text-white lg:bg-badge-bg lg:text-agri"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="h-3 w-3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </span>
+          {{ proof }}
+        </li>
+      }
+    </ul>
+
+    <div class="mt-8 rounded-2xl border border-agri/30 bg-badge-bg p-5">
+      <h3 class="font-bold">Notre rôle</h3>
+      <p class="mt-1 text-sm text-grey-700">
+        TrouveMoi Agri facilite la mise en relation entre clients et producteurs. La plateforme ne vend
+        pas les produits agricoles et ne les garantit pas automatiquement : le producteur reste
+        responsable de ses prix, de ses produits, de ses pratiques, de ses factures et de ses obligations
+        sanitaires.
+      </p>
+    </div>
+
+    <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+      <a
+        routerLink="/requests/new"
+        class="flex items-center justify-center gap-2 rounded-lg bg-agri px-5 py-3 text-sm font-semibold text-white"
+      >
+        Demander un prix en direct
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+      <a
+        routerLink="/auth/register"
+        [queryParams]="{ role: 'producer' }"
+        class="flex items-center justify-center gap-2 rounded-lg border border-agri bg-white px-5 py-3 text-sm font-semibold text-agri"
+      >
+        Je suis producteur
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

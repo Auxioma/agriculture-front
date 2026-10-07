@@ -1,0 +1,45 @@
+<section class="px-4 py-8 lg:px-16 lg:py-14">
+  <div class="mx-auto max-w-6xl">
+    <h1 class="text-xl font-bold lg:text-center lg:text-4xl">Questions fréquentes</h1>
+
+    @if (groups().length > 0) {
+      <div class="mt-8 grid gap-8 lg:mt-12 lg:grid-cols-2 lg:items-start lg:gap-10">
+        @for (group of groups(); track group.label) {
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wide text-agri">{{ group.label }}</h2>
+
+            <div class="mt-4 space-y-3">
+              @for (item of group.items; track item.id) {
+                <div class="rounded-xl border border-grey-200 bg-white">
+                  <button
+                    type="button"
+                    (click)="toggle(group.label, item.id)"
+                    [attr.aria-expanded]="isOpen(group.label, item.id)"
+                    class="flex w-full items-center justify-between gap-4 p-4 text-left"
+                  >
+                    <span class="text-sm font-bold">{{ item.question }}</span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      class="h-4 w-4 shrink-0 text-grey-700 transition-transform"
+                      [class.rotate-180]="isOpen(group.label, item.id)"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                  @if (isOpen(group.label, item.id)) {
+                    <p class="px-4 pb-4 text-sm text-grey-700">{{ item.answer }}</p>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (loaded()) {
+      <p class="mt-8 text-sm text-grey-700 lg:text-center">Aucune question pour le moment.</p>
+    }
+  </div>
+</section>
