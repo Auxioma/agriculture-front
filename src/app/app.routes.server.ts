@@ -13,6 +13,15 @@ export const serverRoutes: ServerRoute[] = [
     path: 'legal/:code',
     renderMode: RenderMode.Client,
   },
+  // espace producteur : derriere une connexion, rien a pre-rendre
+  {
+    path: 'producer',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'producer/**',
+    renderMode: RenderMode.Client,
+  },
   {
     path: '**',
     renderMode: RenderMode.Prerender,

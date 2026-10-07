@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
+import { producerGuard } from './features/producer/producer.guard';
 
 export const routes: Routes = [
   {
@@ -36,6 +37,19 @@ export const routes: Routes = [
   {
     path: 'legal/:code',
     loadComponent: () => import('./features/legal/legal.component').then((m) => m.LegalComponent),
+  },
+  {
+    path: 'producer',
+    canActivate: [producerGuard],
+    loadComponent: () =>
+      import('./features/producer/producer-layout/producer-layout.component').then((m) => m.ProducerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/producer/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
+    ],
   },
   { path: 'auth', children: AUTH_ROUTES },
 ];
