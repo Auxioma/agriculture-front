@@ -11,10 +11,12 @@ export class ProducerSearchService {
   search(query: ProducerQuery, coords?: Coordinates) {
     let params = new HttpParams().set('categoryId', query.categoryId);
 
+    if (query.seasonalOnly) params = params.set('seasonal', true);
     if (query.pickup) params = params.set('pickupAvailable', true);
     if (query.delivery) params = params.set('deliveryAvailable', true);
-    if (query.label) params = params.set('label', query.label);
+    if (query.labels.length > 0) params = params.set('labels', query.labels.join(','));
     if (query.verifiedOnly) params = params.set('verifiedOnly', true);
+    if (query.minRating !== null) params = params.set('minRating', query.minRating);
 
     if (coords) {
       params = params

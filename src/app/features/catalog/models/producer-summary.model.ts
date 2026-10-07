@@ -13,10 +13,10 @@ export interface ProducerSummary {
   countryCode: string | null;
   verificationStatus: string;
   distanceKm: number | null;
-  photoUrl?: string | null;
-  averageRating?: number | null;
-  reviewCount?: number;
-  labels?: Pick<Label, 'code' | 'name'>[];
+  photoUrl: string | null;
+  averageRating: number | null;
+  reviewCount: number;
+  labels: Pick<Label, 'code' | 'name'>[];
 }
 
 export interface Coordinates {
@@ -30,9 +30,11 @@ export interface ProducerQuery {
   categoryId: string;
   location: string;
   radius: number;
+  seasonalOnly: boolean;
   pickup: boolean;
   delivery: boolean;
-  label: string | null;
+  labels: string[];
   verifiedOnly: boolean;
+  minRating: number | null;
   sort: ProducerSort;
 }

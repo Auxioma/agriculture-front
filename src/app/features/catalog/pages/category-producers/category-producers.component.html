@@ -38,6 +38,7 @@
         />
       </div>
 
+      <!-- Rayon : sans localisation, le back ignore le rayon, donc on le désactive -->
       <div class="border-b border-grey-400 pb-4">
         <label for="radius" class="text-xs text-grey-700">Rayon</label>
         <select
@@ -52,6 +53,25 @@
           }
         </select>
       </div>
+
+      <!-- Saisonnalité -->
+      <fieldset class="border-b border-grey-400 pb-4">
+        <legend class="text-xs text-grey-700">Saisonnalité</legend>
+        <button
+          type="button"
+          class="mt-2"
+          [class]="chipClass(seasonalOnly())"
+          [attr.aria-pressed]="seasonalOnly()"
+          (click)="seasonalOnly.set(!seasonalOnly())"
+        >
+          <span
+            class="size-2 rounded-full"
+            [class]="seasonalOnly() ? 'bg-agri' : 'bg-grey-200'"
+            aria-hidden="true"
+          ></span>
+          Produits de saison actuellement
+        </button>
+      </fieldset>
 
       <!-- Mode de livraison -->
       <fieldset class="border-b border-grey-400 pb-4">
@@ -86,15 +106,15 @@
         </div>
       </fieldset>
 
-      <!-- Labels (un seul à la fois) + producteurs vérifiés -->
-      <fieldset>
+      <!-- Labels (plusieurs possibles) + producteurs vérifiés -->
+      <fieldset class="border-b border-grey-400 pb-4">
         <legend class="text-xs text-grey-700">Labels</legend>
         <div class="mt-2 flex flex-wrap gap-2">
           @for (label of labels(); track label.id) {
             <button
               type="button"
-              [class]="chipClass(selectedLabel() === label.code)"
-              [attr.aria-pressed]="selectedLabel() === label.code"
+              [class]="chipClass(selectedLabels().includes(label.code))"
+              [attr.aria-pressed]="selectedLabels().includes(label.code)"
               (click)="toggleLabel(label.code)"
             >
               {{ label.name }}
@@ -108,6 +128,24 @@
           >
             Vérifié
           </button>
+        </div>
+      </fieldset>
+
+      <!-- Note minimale -->
+      <fieldset>
+        <legend class="text-xs text-grey-700">Note minimale</legend>
+        <div class="mt-2 flex flex-wrap gap-2">
+          @for (stars of ratingOptions; track stars) {
+            <button
+              type="button"
+              [class]="chipClass(minRating() === stars)"
+              [attr.aria-pressed]="minRating() === stars"
+              [attr.aria-label]="stars + ' étoile' + (stars > 1 ? 's' : '') + ' minimum'"
+              (click)="toggleRating(stars)"
+            >
+              {{ stars }}<span class="text-gold-wheat" aria-hidden="true">★</span>
+            </button>
+          }
         </div>
       </fieldset>
     </aside>
@@ -190,6 +228,7 @@
           <ul class="grid gap-4 md:grid-cols-3">
             @for (producer of producers(); track producer.id) {
               <li>
+                <!-- La fiche détail du back (GET /api/producers/{id}) cherche par id, pas par slug -->
                 <a
                   [routerLink]="['/producers', producer.id]"
                   class="group block overflow-hidden rounded-2xl border border-grey-200 bg-white transition-shadow hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agri"
@@ -223,9 +262,9 @@
                         }
                       </p>
                     }
-                    @if (producer.labels?.length) {
+                    @if (producer.labels.length > 0) {
                       <ul class="flex flex-wrap gap-1.5 pt-1" aria-label="Labels">
-                        @for (label of producer.labels ?? []; track label.code) {
+                        @for (label of producer.labels; track label.code) {
                           <li
                             class="rounded-md px-2 py-0.5 text-[0.65rem] font-semibold"
                             [class]="labelClass(label.code)"
