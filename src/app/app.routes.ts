@@ -49,6 +49,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/producer/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
+      {
+        path: 'requests',
+        loadComponent: () =>
+          import('./features/producer/requests/requests.component').then((m) => m.RequestsComponent),
+      },
     ],
   },
   { path: 'auth', children: AUTH_ROUTES },

@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { DashboardRequest } from './dashboard.model';
+import { requestDetails, requestTitle } from '../request-format';
 import { DashboardService } from './dashboard.service';
 
 type RequestFilter = 'urgent' | 'all' | 'near';
@@ -13,7 +13,6 @@ const FILTERS: { id: RequestFilter; label: string; title: string }[] = [
   { id: 'near', label: '< 10 km', title: 'Demandes à moins de 10 km' },
 ];
 
-const UNITS: Record<string, string> = { kg: 'kg', unite: 'unité' };
 const SUBSCRIPTION_STATUSES: Record<string, string> = {
   active: 'Actif',
   trialing: "Période d'essai",
@@ -78,33 +77,6 @@ export class DashboardComponent {
     return parts.length ? `Ajoutez ${parts.join(' et ')} pour être plus visible.` : 'Votre profil est complet.';
   });
 
-  requestTitle(request: DashboardRequest): string {
-    const product = request.product ?? 'Demande';
-    return request.quantity === null ? product : `${product} - ${this.quantity(request)}`;
-  }
-
-  // ex. "Lyon · 4 km · budget 12€/kg", ou le message du client quand il n'y a pas de budget
-  requestDetails(request: DashboardRequest): string {
-    const budget =
-      request.budgetMax !== null ? `budget ${request.budgetMax}${request.currency ?? ''}${this.unitSuffix(request)}` : request.message;
-
-    return [request.city, request.distanceKm !== null ? `${request.distanceKm} km` : null, budget]
-      .filter((part) => !!part)
-      .join(' · ');
-  }
-
-  private unit(request: DashboardRequest): string {
-    return UNITS[request.unit ?? ''] ?? request.unit ?? '';
-  }
-
-  private unitSuffix(request: DashboardRequest): string {
-    return request.unit ? `/${this.unit(request)}` : '';
-  }
-
-  private quantity(request: DashboardRequest): string {
-    const unit = this.unit(request);
-    if (unit === 'kg') return `${request.quantity}kg`;
-    const plural = unit === 'unité' && request.quantity! > 1 ? 's' : '';
-    return `${request.quantity} ${unit}${plural}`.trim();
-  }
+  readonly requestTitle = requestTitle;
+  readonly requestDetails = requestDetails;
 }

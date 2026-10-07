@@ -6,7 +6,7 @@ import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from './dashboard.service';
 import { ProducerDashboard } from './dashboard.model';
 
-const request = (overrides: Partial<ProducerDashboard['requests'][number]>) => ({
+const request = (overrides: Partial<ProducerDashboard['requests'][number]>): ProducerDashboard['requests'][number] => ({
   requestId: Math.random().toString(),
   product: 'Produit',
   quantity: null,
@@ -17,6 +17,9 @@ const request = (overrides: Partial<ProducerDashboard['requests'][number]>) => (
   distanceKm: null,
   message: null,
   urgent: false,
+  clientType: 'individual',
+  isNew: false,
+  highVolume: false,
   ...overrides,
 });
 

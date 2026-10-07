@@ -1,4 +1,4 @@
-export interface DashboardRequest {
+export interface AvailableRequest {
   requestId: string;
   product: string | null;
   quantity: number | null;
@@ -9,6 +9,9 @@ export interface DashboardRequest {
   distanceKm: number | null;
   message: string | null;
   urgent: boolean;
+  clientType: 'individual' | 'professional';
+  isNew: boolean;
+  highVolume: boolean;
 }
 
 export interface DashboardSubscription {
@@ -23,7 +26,7 @@ export interface ProducerDashboard {
   availableRequests: number;
   urgentRequests: number;
   unreadMessages: number;
-  requests: DashboardRequest[];
+  requests: AvailableRequest[];
   subscription: DashboardSubscription | null;
   profile: { completion: number; missing: string[] };
 }
