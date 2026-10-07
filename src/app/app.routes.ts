@@ -54,6 +54,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/producer/requests/requests.component').then((m) => m.RequestsComponent),
       },
+      {
+        path: 'requests/received',
+        loadComponent: () =>
+          import('./features/producer/requests/received/received.component').then((m) => m.ReceivedComponent),
+      },
     ],
   },
   { path: 'auth', children: AUTH_ROUTES },
