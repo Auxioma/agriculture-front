@@ -1,0 +1,116 @@
+<!-- mobile : fleche de retour a gauche du titre ; desktop : lien avec son texte en haut, titre dans la colonne centree -->
+<header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
+  <a routerLink="/producer/requests" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    <span class="sr-only lg:not-sr-only">Retour aux demandes disponibles</span>
+  </a>
+  <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-xl lg:text-3xl">Répondre à la demande</h1>
+</header>
+
+@if (request() === null) {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Cette demande est introuvable ou ne vous est pas accessible.</p>
+} @else if (request(); as r) {
+  @if (r.status !== 'new') {
+    <p class="mx-auto mt-4 px-4 text-sm text-grey-700 lg:max-w-xl lg:px-0">
+      Cette demande est déjà traitée ou n'est plus ouverte.
+      <a [routerLink]="['/producer/requests', id]" class="font-semibold text-agri underline">Voir la demande</a>
+    </p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit(false)" class="mx-auto mt-4 space-y-4 px-4 pb-4 lg:max-w-xl lg:px-0">
+      <!-- rappel de la demande -->
+      <p class="rounded-full bg-badge-bg px-4 py-1.5 text-sm font-medium text-agri">
+        {{ r.clientName }} · {{ r.product ?? 'Demande' }}{{ r.quantity !== null ? ' · ' + requestQuantity(r) : '' }}
+      </p>
+
+      <!-- en desktop les champs restent dans la moitie gauche, comme la maquette -->
+      <div class="space-y-4 lg:max-w-72">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="price" class="mb-1 block text-sm font-medium">Prix indicatif</label>
+            <input id="price" formControlName="price" inputmode="decimal" [placeholder]="priceHint()" [class]="input" />
+          </div>
+          <div>
+            <label for="unit" class="mb-1 block text-sm font-medium">Unité</label>
+            <select id="unit" formControlName="unitId" [class]="input" [class.text-grey-500]="!form.controls.unitId.value">
+              <option value="">{{ unitText(r.unit) }}</option>
+              @for (u of units(); track u.id) {
+                <option [value]="u.id">{{ unitText(u.code) }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="quantity" class="mb-1 block text-sm font-medium">Quantité disponible</label>
+          <input id="quantity" formControlName="quantity" inputmode="decimal" [placeholder]="quantityHint()" [class]="input" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="date" class="mb-1 block text-sm font-medium">Date disponible</label>
+            <input id="date" type="date" formControlName="date" [class]="input" />
+          </div>
+          <div>
+            <label for="validity" class="mb-1 block text-sm font-medium">Validité de l'offre</label>
+            <input id="validity" formControlName="validityDays" inputmode="numeric" placeholder="7 jours" [class]="input" />
+          </div>
+        </div>
+
+        <div>
+          <label for="pickup" class="mb-1 block text-sm font-medium">Conditions de retrait</label>
+          <input id="pickup" formControlName="pickup" [placeholder]="r.pickupWanted ? 'Retrait à la ferme' : 'Non proposé'" [class]="input" />
+        </div>
+
+        <div>
+          <label for="delivery" class="mb-1 block text-sm font-medium">Conditions de livraison</label>
+          <input id="delivery" formControlName="delivery" [placeholder]="r.deliveryWanted ? 'Livraison possible' : 'Non proposée'" [class]="input" />
+        </div>
+
+        <div>
+          <label for="message" class="mb-1 block text-sm font-medium">Message personnalisé</label>
+          <textarea id="message" formControlName="message" rows="3" placeholder="Bonjour, ce produit est disponible…" [class]="input"></textarea>
+        </div>
+
+        <!-- pas de route pour envoyer un fichier avec une reponse : bouton desactive pour l'instant -->
+        <button
+          type="button"
+          disabled
+          title="Bientôt disponible"
+          class="flex items-center gap-2 rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm text-grey-500"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+          </svg>
+          Joindre un devis ou une photo
+        </button>
+      </div>
+
+      @if (error()) {
+        <p role="alert" class="text-sm text-danger">{{ error() }}</p>
+      }
+      @if (info()) {
+        <p role="status" class="text-sm font-medium text-agri">{{ info() }}</p>
+      }
+
+      <div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+        <button
+          type="submit"
+          [disabled]="sending()"
+          class="w-full cursor-pointer rounded-xl border-2 border-agri bg-agri py-3 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60"
+        >
+          Envoyer la réponse
+        </button>
+        <button
+          type="button"
+          (click)="submit(true)"
+          [disabled]="sending()"
+          class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri disabled:cursor-wait disabled:opacity-60"
+        >
+          Enregistrer le brouillon
+        </button>
+      </div>
+    </form>
+  }
+}
