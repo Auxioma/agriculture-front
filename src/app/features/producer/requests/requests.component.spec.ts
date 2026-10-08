@@ -112,10 +112,10 @@ describe('RequestsComponent', () => {
     expect(rows()).toEqual(['Aucune demande ne correspond à ces filtres.']);
   });
 
-  it('propose "Voir mes devis" (bouton mobile) vers /my-quotes, comme la navbar', async () => {
+  it('propose "Voir mes devis" (bouton mobile) vers la page Mes devis', async () => {
     await create();
 
-    expect(compiled.querySelector('a[href="/my-quotes"]')?.textContent?.trim()).toBe('Voir mes devis');
+    expect(compiled.querySelector('a[href="/producer/requests/quotes"]')?.textContent?.trim()).toBe('Voir mes devis');
   });
 
   it('affiche un message quand le back est injoignable', async () => {

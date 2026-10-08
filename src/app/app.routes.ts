@@ -59,7 +59,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/producer/requests/received/received.component').then((m) => m.ReceivedComponent),
       },
-      // apres requests/received : sinon "received" serait pris pour un identifiant de demande
+      {
+        path: 'requests/quotes',
+        loadComponent: () => import('./features/producer/requests/quotes/quotes.component').then((m) => m.QuotesComponent),
+      },
+      // apres requests/received et requests/quotes : sinon "received" ou "quotes" serait pris pour un identifiant de demande
       {
         path: 'requests/:id',
         loadComponent: () => import('./features/producer/requests/detail/detail.component').then((m) => m.DetailComponent),

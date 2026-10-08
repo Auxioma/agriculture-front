@@ -129,8 +129,8 @@
         ></ng-container>
         <a routerLink="/pricing">Tarif producteurs</a>
       } @else if (isProducer()) {
-        <a routerLink="/requests">Demandes</a>
-        <a routerLink="/my-quotes">Mes devis</a>
+        <a routerLink="/producer/requests">Demandes</a>
+        <a routerLink="/producer/requests/quotes">Mes devis</a>
         <a routerLink="/pricing">Tarif producteurs</a>
         <a routerLink="/messages">Messagerie</a>
       } @else {
@@ -320,8 +320,8 @@
           ></ng-container>
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
         } @else if (isProducer()) {
-          <a routerLink="/requests" (click)="closeMobileMenu()">Demandes</a>
-          <a routerLink="/my-quotes" (click)="closeMobileMenu()">Mes devis</a>
+          <a routerLink="/producer/requests" (click)="closeMobileMenu()">Demandes</a>
+          <a routerLink="/producer/requests/quotes" (click)="closeMobileMenu()">Mes devis</a>
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
           <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
         } @else {

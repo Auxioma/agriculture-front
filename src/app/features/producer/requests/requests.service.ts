@@ -62,6 +62,23 @@ export interface ReplyPayload {
   deliveryConditions: string | null;
 }
 
+// un devis = une reponse envoyee avec un prix (page "Mes devis"). status : sent, seen, accepted, declined, expired,
+// archived ; les derniers statuts sont poses cote client, voir NOTES.md
+export interface Quote {
+  replyId: string;
+  requestId: string;
+  clientName: string;
+  product: string | null;
+  quantity: number | null;
+  unit: string | null;
+  priceAmount: number;
+  priceUnit: string | null;
+  currency: string | null;
+  status: string;
+  sentAt: string;
+  validUntil: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RequestsService {
   private http = inject(HttpClient);
@@ -73,6 +90,10 @@ export class RequestsService {
 
   getReceived() {
     return this.http.get<ReceivedRequest[]>(`${this.apiUrl}/producer/requests/received`);
+  }
+
+  getQuotes() {
+    return this.http.get<Quote[]>(`${this.apiUrl}/producer/quotes`);
   }
 
   getDetail(requestId: string) {

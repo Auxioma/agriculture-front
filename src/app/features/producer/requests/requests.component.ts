@@ -19,7 +19,7 @@ const CHIP = 'shrink-0 cursor-pointer appearance-none field-sizing-content round
 
 // page "Demandes disponibles" semblable au figma, branchee sur GET /api/producer/requests/available. Les chips se
 // cumulent (urgentes + moins de 10 km...) ; "Produit" et "Type de client" sont des listes en forme de chip. En
-// mobile le bouton "Voir mes devis" est fixe en bas ; /my-quotes n'existe pas encore (la navbar y pointe deja).
+// mobile le bouton "Voir mes devis" est fixe en bas et mene a la page Mes devis.
 @Component({
   selector: 'app-producer-requests',
   standalone: true,

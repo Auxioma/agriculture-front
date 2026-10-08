@@ -24,7 +24,7 @@ export const shortDate = (iso: string): string => {
 export const longDate = (iso: string): string => `${shortDate(iso)} ${new Date(iso).getFullYear()}`;
 
 // ex. "Tomates bio - 5kg"
-export function requestTitle(request: AvailableRequest): string {
+export function requestTitle(request: Pick<AvailableRequest, 'product' | 'quantity' | 'unit'>): string {
   const product = request.product ?? 'Demande';
   return request.quantity === null ? product : `${product} - ${requestQuantity(request)}`;
 }
