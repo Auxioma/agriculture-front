@@ -1,0 +1,82 @@
+<!-- mobile : fleche de retour a gauche du titre ; desktop : lien avec son texte en haut, titre dans la colonne centree -->
+<header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
+  <a routerLink="/producer/requests" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    <span class="sr-only lg:not-sr-only">Retour aux demandes disponibles</span>
+  </a>
+  <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-sm lg:text-3xl">Détail de la demande</h1>
+</header>
+
+@if (request() === null) {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Cette demande est introuvable ou ne vous est pas accessible.</p>
+} @else if (request(); as r) {
+  <div class="mx-auto mt-4 space-y-4 px-4 lg:max-w-sm lg:px-0">
+    <!-- client -->
+    <div class="flex items-center gap-3 rounded-lg border border-grey-200 bg-white px-3 py-2.5">
+      <span aria-hidden="true" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-badge-bg font-semibold text-agri">
+        {{ r.clientName.charAt(0) }}
+      </span>
+      <div class="min-w-0 flex-1">
+        <p class="font-medium">{{ r.clientName }}</p>
+        <p class="text-xs text-secondary">{{ clientType(r) }}</p>
+      </div>
+      @if (r.urgent) {
+        <span class="shrink-0 rounded-full bg-warning px-3 py-0.5 text-xs font-semibold text-fonts">Urgent</span>
+      }
+    </div>
+
+    <!-- besoin -->
+    <section class="rounded-lg border border-grey-200 bg-white p-4">
+      <h2 class="text-lg font-medium">{{ r.product ?? 'Demande' }}</h2>
+      <dl class="mt-3 space-y-3 text-sm">
+        @for (row of rows(); track row.label) {
+          <div class="flex justify-between gap-4">
+            <dt class="text-grey-500">{{ row.label }}</dt>
+            <dd class="text-right font-medium">{{ row.value }}</dd>
+          </div>
+        }
+      </dl>
+      @if (r.message) {
+        <p class="mt-4 border-t border-grey-200 pt-3 text-sm">{{ r.message }}</p>
+      }
+    </section>
+
+    <!-- pieces jointes -->
+    @for (file of r.attachments; track $index) {
+      <a
+        [attr.href]="file.fileUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex w-fit items-center gap-2 rounded-lg bg-grey-200 px-3 py-2 text-sm lg:w-full"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6"></path>
+        </svg>
+        {{ file.fileName }}
+      </a>
+    }
+
+    <!-- actions -->
+    @switch (r.status) {
+      @case ('new') {
+        <div class="space-y-3 pt-2">
+          <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-agri py-3 text-sm font-bold text-white">
+            Répondre à la demande
+          </button>
+          <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">
+            Ouvrir le chat
+          </button>
+        </div>
+      }
+      @case ('treated') {
+        <p class="rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri">{{ treatedText(r) }}</p>
+      }
+      @default {
+        <p class="rounded-lg bg-grey-200 px-4 py-3 text-sm text-grey-700">Cette demande n'est plus ouverte.</p>
+      }
+    }
+    <button type="button" class="block w-full cursor-pointer text-center text-sm text-danger">Signaler cette demande</button>
+  </div>
+}

@@ -17,6 +17,18 @@ export interface ReceivedRequest {
   declined: boolean;
 }
 
+// page de detail d'une demande : la demande comme dans la liste, plus le besoin complet et son etat pour ce producteur
+export interface RequestDetail extends AvailableRequest {
+  desiredDate: string | null;
+  department: string | null;
+  pickupWanted: boolean;
+  deliveryWanted: boolean;
+  attachments: { fileName: string | null; fileUrl: string | null }[];
+  status: 'new' | 'treated' | 'closed';
+  respondedAt: string | null;
+  declined: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RequestsService {
   private http = inject(HttpClient);
@@ -28,5 +40,9 @@ export class RequestsService {
 
   getReceived() {
     return this.http.get<ReceivedRequest[]>(`${this.apiUrl}/producer/requests/received`);
+  }
+
+  getDetail(requestId: string) {
+    return this.http.get<RequestDetail>(`${this.apiUrl}/producer/requests/${requestId}`);
   }
 }

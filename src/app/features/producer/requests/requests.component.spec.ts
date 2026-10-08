@@ -8,6 +8,7 @@ import { RequestsService } from './requests.service';
 
 const request = (overrides: Partial<AvailableRequest>): AvailableRequest => ({
   requestId: Math.random().toString(),
+  clientName: 'Client',
   product: 'Produit',
   quantity: null,
   unit: null,
