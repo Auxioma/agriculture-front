@@ -1,0 +1,65 @@
+<!-- mobile : fleche de retour a gauche du titre ; desktop : lien avec son texte au-dessus du titre -->
+<header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
+  <a routerLink="/producer/requests" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    <span class="sr-only lg:not-sr-only">Retour aux demandes disponibles</span>
+  </a>
+  <h1 class="text-xl font-bold lg:mt-4 lg:text-3xl">Mes devis</h1>
+</header>
+
+@if (quotes() === null) {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Impossible de charger vos devis pour le moment.</p>
+} @else if (quotes(); as all) {
+  <!-- recherche (mobile seulement, comme la maquette) -->
+  <div class="relative mt-4 px-4 lg:hidden">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pointer-events-none absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-grey-500">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="M21 21l-4.3-4.3"></path>
+    </svg>
+    <input
+      #searchBox
+      type="search"
+      aria-label="Rechercher un devis"
+      placeholder="Rechercher un devis"
+      (input)="search.set(searchBox.value)"
+      class="w-full rounded-full bg-grey-200 py-2.5 pl-10 pr-4 text-sm placeholder:text-grey-500"
+    />
+  </div>
+
+  <div class="mt-4 flex gap-2 px-4 lg:px-0" role="group" aria-label="Filtrer les devis">
+    @for (f of filters; track f.id) {
+      <button
+        type="button"
+        (click)="filter.set(f.id)"
+        [attr.aria-pressed]="filter() === f.id"
+        class="cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium"
+        [class]="filter() === f.id ? 'border-agri bg-agri text-white' : 'border-grey-400 bg-white text-grey-700'"
+      >
+        {{ f.label }}
+      </button>
+    }
+  </div>
+
+  <ul class="mt-4 grid gap-3 px-4 lg:grid-cols-2 lg:items-start lg:gap-4 lg:px-0">
+    @for (quote of visibleQuotes(); track quote.replyId) {
+      <li>
+        <a
+          [routerLink]="['/producer/requests', quote.requestId]"
+          class="flex items-center justify-between gap-3 rounded-lg border border-grey-200 bg-white px-4 py-3 hover:border-grey-400"
+        >
+          <div class="min-w-0">
+            <p class="font-semibold">{{ requestTitle(quote) }}</p>
+            <p class="text-xs text-secondary">{{ details(quote) }}</p>
+          </div>
+          <span class="shrink-0 rounded-full px-3 py-0.5 text-xs font-semibold" [class]="badge(quote).style">{{ badge(quote).label }}</span>
+        </a>
+      </li>
+    } @empty {
+      <li class="rounded-lg border border-grey-200 bg-white px-4 py-3 text-sm text-grey-700 lg:col-span-2">
+        {{ all.length === 0 ? "Vous n'avez pas encore envoyé de devis." : 'Aucun devis ne correspond.' }}
+      </li>
+    }
+  </ul>
+}
