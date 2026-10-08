@@ -65,6 +65,8 @@ export class CategoryProducersComponent {
   readonly sortOptions: { value: ProducerSort; label: string }[] = [
     { value: 'relevance', label: 'Pertinence' },
     { value: 'distance', label: 'Distance' },
+    { value: 'popularity', label: 'Popularité' },
+    { value: 'newest', label: 'Nouveauté' },
   ];
 
   /** Tous les filtres regroupés. null tant que la catégorie n'est pas connue. */

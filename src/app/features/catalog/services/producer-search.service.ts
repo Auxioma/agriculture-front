@@ -23,7 +23,10 @@ export class ProducerSearchService {
         .set('latitude', coords.latitude)
         .set('longitude', coords.longitude)
         .set('radiusKm', query.radius);
-      if (query.sort === 'distance') params = params.set('sort', 'distance');
+    }
+
+    if (query.sort !== 'relevance' && (query.sort !== 'distance' || coords)) {
+      params = params.set('sort', query.sort);
     }
 
     return this.http.get<ProducerSummary[]>(`${this.apiUrl}/producers`, { params });

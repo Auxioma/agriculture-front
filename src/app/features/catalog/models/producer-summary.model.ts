@@ -24,7 +24,7 @@ export interface Coordinates {
   longitude: number;
 }
 
-export type ProducerSort = 'relevance' | 'distance';
+export type ProducerSort = 'relevance' | 'distance' | 'popularity' | 'newest';
 
 export interface ProducerQuery {
   categoryId: string;
