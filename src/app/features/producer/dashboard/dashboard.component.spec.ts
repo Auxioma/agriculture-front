@@ -8,6 +8,7 @@ import { ProducerDashboard } from './dashboard.model';
 
 const request = (overrides: Partial<ProducerDashboard['requests'][number]>): ProducerDashboard['requests'][number] => ({
   requestId: Math.random().toString(),
+  clientName: 'Client',
   product: 'Produit',
   quantity: null,
   unit: null,

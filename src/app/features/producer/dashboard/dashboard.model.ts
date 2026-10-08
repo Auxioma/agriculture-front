@@ -1,5 +1,6 @@
 export interface AvailableRequest {
   requestId: string;
+  clientName: string;
   product: string | null;
   quantity: number | null;
   unit: string | null;
