@@ -8,9 +8,9 @@ import { RequestDetail, RequestsService } from '../requests.service';
 const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client professionnel' };
 
 // page "Detail de la demande" semblable au figma, branchee sur GET /api/producer/requests/{id}. On y arrive en
-// cliquant une carte de "Demandes disponibles" ou de "Demandes reçues". Les trois boutons n'ont pas encore de
-// destination : la page pour repondre, la messagerie et le signalement d'une demande n'existent pas. Une demande
-// deja traitee ou plus ouverte n'a plus les boutons "Repondre" / "Ouvrir le chat"
+// cliquant une carte de "Demandes disponibles" ou de "Demandes reçues". "Repondre" mene a la page de reponse ; "Ouvrir
+// le chat" et "Signaler" n'ont pas encore de destination (la messagerie et le signalement d'une demande n'existent
+// pas). Une demande deja traitee ou plus ouverte n'a plus les boutons "Repondre" / "Ouvrir le chat"
 
 @Component({
   selector: 'app-producer-request-detail',

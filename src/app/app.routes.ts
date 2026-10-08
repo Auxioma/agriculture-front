@@ -64,6 +64,10 @@ export const routes: Routes = [
         path: 'requests/:id',
         loadComponent: () => import('./features/producer/requests/detail/detail.component').then((m) => m.DetailComponent),
       },
+      {
+        path: 'requests/:id/reply',
+        loadComponent: () => import('./features/producer/requests/reply/reply.component').then((m) => m.ReplyComponent),
+      },
     ],
   },
   { path: 'auth', children: AUTH_ROUTES },

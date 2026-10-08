@@ -28,6 +28,7 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
   status: 'new',
   respondedAt: null,
   declined: false,
+  draft: null,
   ...overrides,
 });
 
@@ -100,7 +101,7 @@ describe('DetailComponent', () => {
   it('propose de répondre, d\'ouvrir le chat et de signaler quand la demande est à traiter', async () => {
     await create();
 
-    expect(button('Répondre à la demande')).toBeTruthy();
+    expect(compiled.querySelector('a[href="/producer/requests/abc/reply"]')?.textContent?.trim()).toBe('Répondre à la demande');
     expect(button('Ouvrir le chat')).toBeTruthy();
     expect(button('Signaler cette demande')).toBeTruthy();
   });
@@ -109,7 +110,7 @@ describe('DetailComponent', () => {
     await create(of(detail({ status: 'treated', respondedAt: '2026-08-16T12:00:00+00:00', urgent: false })));
 
     expect(text()).toContain('Vous avez répondu à cette demande le 16 août.');
-    expect(button('Répondre à la demande')).toBeUndefined();
+    expect(compiled.querySelector('a[href$="/reply"]')).toBeNull();
     expect(button('Signaler cette demande')).toBeTruthy();
   });
 

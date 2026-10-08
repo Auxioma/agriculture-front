@@ -62,9 +62,12 @@
     @switch (r.status) {
       @case ('new') {
         <div class="space-y-3 pt-2">
-          <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-agri py-3 text-sm font-bold text-white">
+          <a
+            [routerLink]="['/producer/requests', r.requestId, 'reply']"
+            class="block w-full rounded-xl border-2 border-agri bg-agri py-3 text-center text-sm font-bold text-white"
+          >
             Répondre à la demande
-          </button>
+          </a>
           <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">
             Ouvrir le chat
           </button>

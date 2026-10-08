@@ -17,6 +17,18 @@ export interface ReceivedRequest {
   declined: boolean;
 }
 
+// brouillon de reponse (page "Repondre a la demande") : ce que le producteur avait deja saisi
+export interface ReplyDraft {
+  replyText: string | null;
+  priceAmount: number | null;
+  priceUnitId: string | null;
+  availableQuantity: number | null;
+  availabilityDate: string | null;
+  validUntil: string | null;
+  pickupConditions: string | null;
+  deliveryConditions: string | null;
+}
+
 // page de detail d'une demande : la demande comme dans la liste, plus le besoin complet et son etat pour ce producteur
 export interface RequestDetail extends AvailableRequest {
   desiredDate: string | null;
@@ -27,6 +39,27 @@ export interface RequestDetail extends AvailableRequest {
   status: 'new' | 'treated' | 'closed';
   respondedAt: string | null;
   declined: boolean;
+  draft: ReplyDraft | null;
+}
+
+export interface Unit {
+  id: string;
+  code: string;
+  label: string | null;
+}
+
+// corps de POST /api/producer/requests/{id}/reply ; draft = "Enregistrer le brouillon"
+export interface ReplyPayload {
+  draft: boolean;
+  replyText: string | null;
+  priceAmount: string | null;
+  priceUnitId: string | null;
+  currencyCode: string | null;
+  availableQuantity: string | null;
+  availabilityDate: string | null;
+  validUntil: string | null;
+  pickupConditions: string | null;
+  deliveryConditions: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -44,5 +77,13 @@ export class RequestsService {
 
   getDetail(requestId: string) {
     return this.http.get<RequestDetail>(`${this.apiUrl}/producer/requests/${requestId}`);
+  }
+
+  getUnits() {
+    return this.http.get<Unit[]>(`${this.apiUrl}/units`);
+  }
+
+  sendReply(requestId: string, payload: ReplyPayload) {
+    return this.http.post<{ id: string; status: string }>(`${this.apiUrl}/producer/requests/${requestId}/reply`, payload);
   }
 }
