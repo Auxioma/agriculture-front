@@ -55,6 +55,7 @@ describe('DetailComponent', () => {
 
   const text = () => compiled.textContent?.replace(/\s+/g, ' ').trim() ?? '';
   const button = (label: string) => [...compiled.querySelectorAll('button')].find((b) => b.textContent?.trim() === label);
+  const reportLink = () => compiled.querySelector('a[href="/producer/requests/abc/report"]');
 
   beforeEach(() => TestBed.resetTestingModule());
 
@@ -103,7 +104,7 @@ describe('DetailComponent', () => {
 
     expect(compiled.querySelector('a[href="/producer/requests/abc/reply"]')?.textContent?.trim()).toBe('Répondre à la demande');
     expect(button('Ouvrir le chat')).toBeTruthy();
-    expect(button('Signaler cette demande')).toBeTruthy();
+    expect(reportLink()?.textContent?.trim()).toBe('Signaler cette demande');
   });
 
   it('dit que la demande est traitée et retire les boutons de réponse', async () => {
@@ -111,7 +112,7 @@ describe('DetailComponent', () => {
 
     expect(text()).toContain('Vous avez répondu à cette demande le 16 août.');
     expect(compiled.querySelector('a[href$="/reply"]')).toBeNull();
-    expect(button('Signaler cette demande')).toBeTruthy();
+    expect(reportLink()).toBeTruthy();
   });
 
   it('dit quand la demande a été refusée ou n\'est plus ouverte', async () => {

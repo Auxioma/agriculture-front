@@ -80,6 +80,6 @@
         <p class="rounded-lg bg-grey-200 px-4 py-3 text-sm text-grey-700">Cette demande n'est plus ouverte.</p>
       }
     }
-    <button type="button" class="block w-full cursor-pointer text-center text-sm text-danger">Signaler cette demande</button>
+    <a [routerLink]="['/producer/requests', r.requestId, 'report']" class="block w-full text-center text-sm text-danger">Signaler cette demande</a>
   </div>
 }

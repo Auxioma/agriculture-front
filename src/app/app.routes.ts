@@ -77,6 +77,10 @@ export const routes: Routes = [
         path: 'requests/:id/reply',
         loadComponent: () => import('./features/producer/requests/reply/reply.component').then((m) => m.ReplyComponent),
       },
+      {
+        path: 'requests/:id/report',
+        loadComponent: () => import('./features/producer/requests/report/report.component').then((m) => m.ReportComponent),
+      },
     ],
   },
   { path: 'auth', children: AUTH_ROUTES },

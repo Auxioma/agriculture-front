@@ -124,4 +124,8 @@ export class RequestsService {
   sendReply(requestId: string, payload: ReplyPayload) {
     return this.http.post<{ id: string; status: string }>(`${this.apiUrl}/producer/requests/${requestId}/reply`, payload);
   }
+
+  reportRequest(requestId: string, payload: { reason: string; message: string | null }) {
+    return this.http.post<{ id: string }>(`${this.apiUrl}/producer/requests/${requestId}/report`, payload);
+  }
 }
