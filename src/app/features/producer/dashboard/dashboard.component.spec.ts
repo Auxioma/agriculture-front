@@ -85,6 +85,14 @@ describe('DashboardComponent', () => {
     expect(rows[1]).toContain('Avignon · 9 km · souhaite une réponse rapide');
   });
 
+  it('les filtres ne sont pas réservés au mobile : mêmes fonctionnalités en desktop', async () => {
+    await create();
+
+    const group = compiled.querySelector('[role="group"]')!;
+    expect(group.className).not.toContain('lg:hidden');
+    expect(group.className).not.toMatch(/(^|\s)hidden(\s|$)/);
+  });
+
   it('les filtres "Tout" et "< 10 km" changent la liste et son titre', async () => {
     await create();
 

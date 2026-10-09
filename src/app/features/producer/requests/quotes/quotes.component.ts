@@ -19,8 +19,10 @@ const plain = (text: string): string => text.normalize('NFD').replace(/[̀-ͯ]/g
 
 // page "Mes devis" semblable au figma, branchee sur GET /api/producer/quotes (les reponses envoyees avec un prix).
 // Page en lecture seule : les statuts Vue / Acceptee / Refusee / Expiree sont poses cote client (voir NOTES.md,
-// section sur les chevauchements avec la section client), ici on ne fait que les afficher. "Envoyes" = statut envoye
-// seulement, comme le cahier qui separe "devis envoyes" et "reponses vues". La recherche n'existe qu'en mobile.
+// section sur les chevauchements avec la section client), ici on ne fait que les afficher. 
+// "Envoyes" = statut envoyé
+// seulement, comme le cahier qui separe "devis envoyes" et "reponses vues". 
+
 @Component({
   selector: 'app-producer-quotes',
   standalone: true,

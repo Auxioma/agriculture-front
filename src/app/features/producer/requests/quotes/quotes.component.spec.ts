@@ -111,6 +111,14 @@ describe('QuotesComponent', () => {
     expect(rows()).toEqual(['Aucun devis ne correspond.']);
   });
 
+  it('la recherche n\'est pas réservée au mobile : mêmes fonctionnalités en desktop', async () => {
+    await create();
+
+    const wrapper = compiled.querySelector('input[type=search]')!.parentElement!;
+    expect(wrapper.className).not.toContain('lg:hidden');
+    expect(wrapper.className).not.toMatch(/(^|\s)hidden(\s|$)/);
+  });
+
   it('dit qu\'il n\'y a pas encore de devis', async () => {
     await create(of([]));
 

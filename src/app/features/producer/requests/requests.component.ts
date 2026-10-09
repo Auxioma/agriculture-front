@@ -18,8 +18,8 @@ const TOGGLES: Record<Toggle, (request: AvailableRequest) => boolean> = {
 const CHIP = 'shrink-0 cursor-pointer appearance-none field-sizing-content rounded-full border py-1.5 text-xs font-medium';
 
 // page "Demandes disponibles" semblable au figma, branchee sur GET /api/producer/requests/available. Les chips se
-// cumulent (urgentes + moins de 10 km...) ; "Produit" et "Type de client" sont des listes en forme de chip. En
-// mobile le bouton "Voir mes devis" est fixe en bas et mene a la page Mes devis.
+// cumulent (urgentes + moins de 10 km...) ; "Produit" et "Type de client" sont des listes en forme de chip. Le lien
+// "Voir mes devis" mene a la page Mes devis : bouton fixe en bas en mobile, en haut a droite en desktop.
 @Component({
   selector: 'app-producer-requests',
   standalone: true,

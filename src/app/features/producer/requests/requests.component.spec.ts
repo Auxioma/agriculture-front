@@ -112,10 +112,15 @@ describe('RequestsComponent', () => {
     expect(rows()).toEqual(['Aucune demande ne correspond à ces filtres.']);
   });
 
-  it('propose "Voir mes devis" (bouton mobile) vers la page Mes devis', async () => {
+  it('propose "Voir mes devis" en mobile (barre fixe) comme en desktop (en-tête), vers la page Mes devis', async () => {
     await create();
 
-    expect(compiled.querySelector('a[href="/producer/requests/quotes"]')?.textContent?.trim()).toBe('Voir mes devis');
+    const links = [...compiled.querySelectorAll('a[href="/producer/requests/quotes"]')];
+    expect(links.map((a) => a.textContent?.trim())).toEqual(['Voir mes devis', 'Voir mes devis']);
+    // * un des deux est la barre mobile (masquée en desktop), l'autre l'en-tête
+    // * desktop (masqué en mobile), mais aucun n'est le seul accès à la page
+    expect(links.filter((a) => a.closest('header')).length).toBe(1);
+    expect(links.filter((a) => !a.closest('header')).length).toBe(1);
   });
 
   it('affiche un message quand le back est injoignable', async () => {
