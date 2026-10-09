@@ -46,7 +46,7 @@
     @for (quote of visibleQuotes(); track quote.replyId) {
       <li>
         <a
-          [routerLink]="['/producer/requests', quote.requestId]"
+          [routerLink]="['/producer/requests/quotes', quote.replyId]"
           class="flex items-center justify-between gap-3 rounded-lg border border-grey-200 bg-white px-4 py-3 hover:border-grey-400"
         >
           <div class="min-w-0">

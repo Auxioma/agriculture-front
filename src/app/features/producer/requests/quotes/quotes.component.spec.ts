@@ -72,10 +72,10 @@ describe('QuotesComponent', () => {
     expect(list[4]).toContain('Expirée');
   });
 
-  it('chaque devis mène au détail de sa demande', async () => {
-    await create(of([quote({ requestId: 'abc' })]));
+  it('chaque devis mène à sa page de détail', async () => {
+    await create(of([quote({ replyId: 'abc' })]));
 
-    expect(compiled.querySelector('ul a')?.getAttribute('href')).toBe('/producer/requests/abc');
+    expect(compiled.querySelector('ul a')?.getAttribute('href')).toBe('/producer/requests/quotes/abc');
   });
 
   it('"Envoyés" ne garde que les devis au statut envoyé, "Acceptés" que les acceptés', async () => {

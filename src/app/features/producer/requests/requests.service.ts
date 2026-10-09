@@ -79,6 +79,17 @@ export interface Quote {
   validUntil: string | null;
 }
 
+// page "Detail du devis" : le devis de la liste plus ses conditions, le message du producteur et les pieces jointes
+export interface QuoteDetail extends Quote {
+  clientType: 'individual' | 'professional';
+  availableQuantity: number | null;
+  availabilityDate: string | null;
+  pickupConditions: string | null;
+  deliveryConditions: string | null;
+  replyText: string | null;
+  attachments: { fileName: string | null; fileUrl: string | null }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class RequestsService {
   private http = inject(HttpClient);
@@ -94,6 +105,10 @@ export class RequestsService {
 
   getQuotes() {
     return this.http.get<Quote[]>(`${this.apiUrl}/producer/quotes`);
+  }
+
+  getQuote(replyId: string) {
+    return this.http.get<QuoteDetail>(`${this.apiUrl}/producer/quotes/${replyId}`);
   }
 
   getDetail(requestId: string) {
