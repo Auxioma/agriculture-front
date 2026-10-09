@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
-import { longDate, requestQuantity, requestTitle } from '../../../request-format';
+import { longDate, requestQuantity, requestTitle, shortDate } from '../../../request-format';
 import { QuoteDetail, RequestsService } from '../../requests.service';
 import { formatPrice, quoteBadge, validityDays } from '../quote-format';
 
@@ -13,6 +13,9 @@ const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client p
 // client (message ou notification, donc lie a la messagerie) et archiver (le statut est partage avec le cote
 // client) sont a voir avec la section client, voir NOTES.md. Le bouton "Accepter le devis" de la maquette mobile
 // n'est pas fait : c'est le client qui accepte un devis, pas le producteur (cahier fonctionnel, statuts d'une reponse)
+// Un devis accepte (maquettes) affiche "Devis clos", un bandeau "Accepte par ..." et "Discuter avec le client"
+// (inerte lui aussi : c'est la messagerie, partagee avec le cote client). La date d'acceptation n'existe pas encore
+// dans le back : le bandeau l'affiche des que le back la fournit (decidedAt), voir NOTES.md.
 
 @Component({
   selector: 'app-producer-quote-detail',
@@ -38,6 +41,8 @@ export class QuoteDetailComponent {
     if (!q) return [];
 
     const days = q.validUntil ? validityDays(q.sentAt, q.validUntil) : 0;
+    // un devis que le client a tranche ou qui n'est plus valable est "clos" : plus de duree de validite a afficher
+    const validity = this.canEditOrFollowUp(q) ? (days > 0 ? `${days} jour${days > 1 ? 's' : ''}` : null) : 'Devis clos';
 
     return [
       { label: 'Prix indicatif', value: formatPrice(q.priceAmount, q.currency, q.priceUnit) },
@@ -46,11 +51,16 @@ export class QuoteDetailComponent {
         value: q.availableQuantity !== null ? requestQuantity({ quantity: q.availableQuantity, unit: q.unit }, true) : null,
       },
       { label: 'Date disponible', value: q.availabilityDate ? longDate(q.availabilityDate) : null },
-      { label: 'Durée de validité', value: days > 0 ? `${days} jour${days > 1 ? 's' : ''}` : null },
+      { label: 'Durée de validité', value: validity },
       { label: 'Conditions de retrait', value: q.pickupConditions },
       { label: 'Conditions de livraison', value: q.deliveryConditions },
     ].filter((row) => !!row.value);
   });
+
+  // ex. "Accepté par Coopérative Sud le 9 août" (sans la date tant que le back ne la donne pas)
+  acceptedText(quote: QuoteDetail): string {
+    return `Accepté par ${quote.clientName}${quote.decidedAt ? ` le ${shortDate(quote.decidedAt)}` : ''}`;
+  }
 
   // ex. "CR" pour "Camille R."
   initials(quote: QuoteDetail): string {

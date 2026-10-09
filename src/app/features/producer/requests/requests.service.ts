@@ -88,6 +88,8 @@ export interface QuoteDetail extends Quote {
   deliveryConditions: string | null;
   replyText: string | null;
   attachments: { fileName: string | null; fileUrl: string | null }[];
+  // date d'acceptation par le client : le back ne la fournit pas encore (aucun champ), voir NOTES.md
+  decidedAt?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

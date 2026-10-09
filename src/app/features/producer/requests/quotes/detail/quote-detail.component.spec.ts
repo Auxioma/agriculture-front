@@ -108,11 +108,42 @@ describe('QuoteDetailComponent', () => {
   });
 
   it('ne propose plus de modifier ni de relancer un devis déjà tranché par le client', async () => {
-    await create(of(quote({ status: 'accepted' })));
+    await create(of(quote({ status: 'refused-by-client-or-expired', replyText: null })));
 
     expect(button('Modifier ce devis')).toBeUndefined();
     expect(button('Relancer le client')).toBeUndefined();
     expect(button('Archiver ce devis')).toBeTruthy();
+    expect(button('Discuter avec le client')).toBeUndefined();
+  });
+
+  it('un devis accepté est clos : bandeau "Accepté par", discussion avec le client, archivage', async () => {
+    await create(of(quote({ status: 'accepted', clientName: 'Coopérative Sud', clientType: 'professional', decidedAt: '2026-08-09T12:00:00+00:00' })));
+
+    expect(text()).toContain('Acceptée');
+    expect(text()).toContain('Client professionnel');
+    expect(text()).toContain('Accepté par Coopérative Sud le 9 août');
+    expect(button('Discuter avec le client')).toBeTruthy();
+    expect(button('Archiver ce devis')).toBeTruthy();
+    expect(button('Modifier ce devis')).toBeUndefined();
+    expect(button('Relancer le client')).toBeUndefined();
+    const validity = [...compiled.querySelectorAll('dl > div')].find((row) => row.textContent?.includes('Durée de validité'));
+    expect(validity?.querySelector('dd')?.textContent?.trim()).toBe('Devis clos');
+  });
+
+  it('un devis accepté sans date d\'acceptation (le back ne la donne pas encore) n\'affiche pas de date', async () => {
+    await create(of(quote({ status: 'accepted', clientName: 'Coopérative Sud' })));
+
+    expect(text()).toContain('Accepté par Coopérative Sud');
+    expect(text()).not.toContain('Accepté par Coopérative Sud le');
+  });
+
+  it('le titre est le même en mobile et en desktop, quel que soit le statut du devis', async () => {
+    await create(of(quote({ status: 'sent' })));
+    expect(compiled.querySelector('h1')?.textContent?.trim()).toBe('Détail du devis');
+
+    TestBed.resetTestingModule();
+    await create(of(quote({ status: 'accepted' })));
+    expect(compiled.querySelector('h1')?.textContent?.trim()).toBe('Détail du devis');
   });
 
   it('un devis archivé n\'a plus de bouton', async () => {
