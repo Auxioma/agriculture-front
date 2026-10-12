@@ -115,7 +115,7 @@ describe('QuotesComponent', () => {
     expect(list[1]).not.toContain('€');
 
     const links = [...compiled.querySelectorAll('ul a')].map((a) => a.getAttribute('href'));
-    expect(links[0]).toBe('/producer/requests/req-draft/reply');
+    expect(links[0]).toBe('/producer/requests/req-draft/reply?from=quotes');
     expect(links[1]).toBe('/producer/requests/quotes/reply-navets');
   });
 

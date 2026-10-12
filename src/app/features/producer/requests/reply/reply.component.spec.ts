@@ -53,7 +53,7 @@ describe('ReplyComponent', () => {
   };
   let navigate: ReturnType<typeof vi.fn>;
 
-  async function create(request: RequestDetail = detail(), reply$: Observable<unknown> = of({ id: 'r1', status: 'sent' })): Promise<void> {
+  async function create(request: RequestDetail = detail(), reply$: Observable<unknown> = of({ id: 'r1', status: 'sent' }), from: string | null = null): Promise<void> {
     serviceMock = {
       getDetail: vi.fn(() => of(request)),
       getUnits: vi.fn(() => of(UNITS)),
@@ -66,7 +66,7 @@ describe('ReplyComponent', () => {
       providers: [
         provideRouter([]),
         { provide: RequestsService, useValue: serviceMock },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }) } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'abc' }), queryParamMap: convertToParamMap(from ? { from } : {}) } } },
       ],
     }).compileComponents();
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true) as unknown as ReturnType<typeof vi.fn>;
@@ -142,6 +142,17 @@ describe('ReplyComponent', () => {
     });
     expect(payload.validUntil).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(navigate).toHaveBeenCalledWith(['/producer/requests', 'abc']);
+  });
+
+  it('venant de Mes devis, envoyer la réponse et le lien de retour ramènent à Mes devis', async () => {
+    await create(detail(), of({ id: 'r1', status: 'sent' }), 'quotes');
+    fill('message', 'Bonjour');
+
+    expect(compiled.querySelector('a[href="/producer/requests/quotes"]')?.textContent?.trim()).toBe('Retour à mes devis');
+
+    click('Envoyer la réponse');
+
+    expect(navigate).toHaveBeenCalledWith(['/producer/requests/quotes']);
   });
 
   it('enregistre un brouillon sans quitter la page', async () => {

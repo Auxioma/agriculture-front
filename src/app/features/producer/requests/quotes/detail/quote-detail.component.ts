@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
 import { longDate, requestQuantity, requestTitle, shortDate } from '../../../request-format';
 import { QuoteDetail, RequestsService } from '../../requests.service';
@@ -10,7 +10,8 @@ import { formatPrice, quoteBadge, validityDays } from '../quote-format';
 const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client professionnel' };
 
 // page "Detail du devis", branchee sur GET /api/producer/quotes/{id}. On y arrive en cliquant un
-// devis de la page "Mes devis". "Archiver ce devis" pose le statut archive (POST .../archive). "Relancer le client" et
+// devis de la page "Mes devis". "Archiver ce devis" pose le statut archive (POST .../archive) puis ramene a "Mes devis".
+// "Relancer le client" et
 // "Discuter avec le client" n'ont pas encore de destination : c'est la messagerie, partagee avec le cote client, voir
 // NOTES.md. Pas de "Modifier ce devis" : le cahier n'en prevoit pas (un devis envoye ne change plus, seul un brouillon
 // se modifie). Le bouton "Accepter le devis" de la maquette mobile n'est pas fait non plus : c'est le client qui
@@ -26,26 +27,20 @@ const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client p
 })
 export class QuoteDetailComponent {
   private service = inject(RequestsService);
+  private router = inject(Router);
 
   // undefined = chargement, null = erreur (devis inconnu, brouillon, devis d'un autre producteur...)
-  private loaded = toSignal(
+  quote = toSignal(
     inject(ActivatedRoute).paramMap.pipe(
       switchMap((params) => this.service.getQuote(params.get('id') ?? '').pipe(catchError(() => of(null)))),
     ),
   );
-  private archivedId = signal('');
   error = signal('');
-
-  // le devis tel qu'on l'affiche : archive des que le producteur l'a archive, sans recharger la page
-  quote = computed(() => {
-    const q = this.loaded();
-    return q && q.replyId === this.archivedId() ? { ...q, status: 'archived' } : q;
-  });
 
   archive(quote: QuoteDetail): void {
     this.error.set('');
     this.service.archiveQuote(quote.replyId).subscribe({
-      next: () => this.archivedId.set(quote.replyId),
+      next: () => this.router.navigate(['/producer/requests/quotes']),
       error: (err: HttpErrorResponse) => this.error.set(err.error?.error ?? "Impossible d'archiver ce devis pour le moment."),
     });
   }

@@ -1,10 +1,10 @@
 <!-- mobile : fleche de retour a gauche du titre ; desktop : lien avec son texte en haut, titre dans la colonne centree -->
 <header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
-  <a routerLink="/producer/requests" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+  <a [routerLink]="fromQuotes ? '/producer/requests/quotes' : '/producer/requests'" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
       <path d="M15 18l-6-6 6-6"></path>
     </svg>
-    <span class="sr-only lg:not-sr-only">Retour aux demandes disponibles</span>
+    <span class="sr-only lg:not-sr-only">{{ fromQuotes ? 'Retour à mes devis' : 'Retour aux demandes disponibles' }}</span>
   </a>
   <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-xl lg:text-3xl">Répondre à la demande</h1>
 </header>

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { QuoteDetail, RequestsService } from '../../requests.service';
@@ -33,6 +33,7 @@ describe('QuoteDetailComponent', () => {
   let fixture: ComponentFixture<QuoteDetailComponent>;
   let compiled: HTMLElement;
   let serviceMock: { getQuote: ReturnType<typeof vi.fn>; archiveQuote: ReturnType<typeof vi.fn> };
+  let navigate: ReturnType<typeof vi.fn>;
 
   async function create(data$: Observable<QuoteDetail> = of(quote())): Promise<void> {
     serviceMock = { getQuote: vi.fn(() => data$), archiveQuote: vi.fn(() => of({ id: 'r1', status: 'archived' })) };
@@ -44,6 +45,7 @@ describe('QuoteDetailComponent', () => {
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: 'r1' })) } },
       ],
     }).compileComponents();
+    navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true) as unknown as ReturnType<typeof vi.fn>;
 
     fixture = TestBed.createComponent(QuoteDetailComponent);
     fixture.detectChanges();
@@ -115,16 +117,14 @@ describe('QuoteDetailComponent', () => {
     expect(text()).not.toContain('Accepter le devis');
   });
 
-  it('archive le devis : le badge passe à "Archivée" et le bouton disparaît', async () => {
+  it('archive le devis puis revient sur la page Mes devis', async () => {
     await create();
 
     button('Archiver ce devis')!.click();
     fixture.detectChanges();
 
     expect(serviceMock.archiveQuote).toHaveBeenCalledWith('r1');
-    expect(text()).toContain('Archivée');
-    expect(button('Archiver ce devis')).toBeUndefined();
-    expect(button('Relancer le client')).toBeUndefined();
+    expect(navigate).toHaveBeenCalledWith(['/producer/requests/quotes']);
   });
 
   it('affiche le message du back quand l\'archivage est refusé', async () => {
@@ -136,6 +136,7 @@ describe('QuoteDetailComponent', () => {
 
     expect(text()).toContain('Devis introuvable.');
     expect(button('Archiver ce devis')).toBeTruthy();
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('ne propose plus de relancer un devis déjà tranché par le client', async () => {

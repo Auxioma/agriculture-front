@@ -31,7 +31,10 @@ export class ReplyComponent {
   private fb = inject(FormBuilder);
   private service = inject(RequestsService);
   private router = inject(Router);
-  readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
+  private route = inject(ActivatedRoute).snapshot;
+  readonly id = this.route.paramMap.get('id') ?? '';
+  // on arrive de "Mes devis" (un brouillon) : le lien de retour et l'envoi y ramenent, pas aux demandes disponibles
+  readonly fromQuotes = this.route.queryParamMap.get('from') === 'quotes';
 
   readonly input = INPUT;
   form = this.fb.nonNullable.group({
@@ -133,7 +136,7 @@ export class ReplyComponent {
       next: () => {
         this.sending.set(false);
         if (draft) this.info.set('Brouillon enregistré.');
-        else this.router.navigate(['/producer/requests', this.id]);
+        else this.router.navigate(this.fromQuotes ? ['/producer/requests/quotes'] : ['/producer/requests', this.id]);
       },
       error: (err: HttpErrorResponse) => {
         this.sending.set(false);

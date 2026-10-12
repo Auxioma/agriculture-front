@@ -59,7 +59,7 @@ export class QuotesComponent {
     return [quote.clientName, price, shortDate(quote.sentAt)].filter((part) => !!part).join(' · ');
   }
 
-  // un brouillon rouvre la page de reponse, les autres leur detail
+  // un brouillon rouvre la page de reponse (avec ?from=quotes pour revenir ici ensuite), les autres leur detail
   link(quote: Quote): string[] {
     return quote.status === 'draft'
       ? ['/producer/requests', quote.requestId, 'reply']
