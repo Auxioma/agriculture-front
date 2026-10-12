@@ -15,7 +15,8 @@ const FILTERS: { id: StatusFilter; label: string }[] = [
 
 // page "Demandes reçues", branchee sur GET /api/producer/requests/received. On y arrive par le
 // bouton "Voir les demandes reçues" du dashboard ; le lien en haut ramene aux demandes disponibles. Une demande
-// qui n'est plus ouverte (expiree, annulee) apparait seulement dans "Toutes", sans badge.
+// qui n'est plus ouverte (expiree, annulee) ou que le producteur a archivee apparait seulement dans "Toutes", la
+// premiere sans badge, la seconde avec "Archivee".
 @Component({
   selector: 'app-producer-received',
   standalone: true,
@@ -48,6 +49,7 @@ export class ReceivedComponent {
   badge(request: ReceivedRequest): { label: string; style: string } | null {
     if (request.status === 'treated') return { label: 'Traitée', style: 'bg-grey-400 text-grey-700' };
     if (request.status === 'closed') return null;
+    if (request.status === 'archived') return { label: 'Archivée', style: 'bg-grey-200 text-grey-700' };
     return request.urgent
       ? { label: 'Urgente', style: 'bg-warning text-fonts' }
       : { label: 'Nouvelle', style: 'bg-agri text-white' };

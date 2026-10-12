@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -31,10 +32,10 @@ const quote = (overrides: Partial<QuoteDetail> = {}): QuoteDetail => ({
 describe('QuoteDetailComponent', () => {
   let fixture: ComponentFixture<QuoteDetailComponent>;
   let compiled: HTMLElement;
-  let serviceMock: { getQuote: ReturnType<typeof vi.fn> };
+  let serviceMock: { getQuote: ReturnType<typeof vi.fn>; archiveQuote: ReturnType<typeof vi.fn> };
 
   async function create(data$: Observable<QuoteDetail> = of(quote())): Promise<void> {
-    serviceMock = { getQuote: vi.fn(() => data$) };
+    serviceMock = { getQuote: vi.fn(() => data$), archiveQuote: vi.fn(() => of({ id: 'r1', status: 'archived' })) };
     await TestBed.configureTestingModule({
       imports: [QuoteDetailComponent],
       providers: [
@@ -105,16 +106,39 @@ describe('QuoteDetailComponent', () => {
     expect(text()).toContain('Parfait, je peux vous proposer ce produit.');
   });
 
-  it('propose de modifier, relancer et archiver un devis envoyé ou vu, mais pas "Accepter" (c\'est le client qui accepte)', async () => {
+  it('propose de relancer et d\'archiver un devis envoyé ou vu, mais ni "Modifier" (le cahier n\'en prévoit pas) ni "Accepter" (c\'est le client qui accepte)', async () => {
     await create();
 
-    expect(button('Modifier ce devis')).toBeTruthy();
+    expect(button('Modifier ce devis')).toBeUndefined();
     expect(button('Relancer le client')).toBeTruthy();
     expect(button('Archiver ce devis')).toBeTruthy();
     expect(text()).not.toContain('Accepter le devis');
   });
 
-  it('ne propose plus de modifier ni de relancer un devis déjà tranché par le client', async () => {
+  it('archive le devis : le badge passe à "Archivée" et le bouton disparaît', async () => {
+    await create();
+
+    button('Archiver ce devis')!.click();
+    fixture.detectChanges();
+
+    expect(serviceMock.archiveQuote).toHaveBeenCalledWith('r1');
+    expect(text()).toContain('Archivée');
+    expect(button('Archiver ce devis')).toBeUndefined();
+    expect(button('Relancer le client')).toBeUndefined();
+  });
+
+  it('affiche le message du back quand l\'archivage est refusé', async () => {
+    await create();
+    serviceMock.archiveQuote.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, error: { error: 'Devis introuvable.' } })));
+
+    button('Archiver ce devis')!.click();
+    fixture.detectChanges();
+
+    expect(text()).toContain('Devis introuvable.');
+    expect(button('Archiver ce devis')).toBeTruthy();
+  });
+
+  it('ne propose plus de relancer un devis déjà tranché par le client', async () => {
     await create(of(quote({ status: 'refused-by-client-or-expired', replyText: null })));
 
     expect(button('Modifier ce devis')).toBeUndefined();

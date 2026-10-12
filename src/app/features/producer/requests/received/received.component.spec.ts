@@ -62,6 +62,13 @@ describe('ReceivedComponent', () => {
     expect(list[3]).toContain('Refusée le 12 août');
   });
 
+  it('une demande archivée porte le badge "Archivée" et n\'est que dans "Toutes"', async () => {
+    await create(of([request({ clientName: 'Zoé P.', product: 'Navets', status: 'archived' })]));
+
+    expect(compiled.querySelector('ul > li')?.textContent).toContain('Archivée');
+    expect(compiled.querySelector('ul > li')?.textContent).toContain('Reçue le');
+  });
+
   it('une demande qui n\'est plus ouverte n\'a pas de badge', async () => {
     await create();
 

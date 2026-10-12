@@ -60,12 +60,9 @@
       </a>
     }
 
-    <!-- actions : pas encore branchees, voir le commentaire du composant -->
-    @if (canEditOrFollowUp(q)) {
+    <!-- "Relancer" et "Discuter" ne sont pas encore branchés -->
+    @if (canFollowUp(q)) {
       <div class="space-y-3 pt-2">
-        <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-gold-wheat bg-gold-wheat py-3 text-sm font-bold text-fonts lg:border-agri lg:bg-agri lg:text-white">
-          Modifier ce devis
-        </button>
         <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">
           Relancer le client
         </button>
@@ -85,7 +82,10 @@
       </div>
     }
     @if (q.status !== 'archived') {
-      <button type="button" class="block w-full cursor-pointer text-center text-sm text-danger">Archiver ce devis</button>
+      <button type="button" (click)="archive(q)" class="block w-full cursor-pointer text-center text-sm text-danger">Archiver ce devis</button>
+    }
+    @if (error()) {
+      <p role="alert" class="text-center text-sm text-danger">{{ error() }}</p>
     }
   </div>
 }
