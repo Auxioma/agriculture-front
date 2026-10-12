@@ -28,7 +28,7 @@
     />
   </div>
 
-  <div class="mt-4 flex gap-2 px-4 lg:px-0" role="group" aria-label="Filtrer les devis">
+  <div class="mt-4 flex flex-wrap gap-2 px-4 lg:px-0" role="group" aria-label="Filtrer les devis">
     @for (f of filters; track f.id) {
       <button
         type="button"
@@ -46,7 +46,7 @@
     @for (quote of visibleQuotes(); track quote.replyId) {
       <li>
         <a
-          [routerLink]="['/producer/requests/quotes', quote.replyId]"
+          [routerLink]="link(quote)"
           class="flex items-center justify-between gap-3 rounded-lg border border-grey-200 bg-white px-4 py-3 hover:border-grey-400"
         >
           <div class="min-w-0">
@@ -58,7 +58,7 @@
       </li>
     } @empty {
       <li class="rounded-lg border border-grey-200 bg-white px-4 py-3 text-sm text-grey-700 lg:col-span-2">
-        {{ all.length === 0 ? "Vous n'avez pas encore envoyé de devis." : 'Aucun devis ne correspond.' }}
+        {{ all.length === 0 ? "Vous n'avez pas encore répondu à une demande." : 'Aucun devis ne correspond.' }}
       </li>
     }
   </ul>

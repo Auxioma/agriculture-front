@@ -2,6 +2,7 @@ import { unitLabel } from '../../request-format';
 
 // un badge par statut de reponse (cahier fonctionnel, statuts d'une reponse)
 const BADGES: Record<string, { label: string; style: string }> = {
+  draft: { label: 'Brouillon', style: 'border border-grey-400 text-grey-700' },
   sent: { label: 'Envoyée', style: 'border border-primary text-primary' },
   seen: { label: 'Vue', style: 'border border-grey-400 text-grey-700' },
   accepted: { label: 'Acceptée', style: 'bg-success text-white' },

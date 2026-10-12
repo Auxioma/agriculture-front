@@ -29,6 +29,11 @@ const QUOTES: Quote[] = [
   quote({ clientName: 'Marc D.', product: 'Vin rouge', quantity: 12, unit: 'unite', status: 'expired', sentAt: '2026-07-28T12:00:00+00:00' }),
 ];
 
+// un brouillon et une archivee, puis une reponse sans prix (message seul)
+const DRAFT = quote({ replyId: 'reply-endives', requestId: 'req-draft', clientName: 'Léa M.', product: 'Endives', priceAmount: null, status: 'draft', sentAt: '2026-08-11T12:00:00+00:00' });
+const ARCHIVED = quote({ clientName: 'Marc D.', product: 'Betteraves', priceAmount: 1.8, status: 'archived', sentAt: '2026-07-01T12:00:00+00:00' });
+const MESSAGE_ONLY = quote({ replyId: 'reply-navets', clientName: 'Noah S.', product: 'Navets', priceAmount: null, status: 'sent', sentAt: '2026-08-09T12:00:00+00:00' });
+
 describe('QuotesComponent', () => {
   let fixture: ComponentFixture<QuotesComponent>;
   let compiled: HTMLElement;
@@ -78,6 +83,42 @@ describe('QuotesComponent', () => {
     expect(compiled.querySelector('ul a')?.getAttribute('href')).toBe('/producer/requests/quotes/abc');
   });
 
+  it('chaque puce ne garde que son statut : envoyés, vus, acceptés, brouillons, archivés', async () => {
+    await create(of([...QUOTES, DRAFT, ARCHIVED]));
+
+    const only = (label: string, product: string) => {
+      chip(label).click();
+      fixture.detectChanges();
+      expect(rows().length).toBe(1);
+      expect(rows()[0]).toContain(product);
+    };
+    only('Envoyés', 'Tomates bio');
+    only('Vus', 'Miel toutes fleurs');
+    only('Acceptés', 'Pommes de terre');
+    only('Brouillons', 'Endives');
+    only('Archivés', 'Betteraves');
+
+    chip('Tous').click();
+    fixture.detectChanges();
+    expect(rows().length).toBe(7);
+  });
+
+  it("un brouillon ou une réponse sans prix s'affiche sans prix, et le brouillon rouvre la page de réponse", async () => {
+    await create(of([DRAFT, MESSAGE_ONLY]));
+
+    const list = rows();
+    expect(list[0]).toContain('Endives');
+    expect(list[0]).toContain('Brouillon');
+    expect(list[0]).toContain('Léa M. · 11 août');
+    expect(list[1]).toContain('Navets');
+    expect(list[1]).toContain('Envoyée');
+    expect(list[1]).not.toContain('€');
+
+    const links = [...compiled.querySelectorAll('ul a')].map((a) => a.getAttribute('href'));
+    expect(links[0]).toBe('/producer/requests/req-draft/reply');
+    expect(links[1]).toBe('/producer/requests/quotes/reply-navets');
+  });
+
   it('"Envoyés" ne garde que les devis au statut envoyé, "Acceptés" que les acceptés', async () => {
     await create();
 
@@ -122,7 +163,7 @@ describe('QuotesComponent', () => {
   it('dit qu\'il n\'y a pas encore de devis', async () => {
     await create(of([]));
 
-    expect(rows()).toEqual(["Vous n'avez pas encore envoyé de devis."]);
+    expect(rows()).toEqual(["Vous n'avez pas encore répondu à une demande."]);
   });
 
   it('garde un lien de retour vers les demandes disponibles', async () => {

@@ -45,7 +45,8 @@ export class QuoteDetailComponent {
     const validity = this.canEditOrFollowUp(q) ? (days > 0 ? `${days} jour${days > 1 ? 's' : ''}` : null) : 'Devis clos';
 
     return [
-      { label: 'Prix indicatif', value: formatPrice(q.priceAmount, q.currency, q.priceUnit) },
+      // une reponse sans prix (message seul) n'a pas cette ligne
+      { label: 'Prix indicatif', value: q.priceAmount !== null ? formatPrice(q.priceAmount, q.currency, q.priceUnit) : null },
       {
         label: 'Quantité disponible',
         value: q.availableQuantity !== null ? requestQuantity({ quantity: q.availableQuantity, unit: q.unit }, true) : null,

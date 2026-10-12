@@ -98,6 +98,13 @@ describe('QuoteDetailComponent', () => {
     expect(text()).not.toContain('Votre message');
   });
 
+  it("une réponse sans prix n'a pas de ligne de prix mais garde son message", async () => {
+    await create(of(quote({ priceAmount: null, priceUnit: null, availableQuantity: null, availabilityDate: null, validUntil: null, pickupConditions: null, deliveryConditions: null })));
+
+    expect([...compiled.querySelectorAll('dt')].map((dt) => dt.textContent?.trim())).toEqual([]);
+    expect(text()).toContain('Parfait, je peux vous proposer ce produit.');
+  });
+
   it('propose de modifier, relancer et archiver un devis envoyé ou vu, mais pas "Accepter" (c\'est le client qui accepte)', async () => {
     await create();
 

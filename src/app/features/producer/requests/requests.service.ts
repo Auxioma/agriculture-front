@@ -37,6 +37,8 @@ export interface RequestDetail extends AvailableRequest {
   deliveryWanted: boolean;
   attachments: { fileName: string | null; fileUrl: string | null }[];
   status: 'new' | 'treated' | 'closed';
+  // signalee et pas encore tranchee par l'equipe : la demande n'est plus en circulation
+  underReview: boolean;
   respondedAt: string | null;
   declined: boolean;
   draft: ReplyDraft | null;
@@ -62,8 +64,9 @@ export interface ReplyPayload {
   deliveryConditions: string | null;
 }
 
-// un devis = une reponse envoyee avec un prix (page "Mes devis"). status : sent, seen, accepted, declined, expired,
-// archived ; les derniers statuts sont poses cote client, voir NOTES.md
+// une ligne de la page "Mes devis" : une reponse du producteur, avec ou sans prix (message seul), brouillons compris.
+// status : draft, sent, seen, accepted, declined, expired, archived ; les statuts vue a archivee sont poses cote
+// client, voir NOTES.md
 export interface Quote {
   replyId: string;
   requestId: string;
@@ -71,7 +74,7 @@ export interface Quote {
   product: string | null;
   quantity: number | null;
   unit: string | null;
-  priceAmount: number;
+  priceAmount: number | null;
   priceUnit: string | null;
   currency: string | null;
   status: string;
