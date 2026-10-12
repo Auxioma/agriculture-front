@@ -11,4 +11,11 @@ export const routes: Routes = [
     path: 'categories',
     loadChildren: () => import('./features/catalog/catalog.routes').then((m) => m.CATALOG_ROUTES),
   },
+  {
+    path: 'producers/:id',
+    loadComponent: () =>
+      import('./features/catalog/pages/producer-detail/producer-detail.component').then(
+        (m) => m.ProducerDetailComponent,
+      ),
+  },
 ];

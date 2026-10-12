@@ -13,4 +13,11 @@ export const CATALOG_ROUTES: Routes = [
         (m) => m.CategoryProducersComponent,
       ),
   },
+  // {
+  //   path: 'producers/:id',
+  //   loadComponent: () =>
+  //     import('./pages/producer-detail/producer-detail.component').then(
+  //       (m) => m.ProducerDetailComponent,
+  //     ),
+  // },
 ];
