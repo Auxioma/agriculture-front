@@ -77,7 +77,13 @@
         <p class="rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri">{{ treatedText(r) }}</p>
       }
       @default {
-        <p class="rounded-lg bg-grey-200 px-4 py-3 text-sm text-grey-700">Cette demande n'est plus ouverte.</p>
+        <p class="rounded-lg bg-grey-200 px-4 py-3 text-sm text-grey-700">
+          @if (r.underReview) {
+            Cette demande est en cours de vérification par notre équipe.
+          } @else {
+            Cette demande n'est plus ouverte.
+          }
+        </p>
       }
     }
     <a [routerLink]="['/producer/requests', r.requestId, 'report']" class="block w-full text-center text-sm text-danger">Signaler cette demande</a>

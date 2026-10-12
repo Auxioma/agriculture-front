@@ -27,6 +27,7 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
   deliveryWanted: false,
   attachments: [],
   status: 'new',
+  underReview: false,
   respondedAt: null,
   declined: false,
   draft: null,

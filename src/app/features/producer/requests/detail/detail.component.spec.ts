@@ -26,6 +26,7 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
   deliveryWanted: false,
   attachments: [{ fileName: 'photo-parcelle.jpg', fileUrl: 'https://files.test/photo-parcelle.jpg' }],
   status: 'new',
+  underReview: false,
   respondedAt: null,
   declined: false,
   draft: null,
@@ -122,6 +123,15 @@ describe('DetailComponent', () => {
     TestBed.resetTestingModule();
     await create(of(detail({ status: 'closed' })));
     expect(text()).toContain("Cette demande n'est plus ouverte.");
+    expect(button('Ouvrir le chat')).toBeUndefined();
+  });
+
+  it('dit qu\'une demande signalée est en cours de vérification, sans boutons de réponse', async () => {
+    await create(of(detail({ status: 'closed', underReview: true })));
+
+    expect(text()).toContain('Cette demande est en cours de vérification par notre équipe.');
+    expect(text()).not.toContain("n'est plus ouverte");
+    expect(compiled.querySelector('a[href$="/reply"]')).toBeNull();
     expect(button('Ouvrir le chat')).toBeUndefined();
   });
 
