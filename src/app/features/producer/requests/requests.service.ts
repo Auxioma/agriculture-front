@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AvailableRequest } from '../dashboard/dashboard.model';
 
-// new = a traiter, treated = reponse envoyee ou refus, closed = plus ouverte (expiree, annulee...)
+// new = a traiter, treated = reponse envoyee ou refus, archived = mise de cote par le producteur, closed = plus
+// ouverte (expiree, annulee...)
 export interface ReceivedRequest {
   requestId: string;
   clientName: string;
@@ -11,14 +12,24 @@ export interface ReceivedRequest {
   quantity: number | null;
   unit: string | null;
   urgent: boolean;
-  status: 'new' | 'treated' | 'closed';
+  status: 'new' | 'treated' | 'archived' | 'closed';
   receivedAt: string;
   respondedAt: string | null;
   declined: boolean;
 }
 
+// piece jointe d'une reponse ; fileUrl est une URL signee qui expire (generee par le back a chaque lecture)
+export interface ReplyFile {
+  id: string;
+  fileName: string | null;
+  mimeType: string | null;
+  fileUrl: string | null;
+}
+
 // brouillon de reponse (page "Repondre a la demande") : ce que le producteur avait deja saisi
 export interface ReplyDraft {
+  id: string;
+  attachments: ReplyFile[];
   replyText: string | null;
   priceAmount: number | null;
   priceUnitId: string | null;
@@ -36,7 +47,7 @@ export interface RequestDetail extends AvailableRequest {
   pickupWanted: boolean;
   deliveryWanted: boolean;
   attachments: { fileName: string | null; fileUrl: string | null }[];
-  status: 'new' | 'treated' | 'closed';
+  status: 'new' | 'treated' | 'archived' | 'closed';
   // signalee et pas encore tranchee par l'equipe : la demande n'est plus en circulation
   underReview: boolean;
   respondedAt: string | null;
@@ -126,6 +137,31 @@ export class RequestsService {
 
   sendReply(requestId: string, payload: ReplyPayload) {
     return this.http.post<{ id: string; status: string }>(`${this.apiUrl}/producer/requests/${requestId}/reply`, payload);
+  }
+
+  // refus poli : la demande passe dans les traitees
+  declineRequest(requestId: string) {
+    return this.http.post<{ id: string }>(`${this.apiUrl}/producer/requests/${requestId}/decline`, {});
+  }
+
+  // le producteur met la demande de cote (le client n'en sait rien)
+  archiveRequest(requestId: string) {
+    return this.http.post<{ status: string }>(`${this.apiUrl}/producer/requests/${requestId}/archive`, {});
+  }
+
+  archiveQuote(replyId: string) {
+    return this.http.post<{ id: string; status: string }>(`${this.apiUrl}/producer/quotes/${replyId}/archive`, {});
+  }
+
+  // piece jointe d'un brouillon : le brouillon doit deja exister
+  uploadReplyFile(replyId: string, file: File) {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.post<ReplyFile>(`${this.apiUrl}/producer/replies/${replyId}/attachments`, body);
+  }
+
+  removeReplyFile(replyId: string, fileId: string) {
+    return this.http.delete<void>(`${this.apiUrl}/producer/replies/${replyId}/attachments/${fileId}`);
   }
 
   reportRequest(requestId: string, payload: { reason: string; message: string | null }) {

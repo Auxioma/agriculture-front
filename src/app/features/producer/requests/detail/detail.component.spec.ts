@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -36,10 +37,14 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
 describe('DetailComponent', () => {
   let fixture: ComponentFixture<DetailComponent>;
   let compiled: HTMLElement;
-  let serviceMock: { getDetail: ReturnType<typeof vi.fn> };
+  let serviceMock: { getDetail: ReturnType<typeof vi.fn>; declineRequest: ReturnType<typeof vi.fn>; archiveRequest: ReturnType<typeof vi.fn> };
 
   async function create(data$: Observable<RequestDetail> = of(detail())): Promise<void> {
-    serviceMock = { getDetail: vi.fn(() => data$) };
+    serviceMock = {
+      getDetail: vi.fn(() => data$),
+      declineRequest: vi.fn(() => of({ id: 'r1' })),
+      archiveRequest: vi.fn(() => of({ status: 'archived' })),
+    };
     await TestBed.configureTestingModule({
       imports: [DetailComponent],
       providers: [
@@ -124,6 +129,68 @@ describe('DetailComponent', () => {
     await create(of(detail({ status: 'closed' })));
     expect(text()).toContain("Cette demande n'est plus ouverte.");
     expect(button('Ouvrir le chat')).toBeUndefined();
+  });
+
+  it('propose de refuser poliment ou d\'archiver une demande à traiter, pas une demande déjà traitée', async () => {
+    await create();
+    expect(button('Refuser poliment')).toBeTruthy();
+    expect(button('Archiver cette demande')).toBeTruthy();
+
+    TestBed.resetTestingModule();
+    await create(of(detail({ status: 'treated', respondedAt: '2026-08-16T12:00:00+00:00' })));
+    expect(button('Refuser poliment')).toBeUndefined();
+    expect(button('Archiver cette demande')).toBeUndefined();
+  });
+
+  it('refuse poliment après confirmation, puis recharge la demande', async () => {
+    await create();
+
+    button('Refuser poliment')!.click();
+    fixture.detectChanges();
+    expect(text()).toContain('Refuser cette demande ?');
+    expect(serviceMock.declineRequest).not.toHaveBeenCalled();
+
+    // "Annuler" referme la confirmation sans rien envoyer
+    button('Annuler')!.click();
+    fixture.detectChanges();
+    expect(button('Refuser poliment')).toBeTruthy();
+
+    button('Refuser poliment')!.click();
+    fixture.detectChanges();
+    button('Confirmer le refus')!.click();
+    fixture.detectChanges();
+
+    expect(serviceMock.declineRequest).toHaveBeenCalledWith('abc');
+    expect(serviceMock.getDetail).toHaveBeenCalledTimes(2);
+  });
+
+  it('archive la demande puis recharge la page', async () => {
+    await create();
+
+    button('Archiver cette demande')!.click();
+    fixture.detectChanges();
+
+    expect(serviceMock.archiveRequest).toHaveBeenCalledWith('abc');
+    expect(serviceMock.getDetail).toHaveBeenCalledTimes(2);
+  });
+
+  it('affiche le message du back quand l\'action est refusée', async () => {
+    await create();
+    serviceMock.archiveRequest.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { error: 'Cette demande ne peut plus être archivée.' } })));
+
+    button('Archiver cette demande')!.click();
+    fixture.detectChanges();
+
+    expect(text()).toContain('Cette demande ne peut plus être archivée.');
+    expect(serviceMock.getDetail).toHaveBeenCalledTimes(1);
+  });
+
+  it('dit qu\'une demande archivée l\'est, sans boutons d\'action', async () => {
+    await create(of(detail({ status: 'archived' })));
+
+    expect(text()).toContain('Vous avez archivé cette demande.');
+    expect(button('Refuser poliment')).toBeUndefined();
+    expect(compiled.querySelector('a[href$="/reply"]')).toBeNull();
   });
 
   it('dit qu\'une demande signalée est en cours de vérification, sans boutons de réponse', async () => {

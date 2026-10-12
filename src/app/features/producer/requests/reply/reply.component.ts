@@ -3,9 +3,9 @@ import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, of, tap } from 'rxjs';
+import { catchError, of, switchMap, tap } from 'rxjs';
 import { requestQuantity, unitLabel } from '../../request-format';
-import { ReplyDraft, ReplyPayload, RequestsService } from '../requests.service';
+import { ReplyDraft, ReplyFile, ReplyPayload, RequestsService } from '../requests.service';
 
 const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-grey-500';
 
@@ -16,8 +16,9 @@ const toNumber = (value: string): number => (value.trim() === '' ? NaN : Number(
 // reponse" l'envoie au client, "Enregistrer le brouillon" la garde pour plus tard (le brouillon est repris a la
 // prochaine ouverture). Les exemples en gris viennent de la demande (budget, quantite, retrait...). La devise est
 // toujours l'euro. 
-// ! "Joindre un devis ou une photo" est desactive : le back n'a pas de route pour envoyer un fichier
-// ! avec une reponse.
+// "Joindre un devis ou une photo" rattache le fichier au brouillon (il est enregistre d'abord s'il n'existe pas
+// encore) ; envoyer la reponse garde ses fichiers. Le back accepte jpeg, png, webp et pdf jusqu'a 10 Mo, 5 fichiers
+// au plus.
 
 
 @Component({
@@ -46,6 +47,11 @@ export class ReplyComponent {
   error = signal('');
   info = signal('');
   sending = signal(false);
+  files = signal<ReplyFile[]>([]);
+  uploading = signal(false);
+  readonly maxFiles = 5;
+  // identifiant du brouillon, connu des qu'il est enregistre
+  private draftId = '';
 
   // undefined = chargement, null = erreur (demande inconnue ou pas proposee a ce producteur...)
   request = toSignal(
@@ -55,6 +61,48 @@ export class ReplyComponent {
     ),
   );
   units = toSignal(this.service.getUnits().pipe(catchError(() => of([]))), { initialValue: [] });
+
+  // le fichier choisi part dans le brouillon : on l'enregistre d'abord (ou on le met a jour) pour avoir son identifiant
+  attach(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    const payload = this.payload(true);
+    if (!payload) {
+      this.error.set('Vérifiez les nombres saisis (prix, quantité, validité).');
+      return;
+    }
+
+    this.error.set('');
+    this.info.set('');
+    this.uploading.set(true);
+    this.service
+      .sendReply(this.id, payload)
+      .pipe(
+        tap(({ id }) => (this.draftId = id)),
+        switchMap(({ id }) => this.service.uploadReplyFile(id, file)),
+      )
+      .subscribe({
+        next: (uploaded) => {
+          this.uploading.set(false);
+          this.files.update((list) => [...list, uploaded]);
+          this.info.set('Brouillon enregistré.');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.uploading.set(false);
+          this.error.set(err.error?.error ?? "Impossible d'envoyer le fichier pour le moment.");
+        },
+      });
+  }
+
+  removeFile(file: ReplyFile): void {
+    this.error.set('');
+    this.service.removeReplyFile(this.draftId, file.id).subscribe({
+      next: () => this.files.update((list) => list.filter((f) => f.id !== file.id)),
+      error: (err: HttpErrorResponse) => this.error.set(err.error?.error ?? 'Impossible de retirer le fichier pour le moment.'),
+    });
+  }
 
   // ex. "€ / kg"
   unitText(code: string | null): string {
@@ -97,6 +145,8 @@ export class ReplyComponent {
   // reprend ce que le producteur avait deja saisi (validite : nombre de jours restants jusqu'a la date enregistree)
   private prefill(draft: ReplyDraft | null): void {
     if (!draft) return;
+    this.draftId = draft.id;
+    this.files.set(draft.attachments);
     const days = draft.validUntil ? Math.ceil((new Date(draft.validUntil).getTime() - Date.now()) / 86_400_000) : 0;
     this.form.patchValue({
       price: draft.priceAmount?.toString() ?? '',

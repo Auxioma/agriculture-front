@@ -34,6 +34,8 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
   ...overrides,
 });
 
+const FILE = { id: 'f1', fileName: 'devis.pdf', mimeType: 'application/pdf', fileUrl: null };
+
 const UNITS: Unit[] = [
   { id: 'u-kg', code: 'kg', label: 'Kilogramme' },
   { id: 'u-unit', code: 'unite', label: 'Unité' },
@@ -42,7 +44,13 @@ const UNITS: Unit[] = [
 describe('ReplyComponent', () => {
   let fixture: ComponentFixture<ReplyComponent>;
   let compiled: HTMLElement;
-  let serviceMock: { getDetail: ReturnType<typeof vi.fn>; getUnits: ReturnType<typeof vi.fn>; sendReply: ReturnType<typeof vi.fn> };
+  let serviceMock: {
+    getDetail: ReturnType<typeof vi.fn>;
+    getUnits: ReturnType<typeof vi.fn>;
+    sendReply: ReturnType<typeof vi.fn>;
+    uploadReplyFile: ReturnType<typeof vi.fn>;
+    removeReplyFile: ReturnType<typeof vi.fn>;
+  };
   let navigate: ReturnType<typeof vi.fn>;
 
   async function create(request: RequestDetail = detail(), reply$: Observable<unknown> = of({ id: 'r1', status: 'sent' })): Promise<void> {
@@ -50,6 +58,8 @@ describe('ReplyComponent', () => {
       getDetail: vi.fn(() => of(request)),
       getUnits: vi.fn(() => of(UNITS)),
       sendReply: vi.fn(() => reply$),
+      uploadReplyFile: vi.fn(() => of(FILE)),
+      removeReplyFile: vi.fn(() => of(undefined)),
     };
     await TestBed.configureTestingModule({
       imports: [ReplyComponent],
@@ -149,6 +159,8 @@ describe('ReplyComponent', () => {
     await create(
       detail({
         draft: {
+          id: 'd1',
+          attachments: [FILE],
           replyText: 'Premier jet',
           priceAmount: 12.5,
           priceUnitId: 'u-kg',
@@ -168,6 +180,7 @@ describe('ReplyComponent', () => {
     expect(field('date').value).toBe('2026-08-23');
     expect(field('validity').value).toBe('4');
     expect(field('pickup').value).toBe('Retrait à la ferme');
+    expect(text()).toContain('devis.pdf');
   });
 
   it('refuse un nombre mal saisi sans appeler le back', async () => {
@@ -202,11 +215,64 @@ describe('ReplyComponent', () => {
     expect(compiled.querySelector('a[href="/producer/requests/abc"]')).not.toBeNull();
   });
 
-  it('garde un lien de retour vers les demandes disponibles et désactive la pièce jointe', async () => {
+  it('garde un lien de retour vers les demandes disponibles', async () => {
     await create();
 
     expect(compiled.querySelector('a[href="/producer/requests"]')?.textContent?.trim()).toBe('Retour aux demandes disponibles');
-    const attach = [...compiled.querySelectorAll('button')].find((b) => b.textContent?.includes('Joindre un devis'));
-    expect(attach?.disabled).toBe(true);
+  });
+
+  // simule le choix d'un fichier dans le sélecteur caché
+  const pick = (name = 'devis.pdf', type = 'application/pdf') => {
+    const input = compiled.querySelector<HTMLInputElement>('input[type=file]')!;
+    Object.defineProperty(input, 'files', { value: [new File(['x'], name, { type })], configurable: true });
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  };
+  const attachButton = () => [...compiled.querySelectorAll('button')].find((b) => b.textContent?.includes('Joindre un devis'))!;
+
+  it('enregistre le brouillon puis y rattache le fichier choisi', async () => {
+    await create(detail(), of({ id: 'd9', status: 'draft' }));
+    fill('message', 'Voici mon devis');
+
+    pick();
+
+    expect(serviceMock.sendReply.mock.calls[0][1]).toMatchObject({ draft: true, replyText: 'Voici mon devis' });
+    expect(serviceMock.uploadReplyFile).toHaveBeenCalledWith('d9', expect.any(File));
+    expect(text()).toContain('devis.pdf');
+    expect(text()).toContain('Brouillon enregistré.');
+    expect(attachButton().disabled).toBe(false);
+  });
+
+  it('retire un fichier du brouillon', async () => {
+    await create(detail({ draft: { id: 'd1', attachments: [FILE], replyText: null, priceAmount: null, priceUnitId: null, availableQuantity: null, availabilityDate: null, validUntil: null, pickupConditions: null, deliveryConditions: null } }));
+
+    [...compiled.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Retirer')!.click();
+    fixture.detectChanges();
+
+    expect(serviceMock.removeReplyFile).toHaveBeenCalledWith('d1', 'f1');
+    expect(text()).not.toContain('devis.pdf');
+  });
+
+  it('affiche le message du back quand le fichier est refusé', async () => {
+    await create(detail(), of({ id: 'd9', status: 'draft' }));
+    serviceMock.uploadReplyFile.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 422, error: { error: 'Fichier trop volumineux (10 Mo maximum).' } })));
+
+    pick('gros.pdf');
+
+    expect(text()).toContain('Fichier trop volumineux (10 Mo maximum).');
+    expect(text()).not.toContain('gros.pdf');
+  });
+
+  it('ne cherche pas à joindre un fichier avec un nombre mal saisi, et bloque à cinq fichiers', async () => {
+    await create(detail({ draft: { id: 'd1', attachments: Array.from({ length: 5 }, (_, i) => ({ ...FILE, id: 'f' + i })), replyText: null, priceAmount: null, priceUnitId: null, availableQuantity: null, availabilityDate: null, validUntil: null, pickupConditions: null, deliveryConditions: null } }));
+    expect(attachButton().disabled).toBe(true);
+
+    TestBed.resetTestingModule();
+    await create();
+    fill('price', 'douze');
+    pick();
+
+    expect(serviceMock.sendReply).not.toHaveBeenCalled();
+    expect(text()).toContain('Vérifiez les nombres saisis');
   });
 });
