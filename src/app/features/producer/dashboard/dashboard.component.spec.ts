@@ -126,7 +126,7 @@ describe('DashboardComponent', () => {
     TestBed.resetTestingModule();
     await create(of({ ...DASHBOARD, subscription: null }));
     expect(compiled.textContent).toContain("Vous n'avez pas encore d'abonnement.");
-    expect(compiled.querySelector('a[href="/pricing"]')).toBeTruthy();
+    expect(compiled.querySelector('a[href="/producer/subscription"]')).toBeTruthy();
   });
 
   it('indique le taux de complétion du profil et ce qu\'il manque', async () => {

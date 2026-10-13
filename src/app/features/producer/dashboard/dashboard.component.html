@@ -79,14 +79,17 @@
           } @else {
             <p class="mt-2 text-sm text-secondary">{{ subscription.requestsThisMonth }} demandes reçues ce mois-ci</p>
           }
-          <button type="button" class="mt-4 rounded-lg border border-agri px-4 py-2 text-sm font-medium text-agri">
+          <a
+            routerLink="/producer/subscription"
+            class="mt-4 inline-block rounded-lg border border-agri px-4 py-2 text-sm font-medium text-agri"
+          >
             Gérer mon abonnement
-          </button>
+          </a>
         } @else {
           <h2 class="font-semibold">Abonnement</h2>
           <p class="mt-2 text-sm text-secondary">Vous n'avez pas encore d'abonnement.</p>
           <a
-            routerLink="/pricing"
+            routerLink="/producer/subscription"
             class="mt-4 inline-block rounded-lg border border-agri px-4 py-2 text-sm font-medium text-agri"
           >
             Voir les forfaits
