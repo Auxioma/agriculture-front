@@ -81,6 +81,19 @@ export const routes: Routes = [
         path: 'requests/:id/report',
         loadComponent: () => import('./features/producer/requests/report/report.component').then((m) => m.ReportComponent),
       },
+      {
+        path: 'subscription',
+        loadComponent: () => import('./features/producer/subscription/subscription.component').then((m) => m.SubscriptionComponent),
+      },
+      {
+        path: 'subscription/payment-methods',
+        loadComponent: () =>
+          import('./features/producer/subscription/payment-methods/payment-methods.component').then((m) => m.PaymentMethodsComponent),
+      },
+      {
+        path: 'support',
+        loadComponent: () => import('./features/producer/support/support.component').then((m) => m.SupportComponent),
+      },
     ],
   },
   { path: 'auth', children: AUTH_ROUTES },
