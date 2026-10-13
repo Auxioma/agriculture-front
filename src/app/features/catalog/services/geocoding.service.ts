@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { Coordinates } from '../models/producer-summary.model';
-import { features } from 'process';
 
 interface AdressResponse {
   features: { geometry: { coordinates: [number, number] } }[];
