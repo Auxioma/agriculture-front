@@ -1,8 +1,21 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  Injector,
+  afterNextRender,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { ProducerService } from './producer.service';
 import { FeaturedProducer } from './producer.model';
+import { CatalogService } from '../catalog/services/catalog.service';
+import { Category } from '../catalog/models/category.model';
 
 // une couleur par label (mêmes teintes que les badges de confiance du bandeau)
 const LABEL_COLORS: Record<string, string> = {
@@ -37,21 +50,21 @@ export class HomeComponent {
     },
   ];
 
-  // memes categories que la navbar (CatalogFixtures.php), avec une photo par categorie pour le carroussel
-  readonly categories = [
-    { label: 'Fruits', image: '/images/categories/fruits.jpg' },
-    { label: 'Légumes', image: '/images/categories/legumes.jpg' },
-    { label: 'Produits laitiers', image: '/images/categories/produits-laitiers.jpg' },
-    { label: 'Viandes & Volailles', image: '/images/categories/viandes-volailles.jpg' },
-    { label: 'Miel & Produits de la ruche', image: '/images/categories/miel.jpg' },
-  ];
+  private catalog = inject(CatalogService);
+  private producerService = inject(ProducerService);
+  private injector = inject(Injector);
+
+  // image neutre quand une catégorie n'a pas d'imageUrl
+  readonly fallbackImage = '/images/categories/default.jpg';
+
+  // 5 catégories les plus populaires (GET /api/categories?sort=popular&limit=5)
+  popularCategories = signal<Category[]>([]);
 
   private carouselTrack = viewChild<ElementRef<HTMLDivElement>>('carouselTrack');
   canScrollLeft = signal(false);
   canScrollRight = signal(false);
 
   // producteurs les mieux notes + verifies, calcule cote back (GET /api/producers/featured)
-  private producerService = inject(ProducerService);
   featuredProducers = signal<FeaturedProducer[]>([]);
 
   constructor() {
@@ -65,7 +78,21 @@ export class HomeComponent {
       destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
     });
 
-    this.producerService.getFeatured().subscribe((producers) => this.featuredProducers.set(producers));
+    this.producerService
+      .getFeatured()
+      .subscribe((producers) => this.featuredProducers.set(producers));
+
+    this.catalog
+      .getPopularCategories()
+      .pipe(
+        catchError(() => of([] as Category[])),
+        takeUntilDestroyed(),
+      )
+      .subscribe((categories) => {
+        this.popularCategories.set(categories);
+        // les cartes viennent d'apparaître : on recalcule l'état des flèches après le rendu
+        afterNextRender(() => this.updateScrollState(), { injector: this.injector });
+      });
   }
 
   updateScrollState(): void {

@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomeComponent } from './home.component';
 import { ProducerService } from './producer.service';
 import { FeaturedProducer } from './producer.model';
+import { CatalogService } from '../catalog/services/catalog.service';
+import { makeCategory } from '../catalog/testing/catalog.fixtures';
 
 const FEATURED_PRODUCERS: FeaturedProducer[] = [
   {
@@ -17,20 +19,58 @@ const FEATURED_PRODUCERS: FeaturedProducer[] = [
     averageRating: 4.9,
     reviewCount: 12,
     photoUrl: '/images/categories/miel.jpg',
-    labels: [{ code: 'bio', name: 'Bio' }, { code: 'local', name: 'Local' }],
+    labels: [
+      { code: 'bio', name: 'Bio' },
+      { code: 'local', name: 'Local' },
+    ],
   },
+];
+
+// 5 catégories populaires, dont une sans image (repli) pour tester l'image par défaut
+const POPULAR_CATEGORIES = [
+  makeCategory({
+    id: 'c1',
+    name: 'Fruits',
+    slug: 'fruits',
+    imageUrl: '/images/categories/fruits.jpg',
+  }),
+  makeCategory({ id: 'c2', name: 'Légumes', slug: 'legumes', imageUrl: null }),
+  makeCategory({
+    id: 'c3',
+    name: 'Produits laitiers',
+    slug: 'produits-laitiers',
+    imageUrl: '/images/categories/produits-laitiers.jpg',
+  }),
+  makeCategory({
+    id: 'c4',
+    name: 'Viandes & Volailles',
+    slug: 'viandes-volailles',
+    imageUrl: '/images/categories/viandes-volailles.jpg',
+  }),
+  makeCategory({
+    id: 'c5',
+    name: 'Miel & Produits de la ruche',
+    slug: 'miel',
+    imageUrl: '/images/categories/miel.jpg',
+  }),
 ];
 
 describe('HomeComponent', () => {
   let fixture: ComponentFixture<HomeComponent>;
   let producerServiceMock: { getFeatured: ReturnType<typeof vi.fn> };
+  let catalogServiceMock: { getPopularCategories: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     producerServiceMock = { getFeatured: vi.fn(() => of(FEATURED_PRODUCERS)) };
+    catalogServiceMock = { getPopularCategories: vi.fn(() => of(POPULAR_CATEGORIES)) };
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [provideRouter([]), { provide: ProducerService, useValue: producerServiceMock }],
+      providers: [
+        provideRouter([]),
+        { provide: ProducerService, useValue: producerServiceMock },
+        { provide: CatalogService, useValue: catalogServiceMock },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);
@@ -58,16 +98,64 @@ describe('HomeComponent', () => {
     expect(text).toContain('Demandes gratuites pour les clients');
   });
 
-  it('devrait afficher les 5 catégories populaires avec leur photo', () => {
+  it('demande les catégories populaires au service au chargement', () => {
+    expect(catalogServiceMock.getPopularCategories).toHaveBeenCalled();
+  });
+
+  it('devrait afficher les 5 catégories populaires renvoyées par le service, avec leur photo', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Catégories populaires');
+    expect(compiled.textContent).toContain('Fruits');
+    expect(compiled.textContent).toContain('Miel & Produits de la ruche');
 
     const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('.overflow-x-auto img');
     expect(images.length).toBe(5);
     expect(images[0].src).toContain('/images/categories/fruits.jpg');
   });
 
-  it('cache les flèches du carrousel tant qu\'il ne déborde pas', () => {
+  it("utilise l'image de repli quand une catégorie n'a pas d'imageUrl", () => {
+    const images: NodeListOf<HTMLImageElement> = (
+      fixture.nativeElement as HTMLElement
+    ).querySelectorAll('.overflow-x-auto img');
+
+    expect(images[1].alt).toBe('Légumes');
+    expect(images[1].src).toContain('/images/categories/default.jpg');
+  });
+
+  it('chaque carte mène à la page de sa catégorie', () => {
+    const links: NodeListOf<HTMLAnchorElement> = (
+      fixture.nativeElement as HTMLElement
+    ).querySelectorAll('.overflow-x-auto a');
+
+    expect(links[0].getAttribute('href')).toBe('/categories/fruits');
+    expect(links[4].getAttribute('href')).toBe('/categories/miel');
+  });
+
+  it("renvoie vers /categories quand une catégorie n'a pas de slug", () => {
+    catalogServiceMock.getPopularCategories.mockReturnValue(
+      of([makeCategory({ id: 'c1', name: 'Sans slug', slug: null })]),
+    );
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const link: HTMLAnchorElement = otherFixture.nativeElement.querySelector('.overflow-x-auto a');
+    expect(link.getAttribute('href')).toBe('/categories');
+  });
+
+  it("n'affiche aucune carte et ne plante pas quand l'API des catégories échoue", () => {
+    catalogServiceMock.getPopularCategories.mockReturnValue(throwError(() => new Error('boom')));
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const compiled = otherFixture.nativeElement as HTMLElement;
+    expect(compiled.querySelectorAll('.overflow-x-auto a').length).toBe(0);
+    // le reste de la page s'affiche normalement
+    expect(compiled.textContent).toContain('agricole réuni');
+  });
+
+  it("cache les flèches du carrousel tant qu'il ne déborde pas", () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('button[aria-label="Catégories précédentes"]')).toBeNull();
     expect(compiled.querySelector('button[aria-label="Catégories suivantes"]')).toBeNull();
@@ -82,14 +170,20 @@ describe('HomeComponent', () => {
     fixture.componentInstance.updateScrollState();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('button[aria-label="Catégories suivantes"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Catégories suivantes"]'),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]'),
+    ).toBeNull();
 
     track.scrollLeft = 700;
     fixture.componentInstance.updateScrollState();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]'),
+    ).toBeTruthy();
   });
 
   it('scrollCarousel fait défiler le carrousel dans le bon sens', () => {

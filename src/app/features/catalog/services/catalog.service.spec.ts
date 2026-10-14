@@ -65,4 +65,50 @@ describe('CatalogService', () => {
     expect(withLocale.request.params.get('locale')).toBe('de');
     withLocale.flush([]);
   });
+
+  it("appelle GET /categories?sort=popular&limit=5 et ne fait qu'une requête pour plusieurs abonnés", () => {
+    const categories = [makeCategory()];
+    let first: unknown;
+    let second: unknown;
+
+    service.getPopularCategories().subscribe((value) => (first = value));
+    service.getPopularCategories().subscribe((value) => (second = value));
+
+    const req = http.expectOne((r) => r.url === `${apiUrl}/categories`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('sort')).toBe('popular');
+    expect(req.request.params.get('limit')).toBe('5');
+    req.flush(categories);
+
+    expect(first).toEqual(categories);
+    expect(second).toEqual(categories);
+  });
+
+  it('réutilise les catégories populaires déjà reçues sans nouvelle requête', () => {
+    const categories = [makeCategory()];
+    let result: unknown;
+
+    service.getPopularCategories().subscribe();
+    http.expectOne((r) => r.url === `${apiUrl}/categories`).flush(categories);
+
+    service.getPopularCategories().subscribe((value) => (result = value));
+
+    http.expectNone((r) => r.url === `${apiUrl}/categories`);
+    expect(result).toEqual(categories);
+  });
+
+  it('ne mémorise pas une erreur : le prochain abonné relance la requête', () => {
+    const categories = [makeCategory()];
+    let result: unknown;
+
+    service.getPopularCategories().subscribe({ error: () => undefined });
+    http
+      .expectOne((r) => r.url === `${apiUrl}/categories`)
+      .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+
+    service.getPopularCategories().subscribe((value) => (result = value));
+    http.expectOne((r) => r.url === `${apiUrl}/categories`).flush(categories);
+
+    expect(result).toEqual(categories);
+  });
 });
