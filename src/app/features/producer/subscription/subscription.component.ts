@@ -1,14 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, map, of, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, first, forkJoin, map, of, switchMap, take, timer } from 'rxjs';
 import { longDate } from '../request-format';
 import { formatMoney, formatPrice } from './subscription-format';
-import { BillingCycle, CurrentSubscription, Invoice, Plan, PlanPrice, SubscriptionService } from './subscription.service';
+import { BillingCycle, CurrentSubscription, Invoice, Plan, PlanPrice, ScheduledChange, SubscriptionService } from './subscription.service';
 
 // un abonnement qui donne encore acces (un annule ou expire = retour a l'offre gratuite)
 const IN_FORCE = ['active', 'trialing', 'past_due'];
+
+// le webhook de Stripe qui active l'abonnement arrive apres la page : on la relit toutes les 2 s pendant 20 s au plus
+const POLL_EVERY_MS = 2000;
+const POLL_TRIES = 10;
+const TOO_SLOW = 'L’activation prend plus de temps que prévu : rechargez la page dans un instant.';
 
 interface PlanCard {
   plan: Plan;
@@ -31,6 +36,7 @@ interface PlanCard {
 })
 export class SubscriptionComponent {
   private service = inject(SubscriptionService);
+  private destroyRef = inject(DestroyRef);
   private refresh = new BehaviorSubject<void>(undefined);
   private checkoutResult = inject(ActivatedRoute).snapshot.queryParamMap.get('checkout');
 
@@ -39,14 +45,25 @@ export class SubscriptionComponent {
     this.refresh.pipe(switchMap(() => this.service.getCurrent().pipe(catchError(() => of('error' as const))))),
   );
   plans = toSignal(this.service.getPlans().pipe(catchError(() => of([] as Plan[]))), { initialValue: [] as Plan[] });
-  invoices = toSignal(this.service.getInvoices().pipe(catchError(() => of([]))), { initialValue: [] });
+  // factures, carte et changement programme se relisent avec l'abonnement (apres un paiement, un changement, une reprise)
+  invoices = toSignal(this.refresh.pipe(switchMap(() => this.service.getInvoices().pipe(catchError(() => of([] as Invoice[]))))), {
+    initialValue: [] as Invoice[],
+  });
   // la carte par defaut ; null si on ne peut pas la lire (pas de Stripe, pas d'abonnement...)
   card = toSignal(
-    this.service.getCards().pipe(
-      map((cards) => cards.find((c) => c.isDefault) ?? cards[0] ?? null),
-      catchError(() => of(null)),
+    this.refresh.pipe(
+      switchMap(() =>
+        this.service.getCards().pipe(
+          map((cards) => cards.find((c) => c.isDefault) ?? cards[0] ?? null),
+          catchError(() => of(null)),
+        ),
+      ),
     ),
   );
+  // la descente deja programmée (Stripe la garde, pas la base) null s'il n'y en a pas ou si on ne peut pas la lire
+  scheduledChange = toSignal(this.refresh.pipe(switchMap(() => this.service.getScheduledChange().pipe(catchError(() => of(null))))), {
+    initialValue: null as ScheduledChange | null,
+  });
 
   subscription = computed<CurrentSubscription | null>(() => {
     const current = this.current();
@@ -58,6 +75,8 @@ export class SubscriptionComponent {
   pending = signal<PlanCard | null>(null);
   confirmingCancel = signal(false);
   busy = signal(false);
+  // on attend que le webhook de Stripe ait mis la base a jour
+  waiting = signal(false);
   notice = signal(
     this.checkoutResult === 'success'
       ? "Paiement reçu. Votre abonnement s'active dans quelques instants."
@@ -66,6 +85,13 @@ export class SubscriptionComponent {
         : '',
   );
   error = signal('');
+
+  constructor() {
+    // de retour de la page de paiement : l'abonnement et sa facture peuvent ne pas encore etre la
+    if (this.checkoutResult === 'success') {
+      this.watch((current, invoices) => !!current && IN_FORCE.includes(current.status) && invoices.length > 0, 'Votre abonnement est actif.');
+    }
+  }
 
   cards = computed<PlanCard[]>(() => {
     const currentId = this.subscription()?.planPriceId;
@@ -155,12 +181,14 @@ export class SubscriptionComponent {
       next: (change) => {
         this.busy.set(false);
         this.pending.set(null);
-        this.notice.set(
-          change.effect === 'next_renewal' && change.effectiveAt
-            ? `Votre plan passera à ${pending.plan.name} le ${longDate(change.effectiveAt)}.`
-            : `Votre passage au plan ${pending.plan.name} est en cours : il prend effet immédiatement.`,
-        );
-        this.refresh.next();
+        if (change.effect === 'next_renewal' && change.effectiveAt) {
+          this.notice.set(`Votre plan passera à ${pending.plan.name} le ${longDate(change.effectiveAt)}.`);
+          this.refresh.next();
+          return;
+        }
+        // montee d'offre : Stripe l'applique tout de suite, la base suit par webhook
+        this.notice.set(`Votre passage au plan ${pending.plan.name} est en cours : il prend effet immédiatement.`);
+        this.watch((current) => current?.planPriceId === pending.price.id, `Votre plan est maintenant ${pending.plan.name}.`);
       },
       error: (err) => this.fail(err),
     });
@@ -177,6 +205,42 @@ export class SubscriptionComponent {
       },
       error: (err) => this.fail(err),
     });
+  }
+
+  // abonnement dont l'annulation etait programmee : il continue et se renouvelle
+  resume(): void {
+    const end = this.subscription()!.currentPeriodEnd;
+    this.start();
+    this.service.resume().subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.notice.set(`Votre abonnement est repris : il se renouvellera le ${longDate(end)}.`);
+        this.refresh.next();
+      },
+      error: (err) => this.fail(err),
+    });
+  }
+
+  // relit l'abonnement et les factures jusqu'a ce que `done` soit vrai, puis recharge toute la page, sinon dit que c'est long
+  private watch(done: (current: CurrentSubscription | null, invoices: Invoice[]) => boolean, success: string): void {
+    this.waiting.set(true);
+    timer(0, POLL_EVERY_MS)
+      .pipe(
+        take(POLL_TRIES),
+        switchMap(() =>
+          forkJoin({
+            current: this.service.getCurrent().pipe(catchError(() => of(null))),
+            invoices: this.service.getInvoices().pipe(catchError(() => of([] as Invoice[]))),
+          }),
+        ),
+        first(({ current, invoices }) => done(current, invoices), null),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((found) => {
+        this.waiting.set(false);
+        this.notice.set(found ? success : TOO_SLOW);
+        this.refresh.next();
+      });
   }
 
   // separe pour pouvoir le remplacer dans les tests (le navigateur quitte la page)

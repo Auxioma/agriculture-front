@@ -2,8 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CurrentSubscription, Invoice, PaymentCard, Plan, SubscriptionService } from './subscription.service';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { CurrentSubscription, Invoice, PaymentCard, Plan, ScheduledChange, SubscriptionService } from './subscription.service';
 import { SubscriptionComponent } from './subscription.component';
 
 const plan = (code: string, name: string, monthly: number, yearly: number): Plan => ({
@@ -40,26 +40,41 @@ const INVOICES: Invoice[] = [
   { id: 'i2', amount: '24.00', currencyCode: 'EUR', status: 'paid', invoiceUrl: null, createdAt: '2026-07-01T10:00:00+00:00' },
 ];
 
+// une descente deja programmee chez Stripe
+const CHANGE: ScheduledChange = {
+  planPriceId: 'essentiel-m',
+  planCode: 'essentiel',
+  planName: 'Essentiel',
+  billingCycle: 'monthly',
+  amount: '12.00',
+  currencyCode: 'EUR',
+  effectiveAt: '2026-09-01T10:00:00+00:00',
+};
+
 const CARD: PaymentCard = { id: 'pm1', brand: 'visa', last4: '4242', expMonth: 8, expYear: 2028, isDefault: true };
 
 describe('SubscriptionComponent', () => {
   let fixture: ComponentFixture<SubscriptionComponent>;
   let compiled: HTMLElement;
-  let serviceMock: Record<'getPlans' | 'getCurrent' | 'getInvoices' | 'getCards' | 'checkout' | 'changePlan' | 'cancel', ReturnType<typeof vi.fn>>;
+  let serviceMock: Record<'getPlans' | 'getCurrent' | 'getInvoices' | 'getCards' | 'getScheduledChange' | 'checkout' | 'changePlan' | 'cancel' | 'resume', ReturnType<typeof vi.fn>>;
   let redirect: ReturnType<typeof vi.fn>;
 
   async function create(
     sub: Observable<CurrentSubscription | null> = of(current()),
-    options: { invoices?: Invoice[]; cards?: Observable<PaymentCard[]>; query?: Record<string, string> } = {},
+    options: { invoices?: Invoice[]; cards?: Observable<PaymentCard[]>; scheduled?: ScheduledChange | null; query?: Record<string, string> } = {},
   ): Promise<void> {
+    // temps simule : la relecture apres paiement se fait toutes les 2 s, les tests la font avancer a la main
+    vi.useFakeTimers();
     serviceMock = {
       getPlans: vi.fn(() => of(PLANS)),
       getCurrent: vi.fn(() => sub),
       getInvoices: vi.fn(() => of(options.invoices ?? INVOICES)),
       getCards: vi.fn(() => options.cards ?? of([CARD])),
+      getScheduledChange: vi.fn(() => of(options.scheduled ?? null)),
       checkout: vi.fn(() => of({ checkoutUrl: 'https://pay.test/session' })),
       changePlan: vi.fn(() => of({ effect: 'immediate', effectiveAt: null })),
       cancel: vi.fn(() => of(undefined)),
+      resume: vi.fn(() => of(undefined)),
     };
     await TestBed.configureTestingModule({
       imports: [SubscriptionComponent],
@@ -87,6 +102,13 @@ describe('SubscriptionComponent', () => {
   };
 
   beforeEach(() => TestBed.resetTestingModule());
+  afterEach(() => vi.useRealTimers());
+
+  // fait avancer le temps simule puis rafraichit l'affichage
+  const wait = async (ms: number) => {
+    await vi.advanceTimersByTimeAsync(ms);
+    fixture.detectChanges();
+  };
 
   it('résume le plan actuel : prix, renouvellement et demandes utilisées', async () => {
     await create();
@@ -150,7 +172,7 @@ describe('SubscriptionComponent', () => {
     expect(text()).not.toContain('Confirmer');
   });
 
-  it('monter d\'offre est immédiat : confirmation, appel du back puis rechargement', async () => {
+  it('monter d\'offre est immédiat : confirmation, appel du back puis relecture', async () => {
     await create();
 
     click(planCard('Premium'));
@@ -161,7 +183,26 @@ describe('SubscriptionComponent', () => {
 
     expect(serviceMock.changePlan).toHaveBeenCalledWith('premium-m');
     expect(text()).toContain('Votre passage au plan Premium est en cours : il prend effet immédiatement.');
+    await wait(0);
     expect(serviceMock.getCurrent).toHaveBeenCalledTimes(2);
+  });
+
+  it('après une montée d\'offre, attend que le webhook ait changé le plan puis le confirme', async () => {
+    await create();
+    click(planCard('Premium'));
+    click(button('Confirmer'));
+
+    // le webhook de Stripe n'est pas encore passé
+    await wait(0);
+    expect(text()).toContain('est en cours');
+    expect(compiled.querySelector('[role="status"]')?.getAttribute('aria-busy')).toBe('true');
+
+    serviceMock.getCurrent.mockReturnValue(of(current({ planPriceId: 'premium-m', planCode: 'premium', planName: 'Premium', amount: '49.00' })));
+    await wait(2000);
+
+    expect(text()).toContain('Votre plan est maintenant Premium.');
+    expect(compiled.querySelector('[role="status"]')?.getAttribute('aria-busy')).toBe('false');
+    expect(plain(compiled.querySelector('section')!)).toContain('Plan Premium');
   });
 
   it('descendre d\'offre prend effet à la prochaine échéance', async () => {
@@ -269,6 +310,60 @@ describe('SubscriptionComponent', () => {
     expect(text()).toContain('Annulation prévue');
     expect(text()).toContain('Fin de l’abonnement le 1er septembre 2026');
     expect(button('Annuler mon abonnement')).toBeUndefined();
+    expect(button('Reprendre mon abonnement')).toBeTruthy();
+  });
+
+  it('on ne propose pas de reprendre un abonnement qui n\'est pas annulé', async () => {
+    await create();
+
+    expect(button('Reprendre mon abonnement')).toBeUndefined();
+  });
+
+  it('reprend un abonnement annulé : il se renouvellera', async () => {
+    await create(of(current({ cancelAtPeriodEnd: true })));
+    serviceMock.getCurrent.mockReturnValue(of(current()));
+
+    click(button('Reprendre mon abonnement'));
+
+    expect(serviceMock.resume).toHaveBeenCalledTimes(1);
+    expect(text()).toContain('Votre abonnement est repris : il se renouvellera le 1er septembre 2026.');
+    expect(serviceMock.getCurrent).toHaveBeenCalledTimes(2);
+    expect(button('Reprendre mon abonnement')).toBeUndefined();
+    expect(button('Annuler mon abonnement')).toBeTruthy();
+  });
+
+  it('affiche le message du back quand la reprise est refusée', async () => {
+    await create(of(current({ cancelAtPeriodEnd: true })));
+    serviceMock.resume.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: { error: 'Cet abonnement est déjà terminé : souscrivez de nouveau.' } })));
+
+    click(button('Reprendre mon abonnement'));
+
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toContain('déjà terminé');
+    expect(button('Reprendre mon abonnement')).toBeTruthy();
+  });
+
+  it('montre la descente d\'offre déjà programmée, avec son prix et sa date', async () => {
+    await create(of(current()), { scheduled: CHANGE });
+
+    expect(plain(compiled.querySelector('section')!)).toContain('Passage au plan Essentiel (12 €/mois) prévu le 1er septembre 2026.');
+  });
+
+  it('sans changement programmé, ne dit rien', async () => {
+    await create();
+
+    expect(text()).not.toContain('Passage au plan');
+  });
+
+  it('programmer une descente la fait apparaître tout de suite', async () => {
+    await create();
+    serviceMock.changePlan.mockReturnValue(of({ effect: 'next_renewal', effectiveAt: '2026-09-01T10:00:00+00:00' }));
+    serviceMock.getScheduledChange.mockReturnValue(of(CHANGE));
+
+    click(planCard('Essentiel'));
+    click(button('Confirmer'));
+
+    expect(serviceMock.getScheduledChange).toHaveBeenCalledTimes(2);
+    expect(plain(compiled.querySelector('section')!)).toContain('Passage au plan Essentiel (12 €/mois) prévu le 1er septembre 2026.');
   });
 
   it('un paiement en retard prévient et mène aux cartes', async () => {
@@ -286,6 +381,48 @@ describe('SubscriptionComponent', () => {
     TestBed.resetTestingModule();
     await create(of(current()), { query: { checkout: 'cancelled' } });
     expect(text()).toContain('Paiement annulé');
+  });
+
+  it('au retour de la page de paiement, attend que le webhook active l\'abonnement puis recharge tout', async () => {
+    await create(of(null), { invoices: [], query: { checkout: 'success' } });
+    expect(text()).toContain('Plan Gratuit');
+    expect(compiled.querySelector('[role="status"]')?.getAttribute('aria-busy')).toBe('true');
+
+    // 1re relecture : le webhook n'est pas encore passé
+    await wait(0);
+    expect(text()).toContain('Paiement reçu');
+    expect(text()).toContain('Plan Gratuit');
+
+    // 2e relecture : l'abonnement et sa facture existent
+    serviceMock.getCurrent.mockReturnValue(of(current()));
+    serviceMock.getInvoices.mockReturnValue(of(INVOICES));
+    await wait(2000);
+
+    expect(text()).toContain('Votre abonnement est actif.');
+    expect(compiled.querySelector('[role="status"]')?.getAttribute('aria-busy')).toBe('false');
+    expect(plain(compiled.querySelector('section')!)).toContain('Plan Pro');
+    expect(text()).toContain('Carte bancaire •••• 4242');
+    expect(compiled.querySelectorAll('section:nth-of-type(2) ul li').length).toBe(2);
+  });
+
+  it('au retour de la page de paiement, renonce au bout de 20 secondes et le dit', async () => {
+    await create(of(null), { invoices: [], query: { checkout: 'success' } });
+
+    await wait(20000);
+
+    expect(text()).toContain('L’activation prend plus de temps que prévu');
+    expect(compiled.querySelector('[role="status"]')?.getAttribute('aria-busy')).toBe('false');
+    const calls = serviceMock.getCurrent.mock.calls.length;
+    await wait(20000);
+    expect(serviceMock.getCurrent.mock.calls.length).toBe(calls);
+  });
+
+  it('sans retour de paiement, ne relit rien en boucle', async () => {
+    await create();
+
+    await wait(30000);
+
+    expect(serviceMock.getCurrent).toHaveBeenCalledTimes(1);
   });
 
   it('affiche un message quand le back est injoignable', async () => {

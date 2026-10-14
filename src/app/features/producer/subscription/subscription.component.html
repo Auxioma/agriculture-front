@@ -7,7 +7,7 @@
 } @else if (current() !== undefined) {
   <div class="mt-4 space-y-5 px-4 pb-6 lg:max-w-4xl lg:px-0">
     @if (notice()) {
-      <p role="status" class="rounded-lg bg-badge-bg px-4 py-3 text-sm font-medium text-agri">{{ notice() }}</p>
+      <p role="status" [attr.aria-busy]="waiting()" [class.animate-pulse]="waiting()" class="rounded-lg bg-badge-bg px-4 py-3 text-sm font-medium text-agri">{{ notice() }}</p>
     }
     @if (error()) {
       <p role="alert" class="text-sm text-danger">{{ error() }}</p>
@@ -23,6 +23,11 @@
       </div>
       <p class="mt-2 text-2xl font-bold">{{ headline() }}</p>
       <p class="mt-2 text-xs text-white/80">{{ summary() }}</p>
+      @if (scheduledChange(); as change) {
+        <p class="mt-2 text-xs font-medium">
+          Passage au plan {{ change.planName }} ({{ formatPrice(change.amount, change.currencyCode, change.billingCycle) }}) prévu le {{ longDate(change.effectiveAt) }}.
+        </p>
+      }
     </section>
 
     @if (subscription()?.status === 'past_due') {
@@ -151,6 +156,11 @@
 
     <div class="flex flex-wrap gap-3">
       <a routerLink="/producer/support" class="rounded-lg border border-agri bg-white px-5 py-2.5 text-sm font-semibold text-agri">Support</a>
+      @if (subscription()?.cancelAtPeriodEnd) {
+        <button type="button" (click)="resume()" [disabled]="busy()" class="cursor-pointer rounded-lg bg-agri px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+          Reprendre mon abonnement
+        </button>
+      }
     </div>
 
     <!-- annulation : l'abonnement reste actif jusqu'a la fin de la periode payee -->

@@ -60,6 +60,17 @@ export interface PlanChange {
   effectiveAt: string | null;
 }
 
+// changement d'offre deja programme (une descente, prise d'effet a la prochaine echeance)
+export interface ScheduledChange {
+  planPriceId: string;
+  planCode: string;
+  planName: string;
+  billingCycle: BillingCycle;
+  amount: string | null;
+  currencyCode: string | null;
+  effectiveAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
   private http = inject(HttpClient);
@@ -89,6 +100,16 @@ export class SubscriptionService {
 
   cancel() {
     return this.http.post<void>(`${this.apiUrl}/subscription/cancel`, {});
+  }
+
+  // annule l'annulation : l'abonnement continue
+  resume() {
+    return this.http.post<void>(`${this.apiUrl}/subscription/resume`, {});
+  }
+
+  // 204 (rien de programme) : le corps est null
+  getScheduledChange() {
+    return this.http.get<ScheduledChange | null>(`${this.apiUrl}/subscription/scheduled-change`);
   }
 
   getCards() {
