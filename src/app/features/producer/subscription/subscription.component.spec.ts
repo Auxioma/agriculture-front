@@ -154,7 +154,9 @@ describe('SubscriptionComponent', () => {
     await create();
 
     click(planCard('Premium'));
-    expect(text()).toContain('Le changement prend effet immédiatement.');
+    expect(text()).toContain('Le changement prend effet immédiatement');
+    // cahier : conditions d'upgrade transparentes, la différence est facturée tout de suite et non le prix plein
+    expect(text()).toContain('seule la différence avec ce que vous avez déjà payé pour la période en cours (calcul au prorata) est facturée aujourd’hui');
     click(button('Confirmer'));
 
     expect(serviceMock.changePlan).toHaveBeenCalledWith('premium-m');

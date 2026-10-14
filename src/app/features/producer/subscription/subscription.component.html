@@ -89,7 +89,7 @@
         } @else if (pendingIsDowngrade()) {
           <p>Passer au plan {{ p.plan.name }} ({{ formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle) }}). Le changement prendra effet à la prochaine échéance, le {{ longDate(subscription()!.currentPeriodEnd) }}.</p>
         } @else {
-          <p>Passer au plan {{ p.plan.name }} ({{ formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle) }}). Le changement prend effet immédiatement.</p>
+          <p>Passer au plan {{ p.plan.name }} ({{ formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle) }}). Le changement prend effet immédiatement : seule la différence avec ce que vous avez déjà payé pour la période en cours (calcul au prorata) est facturée aujourd’hui.</p>
         }
         <div class="mt-3 flex gap-3">
           <button type="button" (click)="confirm()" [disabled]="busy()" class="cursor-pointer rounded-lg bg-agri px-4 py-2 font-semibold text-white disabled:opacity-60">
