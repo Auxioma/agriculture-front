@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, first, forkJoin, map, of, switchMap, take, timer } from 'rxjs';
@@ -86,7 +86,11 @@ export class SubscriptionComponent {
   );
   error = signal('');
 
+  private dialog = viewChild<ElementRef<HTMLElement>>('dialog');
+
   constructor() {
+    // la carte de confirmation prend le focus a l'ouverture (clavier, lecteurs d'ecran)
+    effect(() => this.dialog()?.nativeElement.focus());
     // de retour de la page de paiement : l'abonnement et sa facture peuvent ne pas encore etre la
     if (this.checkoutResult === 'success') {
       this.watch((current, invoices) => !!current && IN_FORCE.includes(current.status) && invoices.length > 0, 'Votre abonnement est actif.');
@@ -163,7 +167,14 @@ export class SubscriptionComponent {
     this.pending.set(card);
   }
 
-  // sans abonnement : page de paiement Stripe ; avec : changement d'offre
+  // le client refuse --> rien n'a ete envoyé, sauf si l'appel est deja parti
+  dismiss(): void {
+    if (this.busy()) return;
+    this.error.set('');
+    this.pending.set(null);
+  }
+
+  // le client a accepte. Sans abonnement --> page de paiement Stripe, avec changement d'offre
   confirm(): void {
     const pending = this.pending();
     if (!pending) return;

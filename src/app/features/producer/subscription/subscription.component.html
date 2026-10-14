@@ -5,11 +5,11 @@
 @if (current() === 'error') {
   <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Impossible de charger votre abonnement pour le moment.</p>
 } @else if (current() !== undefined) {
-  <div class="mt-4 space-y-5 px-4 pb-6 lg:max-w-4xl lg:px-0">
+  <div class="mt-4 space-y-5 px-4 pb-6 lg:max-w-4xl lg:px-0" [attr.inert]="pending() ? '' : null">
     @if (notice()) {
       <p role="status" [attr.aria-busy]="waiting()" [class.animate-pulse]="waiting()" class="rounded-lg bg-badge-bg px-4 py-3 text-sm font-medium text-agri">{{ notice() }}</p>
     }
-    @if (error()) {
+    @if (error() && !pending()) {
       <p role="alert" class="text-sm text-danger">{{ error() }}</p>
     }
 
@@ -87,26 +87,6 @@
       }
     </div>
 
-    @if (pending(); as p) {
-      <div class="rounded-lg border border-agri bg-white p-4 text-sm">
-        @if (!subscription()) {
-          <p>Souscrire au plan {{ p.plan.name }} ({{ formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle) }}). Vous serez redirigé vers la page de paiement sécurisée.</p>
-        } @else if (pendingIsDowngrade()) {
-          <p>Passer au plan {{ p.plan.name }} ({{ formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle) }}). Le changement prendra effet à la prochaine échéance, le {{ longDate(subscription()!.currentPeriodEnd) }}.</p>
-        } @else {
-          <p>Passer au plan {{ p.plan.name }} ({{ formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle) }}). Le changement prend effet immédiatement : seule la différence avec ce que vous avez déjà payé pour la période en cours (calcul au prorata) est facturée aujourd’hui.</p>
-        }
-        <div class="mt-3 flex gap-3">
-          <button type="button" (click)="confirm()" [disabled]="busy()" class="cursor-pointer rounded-lg bg-agri px-4 py-2 font-semibold text-white disabled:opacity-60">
-            Confirmer
-          </button>
-          <button type="button" (click)="pending.set(null)" [disabled]="busy()" class="cursor-pointer rounded-lg border border-grey-400 px-4 py-2 font-medium text-grey-700">
-            Annuler
-          </button>
-        </div>
-      </div>
-    }
-
     <!-- facturation -->
     @if (subscription() || invoices().length) {
       <section class="rounded-xl border border-grey-200 bg-white p-4 lg:max-w-md">
@@ -182,4 +162,58 @@
       }
     }
   </div>
+
+  <!-- card de confirmation sur fond flou : rien ne part chez Stripe tant que le client n'a pas accepté -->
+  @if (pending(); as p) {
+    @let price = formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle);
+    @let renewal = p.price.billingCycle === 'yearly' ? 'chaque année' : 'chaque mois';
+    <div class="fixed inset-0 z-50 flex overflow-y-auto bg-fonts/40 p-4 backdrop-blur-sm" (click)="dismiss()">
+      <div
+        #dialog
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="change-title"
+        tabindex="-1"
+        (click)="$event.stopPropagation()"
+        (keydown.escape)="dismiss()"
+        class="m-auto w-full max-w-md rounded-2xl bg-white p-5 text-sm shadow-xl outline-none"
+      >
+        <h2 id="change-title" class="text-lg font-bold">{{ subscription() ? 'Passer' : 'Souscrire' }} au plan {{ p.plan.name }}</h2>
+        <p class="mt-1 text-2xl font-bold text-agri">{{ price }}</p>
+
+        <div class="mt-4 space-y-3">
+          @if (!subscription()) {
+            <p><strong>Aujourd’hui.</strong> Vous êtes redirigé vers la page de paiement sécurisée de Stripe et vous réglez {{ price }}.</p>
+            <p><strong>Ensuite.</strong> L’abonnement se renouvelle automatiquement {{ renewal }}. Vous pouvez l’annuler à tout moment depuis cette page.</p>
+          } @else if (pendingIsDowngrade()) {
+            <p><strong>Aujourd’hui.</strong> Rien n’est facturé et vous gardez le plan {{ subscription()!.planName }} jusqu’à la prochaine échéance, le {{ longDate(subscription()!.currentPeriodEnd) }}.</p>
+            <p><strong>Ensuite.</strong> Le changement prend effet ce jour-là : vous passez au plan {{ p.plan.name }} ({{ price }}), facturé à chaque renouvellement.</p>
+          } @else {
+            <p>
+              <strong>Aujourd’hui.</strong> Le changement prend effet immédiatement : seule la différence avec ce que vous avez déjà payé pour la période en cours (calcul au prorata) est facturée aujourd’hui sur votre carte enregistrée. Si le paiement est refusé, votre abonnement ne change pas.
+            </p>
+            <p>
+              <strong>Ensuite.</strong>
+              @if (subscription()!.billingCycle === 'yearly' && p.price.billingCycle === 'monthly') {
+                Si la différence est en votre faveur, rien n’est remboursé sur la carte : elle reste en crédit sur votre compte et réduit vos prochaines factures.
+              }
+              Le plan se renouvelle automatiquement {{ renewal }}.
+            </p>
+          }
+        </div>
+
+        @if (error()) {
+          <p role="alert" class="mt-3 text-danger">{{ error() }}</p>
+        }
+        <div class="mt-5 flex gap-3">
+          <button type="button" (click)="confirm()" [disabled]="busy()" class="flex-1 cursor-pointer rounded-lg bg-agri px-4 py-2.5 font-semibold text-white disabled:opacity-60">
+            J’accepte
+          </button>
+          <button type="button" (click)="dismiss()" [disabled]="busy()" class="flex-1 cursor-pointer rounded-lg border border-grey-400 px-4 py-2.5 font-medium text-grey-700 disabled:opacity-60">
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 }

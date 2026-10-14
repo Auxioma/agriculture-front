@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { CurrentSubscription, Invoice, PaymentCard, Plan, ScheduledChange, SubscriptionService } from './subscription.service';
 import { SubscriptionComponent } from './subscription.component';
@@ -96,6 +96,7 @@ describe('SubscriptionComponent', () => {
   const plain = (element: Element) => element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
   const button = (label: string) => [...compiled.querySelectorAll('button')].find((b) => b.textContent?.trim() === label);
   const planCard = (name: string) => [...compiled.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find((b) => b.textContent?.includes(name))!;
+  const dialog = () => compiled.querySelector<HTMLElement>('[role="dialog"]');
   const click = (element: HTMLElement | undefined) => {
     element!.click();
     fixture.detectChanges();
@@ -169,19 +170,24 @@ describe('SubscriptionComponent', () => {
 
     click(planCard('Pro'));
 
-    expect(text()).not.toContain('Confirmer');
+    expect(dialog()).toBeNull();
   });
 
   it('monter d\'offre est immédiat : confirmation, appel du back puis relecture', async () => {
     await create();
 
     click(planCard('Premium'));
-    expect(text()).toContain('Le changement prend effet immédiatement');
+    expect(plain(dialog()!)).toContain('Le changement prend effet immédiatement');
     // cahier : conditions d'upgrade transparentes, la différence est facturée tout de suite et non le prix plein
-    expect(text()).toContain('seule la différence avec ce que vous avez déjà payé pour la période en cours (calcul au prorata) est facturée aujourd’hui');
-    click(button('Confirmer'));
+    expect(plain(dialog()!)).toContain('seule la différence avec ce que vous avez déjà payé pour la période en cours (calcul au prorata) est facturée aujourd’hui');
+    expect(plain(dialog()!)).toContain('Si le paiement est refusé, votre abonnement ne change pas.');
+    expect(plain(dialog()!)).toContain('Le plan se renouvelle automatiquement chaque mois.');
+    // pas de crédit à expliquer quand on monte d'offre
+    expect(plain(dialog()!)).not.toContain('crédit');
+    click(button('J’accepte'));
 
     expect(serviceMock.changePlan).toHaveBeenCalledWith('premium-m');
+    expect(dialog()).toBeNull();
     expect(text()).toContain('Votre passage au plan Premium est en cours : il prend effet immédiatement.');
     await wait(0);
     expect(serviceMock.getCurrent).toHaveBeenCalledTimes(2);
@@ -190,7 +196,7 @@ describe('SubscriptionComponent', () => {
   it('après une montée d\'offre, attend que le webhook ait changé le plan puis le confirme', async () => {
     await create();
     click(planCard('Premium'));
-    click(button('Confirmer'));
+    click(button('J’accepte'));
 
     // le webhook de Stripe n'est pas encore passé
     await wait(0);
@@ -210,8 +216,9 @@ describe('SubscriptionComponent', () => {
     serviceMock.changePlan.mockReturnValue(of({ effect: 'next_renewal', effectiveAt: '2026-09-01T10:00:00+00:00' }));
 
     click(planCard('Essentiel'));
-    expect(text()).toContain('Le changement prendra effet à la prochaine échéance, le 1er septembre 2026.');
-    click(button('Confirmer'));
+    expect(plain(dialog()!)).toContain('Rien n’est facturé et vous gardez le plan Pro jusqu’à la prochaine échéance, le 1er septembre 2026.');
+    expect(plain(dialog()!)).toContain('vous passez au plan Essentiel (12 €/mois), facturé à chaque renouvellement');
+    click(button('J’accepte'));
 
     expect(serviceMock.changePlan).toHaveBeenCalledWith('essentiel-m');
     expect(text()).toContain('Votre plan passera à Essentiel le 1er septembre 2026.');
@@ -223,20 +230,141 @@ describe('SubscriptionComponent', () => {
     click(planCard('Premium'));
     click(button('Annuler'));
 
-    expect(text()).not.toContain('Confirmer');
+    expect(dialog()).toBeNull();
     expect(serviceMock.changePlan).not.toHaveBeenCalled();
+  });
+
+  it('le changement s\'explique dans une carte sur fond flou, rien n\'est envoyé tant qu\'on n\'a pas accepté', async () => {
+    await create();
+
+    click(planCard('Premium'));
+
+    expect(dialog()!.getAttribute('aria-modal')).toBe('true');
+    expect(plain(dialog()!)).toContain('Passer au plan Premium');
+    expect(plain(dialog()!)).toContain('49 €/mois');
+    expect(dialog()!.parentElement!.className).toContain('backdrop-blur');
+    expect(button('J’accepte')).toBeTruthy();
+    expect(serviceMock.changePlan).not.toHaveBeenCalled();
+    expect(serviceMock.checkout).not.toHaveBeenCalled();
+  });
+
+  it('derrière la carte, la page est inerte', async () => {
+    await create();
+    expect(compiled.querySelector('[inert]')).toBeNull();
+
+    click(planCard('Premium'));
+    expect(compiled.querySelector('[inert]')).not.toBeNull();
+    expect(compiled.querySelector('[inert]')!.contains(dialog())).toBe(false);
+
+    click(button('Annuler'));
+    expect(compiled.querySelector('[inert]')).toBeNull();
+  });
+
+  it('la carte prend le focus à l\'ouverture', async () => {
+    await create();
+
+    click(planCard('Premium'));
+
+    expect(document.activeElement).toBe(dialog());
+  });
+
+  it('la touche Échap ferme la carte sans rien envoyer', async () => {
+    await create();
+    click(planCard('Premium'));
+
+    dialog()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+
+    expect(dialog()).toBeNull();
+    expect(serviceMock.changePlan).not.toHaveBeenCalled();
+  });
+
+  it('un clic sur le fond flou ferme la carte, un clic dans la carte non', async () => {
+    await create();
+    click(planCard('Premium'));
+
+    click(dialog()!);
+    expect(dialog()).not.toBeNull();
+
+    click(dialog()!.parentElement as HTMLElement);
+    expect(dialog()).toBeNull();
+    expect(serviceMock.changePlan).not.toHaveBeenCalled();
+  });
+
+  it('pendant l\'appel au back, la carte ne se ferme pas et ne peut pas être acceptée deux fois', async () => {
+    await create();
+    serviceMock.changePlan.mockReturnValue(NEVER);
+    click(planCard('Premium'));
+    click(button('J’accepte'));
+
+    expect(button('J’accepte')!.disabled).toBe(true);
+    expect(button('Annuler')!.disabled).toBe(true);
+    dialog()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    click(dialog()!.parentElement as HTMLElement);
+    expect(dialog()).not.toBeNull();
+    button('J’accepte')!.click();
+    expect(serviceMock.changePlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('l\'erreur du paiement s\'affiche dans la carte, une seule fois, et la carte reste ouverte', async () => {
+    await create();
+    serviceMock.changePlan.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 402, error: { error: 'Le paiement de ce changement d\'offre n\'a pas abouti : votre abonnement n\'a pas changé.' } })));
+
+    click(planCard('Premium'));
+    click(button('J’accepte'));
+
+    const alerts = compiled.querySelectorAll('[role="alert"]');
+    expect(alerts.length).toBe(1);
+    expect(dialog()!.contains(alerts[0])).toBe(true);
+    expect(alerts[0].textContent).toContain('votre abonnement n\'a pas changé');
+    expect(button('J’accepte')!.disabled).toBe(false);
+  });
+
+  it('renoncer après une erreur efface le message', async () => {
+    await create();
+    serviceMock.changePlan.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 502, error: { error: 'Le service de paiement est momentanément indisponible.' } })));
+    click(planCard('Premium'));
+    click(button('J’accepte'));
+
+    click(button('Annuler'));
+
+    expect(dialog()).toBeNull();
+    expect(compiled.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('en passant de l\'annuel au mensuel, la carte dit que la différence reste en crédit', async () => {
+    await create(of(current({ planPriceId: 'pro-y', billingCycle: 'yearly', amount: '240.00' })));
+    click(button('Mensuel'));
+
+    click(planCard('Pro'));
+
+    expect(plain(dialog()!)).toContain('Si la différence est en votre faveur, rien n’est remboursé sur la carte : elle reste en crédit sur votre compte et réduit vos prochaines factures.');
+    expect(plain(dialog()!)).toContain('Le plan se renouvelle automatiquement chaque mois.');
   });
 
   it('sans abonnement, souscrire envoie sur la page de paiement', async () => {
     await create(of(null), { invoices: [] });
 
     click(planCard('Pro'));
-    expect(text()).toContain('redirigé vers la page de paiement');
-    click(button('Confirmer'));
+    expect(plain(dialog()!)).toContain('Souscrire au plan Pro');
+    expect(plain(dialog()!)).toContain('Vous êtes redirigé vers la page de paiement sécurisée de Stripe et vous réglez 24 €/mois.');
+    expect(plain(dialog()!)).toContain('se renouvelle automatiquement chaque mois');
+    expect(serviceMock.checkout).not.toHaveBeenCalled();
+    click(button('J’accepte'));
 
     expect(serviceMock.checkout).toHaveBeenCalledWith('pro-m');
     expect(redirect).toHaveBeenCalledWith('https://pay.test/session');
     expect(serviceMock.changePlan).not.toHaveBeenCalled();
+  });
+
+  it('sans abonnement, un abonnement annuel se renouvelle chaque année', async () => {
+    await create(of(null), { invoices: [] });
+
+    click(button('Annuel'));
+    click(planCard('Pro'));
+
+    expect(plain(dialog()!)).toContain('vous réglez 240 €/an');
+    expect(plain(dialog()!)).toContain('se renouvelle automatiquement chaque année');
   });
 
   it('affiche le message du back quand l\'offre est refusée', async () => {
@@ -244,7 +372,7 @@ describe('SubscriptionComponent', () => {
     serviceMock.changePlan.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 502, error: { error: 'Le service de paiement est momentanément indisponible.' } })));
 
     click(planCard('Premium'));
-    click(button('Confirmer'));
+    click(button('J’accepte'));
 
     expect(compiled.querySelector('[role="alert"]')?.textContent).toContain('momentanément indisponible');
   });
@@ -360,7 +488,7 @@ describe('SubscriptionComponent', () => {
     serviceMock.getScheduledChange.mockReturnValue(of(CHANGE));
 
     click(planCard('Essentiel'));
-    click(button('Confirmer'));
+    click(button('J’accepte'));
 
     expect(serviceMock.getScheduledChange).toHaveBeenCalledTimes(2);
     expect(plain(compiled.querySelector('section')!)).toContain('Passage au plan Essentiel (12 €/mois) prévu le 1er septembre 2026.');
