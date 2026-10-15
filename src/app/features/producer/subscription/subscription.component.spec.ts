@@ -502,6 +502,59 @@ describe('SubscriptionComponent', () => {
     expect(text()).toContain('Mettre à jour ma carte');
   });
 
+  // Stripe affiche déjà la période suivante quand un renouvellement échoue : la date de fin de période n'est pas l'échéance
+  it('en retard de paiement, dit que le paiement attend au lieu d\'une date de renouvellement', async () => {
+    await create(of(current({ status: 'past_due' })));
+
+    expect(plain(compiled.querySelector('section')!)).toContain('Paiement en attente · 24/30 demandes utilisées');
+    expect(plain(compiled.querySelector('section')!)).not.toContain('Renouvellement le');
+  });
+
+  it('en retard de paiement et annulé, la fin de l\'abonnement reste affichée', async () => {
+    await create(of(current({ status: 'past_due', cancelAtPeriodEnd: true })));
+
+    expect(plain(compiled.querySelector('section')!)).toContain('Fin de l’abonnement le 1er septembre 2026');
+    expect(plain(compiled.querySelector('section')!)).not.toContain('Paiement en attente');
+  });
+
+  it('en retard de paiement, les autres offres sont désactivées : le back refuserait le changement, la page le dit avant', async () => {
+    await create(of(current({ status: 'past_due' })));
+
+    expect(compiled.querySelector('[role="alert"]')?.textContent).toContain('Vous pourrez changer d’offre une fois le paiement régularisé');
+    expect(planCard('Premium').disabled).toBe(true);
+    expect(planCard('Essentiel').disabled).toBe(true);
+    expect(planCard('Pro').disabled).toBe(false);
+
+    click(planCard('Premium'));
+    // même sans le bouton, le composant refuse d'ouvrir la carte
+    const premium = fixture.componentInstance.cards().find((c) => c.plan.code === 'premium')!;
+    fixture.componentInstance.select(premium);
+    fixture.detectChanges();
+
+    expect(dialog()).toBeNull();
+    expect(serviceMock.changePlan).not.toHaveBeenCalled();
+  });
+
+  it('hors retard de paiement, les offres restent sélectionnables', async () => {
+    await create();
+
+    expect(planCard('Premium').disabled).toBe(false);
+    expect(planCard('Essentiel').disabled).toBe(false);
+  });
+
+  it('en retard de paiement, l\'annulation ne promet pas un accès qui n\'existe plus', async () => {
+    await create(of(current({ status: 'past_due' })));
+
+    click(button('Annuler mon abonnement'));
+    expect(text()).toContain('Votre abonnement prendra fin le 1er septembre 2026');
+    expect(text()).toContain('Votre accès reste limité tant que le dernier paiement n\'est pas régularisé');
+    expect(text()).not.toContain('reste actif');
+    click(button('Annuler mon abonnement'));
+
+    expect(serviceMock.cancel).toHaveBeenCalledTimes(1);
+    expect(text()).toContain('Annulation enregistrée : votre abonnement prendra fin le 1er septembre 2026. Votre accès reste limité');
+  });
+
   it('au retour de la page de paiement, confirme ou annonce l\'abandon', async () => {
     await create(of(current()), { query: { checkout: 'success' } });
     expect(text()).toContain('Paiement reçu');

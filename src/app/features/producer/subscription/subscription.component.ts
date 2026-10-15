@@ -120,6 +120,9 @@ export class SubscriptionComponent {
     return order.indexOf(pending.plan.code) < order.indexOf(subscription.planCode);
   });
 
+  // paiement en retard --> l'accès est limité, Stripe reessaie de prélever, le back refuse tout changement d'offre
+  pastDue = computed(() => this.subscription()?.status === 'past_due');
+
   planName = computed(() => this.subscription()?.planName ?? 'Gratuit');
 
   headline = computed(() => {
@@ -131,11 +134,13 @@ export class SubscriptionComponent {
   summary = computed(() => {
     const s = this.subscription();
     if (!s) return 'Profil limité, aperçu anonymisé des demandes.';
-    const end = s.cancelAtPeriodEnd ? 'Fin de l’abonnement le' : 'Renouvellement le';
     const usage =
       s.requestsQuota === null
         ? `${s.requestsThisMonth} demandes reçues ce mois-ci`
         : `${s.requestsThisMonth}/${s.requestsQuota} demandes utilisées`;
+    // en retard, Stripe affiche déjà la période suivante : "Renouvellement le" donnerait une date qui n'est pas l'échéance
+    if (this.pastDue() && !s.cancelAtPeriodEnd) return `Paiement en attente · ${usage}`;
+    const end = s.cancelAtPeriodEnd ? 'Fin de l’abonnement le' : 'Renouvellement le';
     return `${end} ${longDate(s.currentPeriodEnd)} · ${usage}`;
   });
 
@@ -161,7 +166,7 @@ export class SubscriptionComponent {
   }
 
   select(card: PlanCard): void {
-    if (card.isCurrent) return;
+    if (card.isCurrent || this.pastDue()) return;
     this.error.set('');
     this.notice.set('');
     this.pending.set(card);
@@ -206,12 +211,18 @@ export class SubscriptionComponent {
   }
 
   cancel(): void {
+    const late = this.pastDue();
+    const end = longDate(this.subscription()!.currentPeriodEnd);
     this.start();
     this.service.cancel().subscribe({
       next: () => {
         this.busy.set(false);
         this.confirmingCancel.set(false);
-        this.notice.set('Annulation enregistrée : votre abonnement reste actif jusqu’à la fin de la période payée.');
+        this.notice.set(
+          late
+            ? `Annulation enregistrée : votre abonnement prendra fin le ${end}. Votre accès reste limité tant que le paiement n’est pas régularisé.`
+            : 'Annulation enregistrée : votre abonnement reste actif jusqu’à la fin de la période payée.',
+        );
         this.refresh.next();
       },
       error: (err) => this.fail(err),
