@@ -10,6 +10,14 @@
 @if (requests() === null) {
   <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Impossible de charger les demandes pour le moment.</p>
 } @else if (requests()) {
+  @if (previewOnly()) {
+    <!-- cahier : producteur non abonne = apercu limite + CTA de deblocage -->
+    <p class="mx-4 mt-4 rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri lg:mx-0">
+      Aperçu limité : le nom du client, son message, son budget et ses pièces jointes sont réservés aux producteurs abonnés.
+      <a routerLink="/producer/subscription" class="font-semibold underline">Débloquer les demandes</a>
+    </p>
+  }
+
   <!-- filtres : a la ligne, "Tout" et les deux listes puis les 4 boutons (en desktop, max-w-xs force la coupure) -->
   <div class="mt-4 flex flex-wrap gap-2 px-4 lg:max-w-xs lg:px-0" role="group" aria-label="Filtrer les demandes">
     <button type="button" (click)="reset()" [attr.aria-pressed]="!isFiltered()" [class]="chip(!isFiltered())">Tout</button>
@@ -44,7 +52,8 @@
     <button type="button" (click)="toggle('volume')" [attr.aria-pressed]="isOn('volume')" [class]="chip(isOn('volume'))">
       Volumes
     </button>
-    <button type="button" (click)="toggle('budget')" [attr.aria-pressed]="isOn('budget')" [class]="chip(isOn('budget'))">
+    <!-- le budget fait partie de ce qui est cache sans abonnement : le filtre ne trouverait rien -->
+    <button type="button" (click)="toggle('budget')" [attr.aria-pressed]="isOn('budget')" [disabled]="previewOnly()" [class]="chip(isOn('budget')) + ' disabled:cursor-not-allowed disabled:opacity-60'">
       Budget
     </button>
   </div>

@@ -16,6 +16,8 @@ export interface ReceivedRequest {
   receivedAt: string;
   respondedAt: string | null;
   declined: boolean;
+  // producteur sans abonnement : le nom du client est caché
+  locked: boolean;
 }
 
 // piece jointe d'une reponse ; fileUrl est une URL signee qui expire (generee par le back a chaque lecture)

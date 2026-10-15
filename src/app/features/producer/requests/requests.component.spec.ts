@@ -21,6 +21,7 @@ const request = (overrides: Partial<AvailableRequest>): AvailableRequest => ({
   clientType: 'individual',
   isNew: false,
   highVolume: false,
+  locked: false,
   ...overrides,
 });
 
@@ -127,5 +128,25 @@ describe('RequestsComponent', () => {
     await create(throwError(() => new Error('API down')));
 
     expect(compiled.textContent).toContain('Impossible de charger les demandes');
+  });
+
+  // cahier fonctionnel : producteur non abonné = aperçu limité + bouton de déblocage
+  it('sans abonnement : un message d\'aperçu limité avec le lien de déblocage, et le filtre Budget est désactivé', async () => {
+    await create(of(REQUESTS.map((r) => ({ ...r, locked: true, budgetMax: null }))));
+
+    expect(compiled.textContent).toContain('Aperçu limité');
+    expect(compiled.querySelector('a[href="/producer/subscription"]')?.textContent?.trim()).toBe('Débloquer les demandes');
+    expect((chip('Budget') as HTMLButtonElement).disabled).toBe(true);
+    // les cartes montrent toujours produit, volume et zone
+    expect(rows()[0]).toContain('Tomates bio - 20kg');
+    expect(rows()[0]).toContain('Lyon · 4 km');
+  });
+
+  it('avec un abonnement : pas de message d\'aperçu, le filtre Budget fonctionne', async () => {
+    await create();
+
+    expect(compiled.textContent).not.toContain('Aperçu limité');
+    expect(compiled.querySelector('a[href="/producer/subscription"]')).toBeNull();
+    expect((chip('Budget') as HTMLButtonElement).disabled).toBe(false);
   });
 });

@@ -34,6 +34,9 @@ export class RequestsComponent {
   product = signal('');
   clientType = signal('');
 
+  // sans abonnement les demandes sont en aperçu limité : un bouton de déblocage les accompagne
+  previewOnly = computed(() => (this.requests() ?? []).some((r) => r.locked));
+
   products = computed(() => [...new Set((this.requests() ?? []).map((r) => r.product).filter((p): p is string => !!p))]);
 
   isFiltered = computed(() => this.toggles().length > 0 || !!this.product() || !!this.clientType());
