@@ -39,6 +39,13 @@
         }
       </div>
 
+      @if (previewOnly()) {
+        <p class="mb-3 rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri">
+          Aperçu limité : le nom du client, son message et son budget sont réservés aux producteurs abonnés.
+          <a routerLink="/producer/subscription" class="font-semibold underline">Débloquer les demandes</a>
+        </p>
+      }
+
       <h2 class="mb-3 font-bold">{{ filterTitle() }}</h2>
       <ul class="space-y-3">
         @for (request of visibleRequests(); track request.requestId) {

@@ -21,6 +21,7 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
   clientType: 'individual',
   isNew: true,
   highVolume: false,
+  locked: false,
   desiredDate: null,
   department: '69',
   pickupWanted: false,

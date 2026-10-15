@@ -47,6 +47,9 @@ export class DashboardComponent {
   readonly filters = FILTERS;
   filter = signal<RequestFilter>('urgent');
 
+  // sans abonnement les demandes sont en aperçu limité : un bouton de déblocage les accompagne
+  previewOnly = computed(() => (this.dashboard()?.requests ?? []).some((r) => r.locked));
+
   filterTitle = computed(() => FILTERS.find((f) => f.id === this.filter())!.title);
 
   visibleRequests = computed(() => {

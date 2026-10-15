@@ -21,6 +21,7 @@ const request = (overrides: Partial<ProducerDashboard['requests'][number]>): Pro
   clientType: 'individual',
   isNew: false,
   highVolume: false,
+  locked: false,
   ...overrides,
 });
 
@@ -146,5 +147,20 @@ describe('DashboardComponent', () => {
     await create(throwError(() => new Error('API down')));
 
     expect(compiled.textContent).toContain('Impossible de charger votre tableau de bord');
+  });
+
+  it('sans abonnement : les demandes sont en aperçu limité, avec le lien de déblocage', async () => {
+    await create(of({ ...DASHBOARD, requests: DASHBOARD.requests.map((r) => ({ ...r, locked: true, message: null, budgetMax: null })), subscription: null }));
+
+    expect(compiled.textContent).toContain('Aperçu limité');
+    const unlock = [...compiled.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Débloquer les demandes')!;
+    expect(unlock.getAttribute('href')).toBe('/producer/subscription');
+  });
+
+  it('avec un abonnement : pas de message d\'aperçu limité', async () => {
+    await create();
+
+    expect(compiled.textContent).not.toContain('Aperçu limité');
+    expect([...compiled.querySelectorAll('a')].some((a) => a.textContent?.trim() === 'Débloquer les demandes')).toBe(false);
   });
 });

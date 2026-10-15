@@ -13,6 +13,8 @@ export interface AvailableRequest {
   clientType: 'individual' | 'professional';
   isNew: boolean;
   highVolume: boolean;
+  // producteur sans abonnement : aperçu limité (le nom, le message et le budget du client sont cachés), voir NOTES.md
+  locked: boolean;
 }
 
 export interface DashboardSubscription {
