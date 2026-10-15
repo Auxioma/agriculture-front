@@ -124,7 +124,7 @@
                   @if (invoiceStatus(invoice); as status) {
                     <span class="text-xs font-medium text-danger">{{ status }}</span>
                   }
-                  {{ formatMoney(invoice.amount, invoice.currencyCode) }}
+                  {{ invoiceAmount(invoice) }}
                   @if (invoice.invoiceUrl) {
                     <a [attr.href]="invoice.invoiceUrl" target="_blank" rel="noopener noreferrer" [attr.aria-label]="'Télécharger la facture du ' + longDate(invoice.createdAt)" class="text-agri">
                       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
@@ -157,6 +157,8 @@
         <div class="rounded-lg border border-grey-200 bg-white p-4 text-sm">
           @if (pastDue()) {
             <p>Votre abonnement prendra fin le {{ longDate(subscription()!.currentPeriodEnd) }}, puis vous repassez à l'offre gratuite. Votre accès reste limité tant que le dernier paiement n'est pas régularisé.</p>
+          } @else if (subscription()!.billingCycle === 'yearly') {
+            <p>Votre abonnement reste actif jusqu'au {{ longDate(subscription()!.currentPeriodEnd) }}, fin de votre engagement annuel (sans remboursement), puis vous repassez à l'offre gratuite.</p>
           } @else {
             <p>Votre abonnement reste actif jusqu'au {{ longDate(subscription()!.currentPeriodEnd) }}, puis vous repassez à l'offre gratuite.</p>
           }
@@ -179,6 +181,7 @@
   @if (pending(); as p) {
     @let price = formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle);
     @let renewal = p.price.billingCycle === 'yearly' ? 'chaque année' : 'chaque mois';
+    @let leavesCommitment = subscription()?.billingCycle === 'yearly' && p.price.billingCycle === 'monthly';
     <div class="fixed inset-0 z-50 flex overflow-y-auto bg-fonts/40 p-4 backdrop-blur-sm" (click)="dismiss()">
       <div
         #dialog
@@ -196,9 +199,16 @@
         <div class="mt-4 space-y-3">
           @if (!subscription()) {
             <p><strong>Aujourd’hui.</strong> Vous êtes redirigé vers la page de paiement sécurisée de Stripe et vous réglez {{ price }}.</p>
-            <p><strong>Ensuite.</strong> L’abonnement se renouvelle automatiquement {{ renewal }}. Vous pouvez l’annuler à tout moment depuis cette page.</p>
-          } @else if (pendingIsDowngrade()) {
-            <p><strong>Aujourd’hui.</strong> Rien n’est facturé et vous gardez le plan {{ subscription()!.planName }} jusqu’à la prochaine échéance, le {{ longDate(subscription()!.currentPeriodEnd) }}.</p>
+            <p>
+              <strong>Ensuite.</strong>
+              @if (p.price.billingCycle === 'yearly') {
+                Vous vous engagez pour 12 mois : l’abonnement se renouvelle automatiquement chaque année, et l’annulation prend effet à la fin de l’engagement, sans remboursement.
+              } @else {
+                L’abonnement se renouvelle automatiquement chaque mois. Vous pouvez l’annuler à tout moment depuis cette page.
+              }
+            </p>
+          } @else if (pendingAtRenewal()) {
+            <p><strong>Aujourd’hui.</strong> Rien n’est facturé et vous gardez le plan {{ subscription()!.planName }} jusqu’à @if (leavesCommitment) {la fin de votre engagement annuel} @else {la prochaine échéance}, le {{ longDate(subscription()!.currentPeriodEnd) }}.</p>
             <p><strong>Ensuite.</strong> Le changement prend effet ce jour-là : vous passez au plan {{ p.plan.name }} ({{ price }}), facturé à chaque renouvellement.</p>
           } @else {
             <p>
@@ -206,8 +216,12 @@
             </p>
             <p>
               <strong>Ensuite.</strong>
-              @if (subscription()!.billingCycle === 'yearly' && p.price.billingCycle === 'monthly') {
-                Si la différence est en votre faveur, rien n’est remboursé sur la carte : elle reste en crédit sur votre compte et réduit vos prochaines factures.
+              @if (p.price.billingCycle === 'yearly') {
+                @if (subscription()!.billingCycle === 'yearly') {
+                  Votre engagement annuel continue jusqu’au {{ longDate(subscription()!.currentPeriodEnd) }}.
+                } @else {
+                  Vous vous engagez pour 12 mois à partir d’aujourd’hui : pas de retour au mensuel avant la fin de la période, et l’annulation prend effet à l’échéance, sans remboursement.
+                }
               }
               Le plan se renouvelle automatiquement {{ renewal }}.
             </p>

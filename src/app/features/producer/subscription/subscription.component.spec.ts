@@ -348,14 +348,104 @@ describe('SubscriptionComponent', () => {
     expect(compiled.querySelector('[role="alert"]')).toBeNull();
   });
 
-  it('en passant de l\'annuel au mensuel, la carte dit que la différence reste en crédit', async () => {
+  // Cahier fonctionnel : "Annuel : engagement annuel". Sous engagement, le mensuel attend la fin de la période (même vers un plan plus haut)
+  it('sous engagement annuel, passer au mensuel attend la fin de l\'engagement, sans rien facturer ni rendre', async () => {
     await create(of(current({ planPriceId: 'pro-y', billingCycle: 'yearly', amount: '240.00' })));
+    serviceMock.changePlan.mockReturnValue(of({ effect: 'next_renewal', effectiveAt: '2026-09-01T10:00:00+00:00' }));
     click(button('Mensuel'));
 
     click(planCard('Pro'));
 
-    expect(plain(dialog()!)).toContain('Si la différence est en votre faveur, rien n’est remboursé sur la carte : elle reste en crédit sur votre compte et réduit vos prochaines factures.');
-    expect(plain(dialog()!)).toContain('Le plan se renouvelle automatiquement chaque mois.');
+    expect(plain(dialog()!)).toContain('Rien n’est facturé et vous gardez le plan Pro jusqu’à la fin de votre engagement annuel, le 1er septembre 2026.');
+    expect(plain(dialog()!)).toContain('vous passez au plan Pro (24 €/mois), facturé à chaque renouvellement');
+    expect(plain(dialog()!)).not.toContain('crédit');
+    click(button('J’accepte'));
+
+    expect(serviceMock.changePlan).toHaveBeenCalledWith('pro-m');
+    expect(text()).toContain('Votre plan passera à Pro le 1er septembre 2026.');
+  });
+
+  it('sous engagement annuel, un plan plus haut en mensuel attend aussi la fin de l\'engagement', async () => {
+    await create(of(current({ planPriceId: 'pro-y', billingCycle: 'yearly', amount: '240.00' })));
+    click(button('Mensuel'));
+
+    click(planCard('Premium'));
+
+    expect(plain(dialog()!)).toContain('jusqu’à la fin de votre engagement annuel, le 1er septembre 2026');
+    expect(plain(dialog()!)).toContain('vous passez au plan Premium (49 €/mois)');
+    expect(plain(dialog()!)).not.toContain('Le changement prend effet immédiatement');
+  });
+
+  it('sous engagement annuel, monter vers une offre annuelle reste immédiat et l\'engagement continue', async () => {
+    await create(of(current({ planPriceId: 'pro-y', billingCycle: 'yearly', amount: '240.00' })));
+
+    click(planCard('Premium'));
+
+    expect(plain(dialog()!)).toContain('Le changement prend effet immédiatement');
+    expect(plain(dialog()!)).toContain('Votre engagement annuel continue jusqu’au 1er septembre 2026.');
+    expect(plain(dialog()!)).toContain('Le plan se renouvelle automatiquement chaque année.');
+    expect(plain(dialog()!)).not.toContain('Vous vous engagez pour 12 mois');
+  });
+
+  it('du mensuel à l\'annuel, un engagement de 12 mois commence aujourd\'hui', async () => {
+    await create();
+    click(button('Annuel'));
+
+    click(planCard('Premium'));
+
+    expect(plain(dialog()!)).toContain('Le changement prend effet immédiatement');
+    expect(plain(dialog()!)).toContain('Vous vous engagez pour 12 mois à partir d’aujourd’hui');
+    expect(plain(dialog()!)).toContain('sans remboursement');
+  });
+
+  it('du mensuel au mensuel, aucun engagement n\'est annoncé', async () => {
+    await create();
+
+    click(planCard('Premium'));
+
+    expect(plain(dialog()!)).not.toContain('engage');
+  });
+
+  it('l\'engagement annuel est annoncé dans le résumé, pas pour le mensuel', async () => {
+    await create(of(current({ planPriceId: 'pro-y', billingCycle: 'yearly', amount: '240.00' })));
+    expect(plain(compiled.querySelector('section')!)).toContain('Engagement annuel · Renouvellement le 1er septembre 2026');
+
+    TestBed.resetTestingModule();
+    await create();
+    expect(plain(compiled.querySelector('section')!)).not.toContain('Engagement annuel');
+  });
+
+  it('annuel annulé : le résumé donne la fin de l\'abonnement, pas un engagement qui continue', async () => {
+    await create(of(current({ planPriceId: 'pro-y', billingCycle: 'yearly', amount: '240.00', cancelAtPeriodEnd: true })));
+
+    expect(plain(compiled.querySelector('section')!)).toContain('Fin de l’abonnement le 1er septembre 2026');
+    expect(plain(compiled.querySelector('section')!)).not.toContain('Engagement annuel');
+  });
+
+  it('annuler un abonnement annuel rappelle l\'engagement : actif jusqu\'à la fin, sans remboursement', async () => {
+    await create(of(current({ planPriceId: 'pro-y', billingCycle: 'yearly', amount: '240.00' })));
+
+    click(button('Annuler mon abonnement'));
+
+    expect(text()).toContain('reste actif jusqu\'au 1er septembre 2026, fin de votre engagement annuel (sans remboursement)');
+  });
+
+  it('une facture payée à 0 € (réglée par le crédit) ne montre pas « 0 € » mais « Rien à payer »', async () => {
+    const invoices: Invoice[] = [
+      { id: 'i0', amount: '0.00', currencyCode: 'EUR', status: 'paid', invoiceUrl: 'https://invoices.test/0', createdAt: '2026-08-01T10:00:00+00:00' },
+      { id: 'i1', amount: '49.00', currencyCode: 'EUR', status: 'paid', invoiceUrl: 'https://invoices.test/1', createdAt: '2026-07-01T10:00:00+00:00' },
+      { id: 'i2', amount: '19.00', currencyCode: 'EUR', status: 'failed', invoiceUrl: null, createdAt: '2026-06-01T10:00:00+00:00' },
+    ];
+    await create(of(current()), { invoices });
+
+    const lines = [...compiled.querySelectorAll('section:nth-of-type(2) ul li')].map((li) => plain(li));
+    expect(lines[0]).toContain('Rien à payer');
+    expect(lines[0]).not.toContain('0 €');
+    // la facture reste téléchargeable
+    expect(compiled.querySelectorAll('section:nth-of-type(2) ul li')[0].querySelector('a[href="https://invoices.test/0"]')).toBeTruthy();
+    expect(lines[1]).toContain('49 €');
+    expect(lines[2]).toContain('Paiement échoué');
+    expect(lines[2]).toContain('19 €');
   });
 
   it('sans abonnement, souscrire envoie sur la page de paiement', async () => {
@@ -373,14 +463,25 @@ describe('SubscriptionComponent', () => {
     expect(serviceMock.changePlan).not.toHaveBeenCalled();
   });
 
-  it('sans abonnement, un abonnement annuel se renouvelle chaque année', async () => {
+  it('sans abonnement, un abonnement annuel annonce l\'engagement de 12 mois et se renouvelle chaque année', async () => {
     await create(of(null), { invoices: [] });
 
     click(button('Annuel'));
     click(planCard('Pro'));
 
     expect(plain(dialog()!)).toContain('vous réglez 240 €/an');
+    expect(plain(dialog()!)).toContain('Vous vous engagez pour 12 mois');
     expect(plain(dialog()!)).toContain('se renouvelle automatiquement chaque année');
+    expect(plain(dialog()!)).toContain('l’annulation prend effet à la fin de l’engagement, sans remboursement');
+  });
+
+  it('sans abonnement, un abonnement mensuel n\'annonce aucun engagement', async () => {
+    await create(of(null), { invoices: [] });
+
+    click(planCard('Pro'));
+
+    expect(plain(dialog()!)).not.toContain('engage');
+    expect(plain(dialog()!)).toContain('Vous pouvez l’annuler à tout moment depuis cette page');
   });
 
   it('affiche le message du back quand l\'offre est refusée', async () => {

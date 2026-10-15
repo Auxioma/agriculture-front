@@ -111,13 +111,17 @@ export class SubscriptionComponent {
     });
   });
 
-  // une offre plus haut dans la liste (ordre de l'admin, le meme que celui du back) est une montee
-  pendingIsDowngrade = computed(() => {
+  // prend effet à l'échéance (même règle que le back) : une offre plus basse (ordre de l'admin, le meme que celui du back)
+  // ou le mensuel quand on est sous engagement annuel
+  pendingAtRenewal = computed(() => {
     const pending = this.pending();
     const subscription = this.subscription();
     if (!pending || !subscription) return false;
     const order = this.plans().map((p) => p.code);
-    return order.indexOf(pending.plan.code) < order.indexOf(subscription.planCode);
+    const lowerPlan = order.indexOf(pending.plan.code) < order.indexOf(subscription.planCode);
+    // ! l'annuel est un engagement (cahier) : repasser au mensuel attend la fin de la période, même vers une offre plus haute
+    const leavesAnnual = subscription.billingCycle === 'yearly' && pending.price.billingCycle === 'monthly';
+    return lowerPlan || leavesAnnual;
   });
 
   // paiement en retard --> l'accès est limité, Stripe reessaie de prélever, le back refuse tout changement d'offre
@@ -148,7 +152,9 @@ export class SubscriptionComponent {
     // en retard, Stripe affiche déjà la période suivante : "Renouvellement le" donnerait une date qui n'est pas l'échéance
     if (this.pastDue() && !s.cancelAtPeriodEnd) return `Paiement en attente · ${usage}`;
     const end = s.cancelAtPeriodEnd ? 'Fin de l’abonnement le' : 'Renouvellement le';
-    return `${end} ${longDate(s.currentPeriodEnd)} · ${usage}`;
+    // * l'annuel est un engagement (cahier) : on le dit, la date de renouvellement est aussi la fin de l'engagement
+    const commitment = s.billingCycle === 'yearly' && !s.cancelAtPeriodEnd ? 'Engagement annuel · ' : '';
+    return `${commitment}${end} ${longDate(s.currentPeriodEnd)} · ${usage}`;
   });
 
   // le 1er du mois prochain (en ISO pour shortDate)
@@ -163,6 +169,12 @@ export class SubscriptionComponent {
     if (s.cancelAtPeriodEnd) return 'Annulation prévue';
     return { active: 'Actif', trialing: 'Essai', past_due: 'Paiement en retard' }[s.status as string] ?? null;
   });
+
+  // ! payée à 0 € = rien n'a été prélevé (réglée par le crédit du client, ou avoir) : "0 €" ferait croire à une erreur à côté d'un
+  // plan à 49 €/mois. Le téléchargement montre le détail. (le back garde amount = ce qui est encaissé, les revenus de l'admin en dépendent)
+  invoiceAmount(invoice: Invoice): string {
+    return invoice.status === 'paid' && invoice.amount !== null && Number(invoice.amount) === 0 ? 'Rien à payer' : formatMoney(invoice.amount, invoice.currencyCode);
+  }
 
   // une facture payee n'a pas de mention ; les autres disent ou en est le paiement
   invoiceStatus(invoice: Invoice): string | null {
