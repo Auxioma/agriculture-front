@@ -81,6 +81,18 @@ export class ProducerDetailComponent {
     this.id$.pipe(switchMap((id) => this.api.getReviews(id).pipe(catchError(() => of(null))))),
   );
 
+  // ── Origine de la visite, pour le fil d'Ariane ──
+  // * ?category=<slug> n'est ajouté que par la liste d'une catégorie (/categories/:slug). Sans ce paramètre
+  // * (liste /producers, producteurs du mois, lien direct), le fil d'Ariane passe par « Producteurs ».
+  // * Un paramètre d'URL plutôt que l'historique de navigation : il survit au rechargement et au partage du lien.
+  private readonly categorySlug = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('category'))),
+    { initialValue: this.route.snapshot.queryParamMap.get('category') },
+  );
+
+  /** true = on vient d'une catégorie (« Catégories »), false = « Producteurs » */
+  readonly fromCategory = computed(() => !!this.categorySlug());
+
   // ── Catégorie d'origine (?category=<slug>, ajouté par la liste des producteurs) pour le fil d'Ariane ──
   readonly category = toSignal(
     this.route.queryParamMap.pipe(

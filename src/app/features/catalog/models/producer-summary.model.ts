@@ -27,7 +27,8 @@ export interface Coordinates {
 export type ProducerSort = 'relevance' | 'distance' | 'popularity' | 'newest';
 
 export interface ProducerQuery {
-  categoryId: string;
+  /** null = pas de filtre de catégorie : tous les producteurs actifs (page Producteurs) */
+  categoryId: string | null;
   location: string;
   radius: number;
   seasonalOnly: boolean;

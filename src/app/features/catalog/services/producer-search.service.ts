@@ -9,7 +9,10 @@ export class ProducerSearchService {
   private readonly apiUrl = environment.apiURL;
 
   search(query: ProducerQuery, coords?: Coordinates) {
-    let params = new HttpParams().set('categoryId', query.categoryId);
+    let params = new HttpParams();
+
+    // * Sans catégorie, on n'envoie pas le paramètre : un categoryId vide serait refusé par le back (UUID invalide)
+    if (query.categoryId) params = params.set('categoryId', query.categoryId);
 
     if (query.seasonalOnly) params = params.set('seasonal', true);
     if (query.pickup) params = params.set('pickupAvailable', true);

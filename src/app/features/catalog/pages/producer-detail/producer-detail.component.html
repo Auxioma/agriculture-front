@@ -5,7 +5,11 @@
       <li class="shrink-0"><a routerLink="/" class="text-fonts hover:text-grey-700">Accueil</a></li>
       <li aria-hidden="true" class="shrink-0 text-fonts">/</li>
       <li class="shrink-0">
-        <a routerLink="/categories" class="text-fonts hover:text-grey-700">Catégories</a>
+        @if (fromCategory()) {
+          <a routerLink="/categories" class="text-fonts hover:text-grey-700">Catégories</a>
+        } @else {
+          <a routerLink="/producers" class="text-fonts hover:text-grey-700">Producteurs</a>
+        }
       </li>
       @if (category(); as cat) {
         <li aria-hidden="true" class="shrink-0 text-fonts">/</li>
@@ -28,7 +32,11 @@
     @if (notFound()) {
       <p role="alert" class="rounded-lg border border-danger p-4 text-danger">
         Ce producteur n'existe pas ou n'est plus disponible.
-        <a routerLink="/categories" class="font-semibold underline">Retour aux catégories</a>
+        @if (fromCategory()) {
+          <a routerLink="/categories" class="font-semibold underline">Retour aux catégories</a>
+        } @else {
+          <a routerLink="/producers" class="font-semibold underline">Retour aux producteurs</a>
+        }
       </p>
     } @else if (hasError()) {
       <p role="alert" class="rounded-lg border border-danger p-4 text-danger">

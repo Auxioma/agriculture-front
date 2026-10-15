@@ -138,13 +138,15 @@ describe('CategoryProducersComponent', () => {
     expect(text).toContain('Bio');
   });
 
-  it("relie chaque carte à la fiche du producteur, en gardant la catégorie d'origine", async () => {
+  it("relie chaque carte à la fiche du producteur par son slug, en gardant la catégorie d'origine", async () => {
     const ctx = await setup();
 
-    showResults(ctx, await nextSearch(ctx), [makeProducerSummary({ id: 'p1' })]);
+    showResults(ctx, await nextSearch(ctx), [
+      makeProducerSummary({ id: 'p1', slug: 'ferme-des-vergers' }),
+    ]);
 
     const href = ctx.host.querySelector('ul a')?.getAttribute('href') ?? '';
-    expect(href).toContain('/producers/p1');
+    expect(href).toContain('/producers/ferme-des-vergers');
     expect(href).toContain('category=fruits');
   });
 

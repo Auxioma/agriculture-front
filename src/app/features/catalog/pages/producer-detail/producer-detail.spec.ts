@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -299,6 +300,33 @@ describe('ProducerDetailComponent', () => {
     expect(breadcrumb).toContain('Catégories');
     expect(breadcrumb).toContain('Fruits');
     expect(breadcrumb).toContain('Ferme des Vergers du Roy');
+    // * On vient d'une catégorie : pas de « Producteurs » dans le fil d'Ariane
+    expect(breadcrumb).not.toContain('Producteurs');
+    expect(linkByText(ctx.host, 'Catégories').getAttribute('href')).toBe('/categories');
+  });
+
+  it("passe par « Producteurs » dans le fil d'Ariane quand l'URL ne précise pas de catégorie", async () => {
+    const ctx = await setup();
+
+    respond(ctx, makeProducerDetail());
+
+    const breadcrumb = textOf(ctx.host.querySelector('nav'));
+    expect(breadcrumb).toContain('Producteurs');
+    expect(breadcrumb).toContain('Ferme des Vergers du Roy');
+    expect(breadcrumb).not.toContain('Catégories');
+    expect(linkByText(ctx.host, 'Producteurs').getAttribute('href')).toBe('/producers');
+  });
+
+  it("remplace l'id par le slug dans l'URL, en gardant la catégorie d'origine", async () => {
+    const ctx = await setup('/producers/p1?category=fruits');
+
+    ctx.http
+      .expectOne((r) => r.url === `${apiUrl}/categories`)
+      .flush([makeCategory({ id: 'c1', name: 'Fruits', slug: 'fruits' })]);
+    respond(ctx, makeProducerDetail({ slug: 'ferme-du-soleil' }));
+
+    // * replaceState : l'adresse affichée change, sans recharger la fiche (donc sans seconde vue comptée)
+    expect(TestBed.inject(Location).path()).toBe('/producers/ferme-du-soleil?category=fruits');
   });
 
   it("n'interroge pas les catégories quand l'URL n'en précise pas", async () => {
@@ -321,6 +349,37 @@ describe('ProducerDetailComponent', () => {
     ctx.harness.detectChanges();
 
     expect(textOf(ctx.host)).toContain("n'existe pas ou n'est plus disponible");
+  });
+
+  it('propose de retourner aux producteurs quand la fiche est introuvable, hors catégorie', async () => {
+    const ctx = await setup();
+
+    ctx.http
+      .expectOne(`${apiUrl}/producers/p1`)
+      .flush({ error: 'Producteur introuvable.' }, { status: 404, statusText: 'Not Found' });
+    ctx.http
+      .expectOne(`${apiUrl}/producers/p1/reviews`)
+      .flush({ error: 'Producteur introuvable.' }, { status: 404, statusText: 'Not Found' });
+    ctx.harness.detectChanges();
+
+    expect(linkByText(ctx.host, 'Retour aux producteurs').getAttribute('href')).toBe('/producers');
+  });
+
+  it('propose de retourner aux catégories quand la fiche est introuvable depuis une catégorie', async () => {
+    const ctx = await setup('/producers/p1?category=fruits');
+
+    ctx.http
+      .expectOne((r) => r.url === `${apiUrl}/categories`)
+      .flush([makeCategory({ id: 'c1', name: 'Fruits', slug: 'fruits' })]);
+    ctx.http
+      .expectOne(`${apiUrl}/producers/p1`)
+      .flush({ error: 'Producteur introuvable.' }, { status: 404, statusText: 'Not Found' });
+    ctx.http
+      .expectOne(`${apiUrl}/producers/p1/reviews`)
+      .flush({ error: 'Producteur introuvable.' }, { status: 404, statusText: 'Not Found' });
+    ctx.harness.detectChanges();
+
+    expect(linkByText(ctx.host, 'Retour aux catégories').getAttribute('href')).toBe('/categories');
   });
 
   it("distingue une panne serveur d'un producteur introuvable", async () => {
