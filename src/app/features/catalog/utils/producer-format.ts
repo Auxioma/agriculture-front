@@ -15,6 +15,15 @@ const MONTH_LABELS = [
   'novembre',
   'décembre',
 ];
+/** Segment d'URL public d'un producteur : son slug, ou son id tant que le slug est NULL (ou vide) en base */
+export function producerRef(producer: { id: string; slug: string | null }): string {
+  return producer.slug || producer.id;
+}
+
+export function producerPath(producer: { id: string; slug: string | null }): string[] {
+  return ['/producers', producerRef(producer)];
+}
+
 // * « de » devient « d' » devant une voyelle : avril, août, octobre.
 const VOWEL_MONTHS = new Set([4, 8, 10]);
 

@@ -78,8 +78,14 @@ export class HomeComponent {
       destroyRef.onDestroy(() => window.removeEventListener('resize', onResize));
     });
 
+    // * Sans catchError, une API injoignable lève une exception non gérée (et plante le rendu côté serveur) :
+    // * on affiche simplement une section vide, comme pour les catégories.
     this.producerService
       .getFeatured()
+      .pipe(
+        catchError(() => of([] as FeaturedProducer[])),
+        takeUntilDestroyed(),
+      )
       .subscribe((producers) => this.featuredProducers.set(producers));
 
     this.catalog

@@ -214,6 +214,12 @@ describe('HomeComponent', () => {
     expect(text).toContain('Local');
   });
 
+  it('lie la fiche du producteur à la une à son slug', () => {
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href^="/producers/"]');
+
+    expect(link.getAttribute('href')).toBe('/producers/ferme-dupont');
+  });
+
   it('ne montre pas la section quand le service ne renvoie aucun producteur', async () => {
     producerServiceMock.getFeatured.mockReturnValue(of([]));
 
@@ -222,6 +228,17 @@ describe('HomeComponent', () => {
 
     const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('Nos agriculteurs du mois');
+  });
+
+  it("ne plante pas et masque la section quand l'API des producteurs échoue", () => {
+    producerServiceMock.getFeatured.mockReturnValue(throwError(() => new Error('boom')));
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('Nos agriculteurs du mois');
+    expect(text).toContain('agricole réuni');
   });
 
   it('affiche les 3 étapes de "Comment ça marche"', () => {

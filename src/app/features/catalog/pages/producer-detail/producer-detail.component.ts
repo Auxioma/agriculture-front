@@ -1,4 +1,4 @@
-import { DOCUMENT, NgOptimizedImage } from '@angular/common';
+import { DOCUMENT, Location, NgOptimizedImage } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, filter, map, of, startWith, switchMap } from 'rxjs';
 import { ProducerDetail } from '../../models/producer-detail.model';
 import { CatalogService } from '../../services/catalog.service';
@@ -41,6 +41,8 @@ const REVIEWS_PREVIEW_COUNT = 2;
 })
 export class ProducerDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly document = inject(DOCUMENT);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
@@ -48,6 +50,7 @@ export class ProducerDetailComponent {
   private readonly catalog = inject(CatalogService);
 
   // ── Identifiant du producteur, lu dans l'URL (/producers/:id) ──
+  // * :id contient le slug du producteur (l'API accepte aussi son UUID : anciens liens, favoris).
   private readonly id$ = this.route.paramMap.pipe(
     map((params) => params.get('id')),
     filter((id): id is string => id !== null),
@@ -162,6 +165,22 @@ export class ProducerDetailComponent {
       const summary = (producer.description ?? producer.story ?? '').trim();
       if (summary) {
         this.meta.updateTag({ name: 'description', content: summary.slice(0, 160) });
+      }
+    });
+
+    // * URL canonique : un producteur qui a un slug ne doit avoir qu'une adresse. Si on est arrivé par son id
+    // * (ancien lien, favori), on remplace l'URL affichée par celle du slug, sans recharger la fiche.
+    // * replaceState et non router.navigate : naviguer changerait :id, donc la fiche serait rechargée et
+    // * le backend compterait une seconde vue du profil.
+    effect(() => {
+      const slug = this.producer()?.slug;
+      if (!slug) return;
+
+      const canonical = this.router.serializeUrl(
+        this.router.createUrlTree(['/producers', slug], { queryParamsHandling: 'preserve' }),
+      );
+      if (this.location.path() !== canonical) {
+        this.location.replaceState(canonical);
       }
     });
   }

@@ -10,9 +10,11 @@
       @if (category(); as cat) {
         <li aria-hidden="true" class="shrink-0 text-fonts">/</li>
         <li class="shrink-0">
-          <a [routerLink]="['/categories', cat.slug]" class="text-fonts hover:text-grey-700">{{
-            cat.name
-          }}</a>
+          <a
+            [routerLink]="cat.slug ? ['/categories', cat.slug] : ['/categories']"
+            class="text-fonts hover:text-grey-700"
+            >{{ cat.name }}</a
+          >
         </li>
       }
       @if (producer(); as p) {
