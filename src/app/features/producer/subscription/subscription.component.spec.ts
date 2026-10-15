@@ -539,6 +539,32 @@ describe('SubscriptionComponent', () => {
     expect(serviceMock.getCurrent).toHaveBeenCalledTimes(2);
   });
 
+  // annuler libère le changement d'offre prévu chez Stripe, reprendre ne le remet pas : la page le dit avant et après
+  it('annuler avec un changement d\'offre prévu : la carte d\'annulation dit qu\'il tombe, et le message après aussi', async () => {
+    await create(of(current()), { scheduled: CHANGE });
+
+    click(button('Annuler mon abonnement'));
+    expect(text()).toContain('Le passage au plan Essentiel prévu le 1er septembre 2026 est annulé avec l\'abonnement');
+    expect(text()).toContain('ce changement ne sera pas rétabli');
+    // le changement prévu disparait de la page une fois l'annulation faite
+    serviceMock.getScheduledChange.mockReturnValue(of(null));
+    click(button('Annuler mon abonnement'));
+
+    expect(text()).toContain('Annulation enregistrée : votre abonnement reste actif jusqu’à la fin de la période payée. Le passage au plan Essentiel prévu le 1er septembre 2026 n’aura pas lieu.');
+    expect(plain(compiled.querySelector('section')!)).not.toContain('Passage au plan');
+  });
+
+  it('annuler sans changement d\'offre prévu : rien à dire sur un changement', async () => {
+    await create();
+
+    click(button('Annuler mon abonnement'));
+    expect(text()).not.toContain('ne sera pas rétabli');
+    click(button('Annuler mon abonnement'));
+
+    expect(text()).toContain('Annulation enregistrée');
+    expect(text()).not.toContain('n’aura pas lieu');
+  });
+
   it('on peut garder son abonnement', async () => {
     await create();
 
@@ -571,7 +597,7 @@ describe('SubscriptionComponent', () => {
     click(button('Reprendre mon abonnement'));
 
     expect(serviceMock.resume).toHaveBeenCalledTimes(1);
-    expect(text()).toContain('Votre abonnement est repris : il se renouvellera le 1er septembre 2026.');
+    expect(text()).toContain('Votre abonnement est repris : il se renouvellera le 1er septembre 2026 sur le plan Pro, sans changement d’offre prévu.');
     expect(serviceMock.getCurrent).toHaveBeenCalledTimes(2);
     expect(button('Reprendre mon abonnement')).toBeUndefined();
     expect(button('Annuler mon abonnement')).toBeTruthy();

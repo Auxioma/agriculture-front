@@ -238,15 +238,19 @@ export class SubscriptionComponent {
   cancel(): void {
     const late = this.pastDue();
     const end = longDate(this.subscription()!.currentPeriodEnd);
+    // ! annuler libère le changement d'offre prévu chez Stripe (une planification empêche d'annuler) et reprendre ne le remet pas :
+    // ! on le dit avant (carte d'annulation) et après, sinon il disparait en silence
+    const change = this.scheduledChange();
+    const dropped = change ? ` Le passage au plan ${change.planName} prévu le ${longDate(change.effectiveAt)} n’aura pas lieu.` : '';
     this.start();
     this.service.cancel().subscribe({
       next: () => {
         this.busy.set(false);
         this.confirmingCancel.set(false);
         this.notice.set(
-          late
+          (late
             ? `Annulation enregistrée : votre abonnement prendra fin le ${end}. Votre accès reste limité tant que le paiement n’est pas régularisé.`
-            : 'Annulation enregistrée : votre abonnement reste actif jusqu’à la fin de la période payée.',
+            : 'Annulation enregistrée : votre abonnement reste actif jusqu’à la fin de la période payée.') + dropped,
         );
         this.refresh.next();
       },
@@ -257,11 +261,13 @@ export class SubscriptionComponent {
   // abonnement dont l'annulation etait programmee : il continue et se renouvelle
   resume(): void {
     const end = this.subscription()!.currentPeriodEnd;
+    const plan = this.subscription()!.planName;
     this.start();
     this.service.resume().subscribe({
       next: () => {
         this.busy.set(false);
-        this.notice.set(`Votre abonnement est repris : il se renouvellera le ${longDate(end)}.`);
+        // * un changement prévu avant l'annulation n'est pas rétabli --> on le dit (aucun changement prévu après la reprise)
+        this.notice.set(`Votre abonnement est repris : il se renouvellera le ${longDate(end)} sur le plan ${plan}, sans changement d’offre prévu.`);
         this.refresh.next();
       },
       error: (err) => this.fail(err),
