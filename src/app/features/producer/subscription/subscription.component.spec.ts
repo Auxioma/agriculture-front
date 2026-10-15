@@ -61,10 +61,12 @@ describe('SubscriptionComponent', () => {
 
   async function create(
     sub: Observable<CurrentSubscription | null> = of(current()),
-    options: { invoices?: Invoice[]; cards?: Observable<PaymentCard[]>; scheduled?: ScheduledChange | null; query?: Record<string, string> } = {},
+    options: { invoices?: Invoice[]; cards?: Observable<PaymentCard[]>; scheduled?: ScheduledChange | null; query?: Record<string, string>; now?: Date } = {},
   ): Promise<void> {
     // temps simule : la relecture apres paiement se fait toutes les 2 s, les tests la font avancer a la main
     vi.useFakeTimers();
+    // * date figée, le quota se remet à zéro le 1er du mois suivant (donc ça change selon le jour où on lance les tests)
+    vi.setSystemTime(options.now ?? new Date(2026, 7, 18, 10));
     serviceMock = {
       getPlans: vi.fn(() => of(PLANS)),
       getCurrent: vi.fn(() => sub),
@@ -111,20 +113,34 @@ describe('SubscriptionComponent', () => {
     fixture.detectChanges();
   };
 
-  it('résume le plan actuel : prix, renouvellement et demandes utilisées', async () => {
+  it('résume le plan actuel : prix, renouvellement et demandes reçues', async () => {
     await create();
 
     const summary = compiled.querySelector('section')!.textContent!.replace(/\s+/g, ' ');
     expect(summary).toContain('Plan Pro');
     expect(summary).toContain('Actif');
     expect(summary).toContain('24 €/mois');
-    expect(summary).toContain('Renouvellement le 1er septembre 2026 · 24/30 demandes utilisées');
+    expect(summary).toContain('Renouvellement le 1er septembre 2026 · 24/30 demandes reçues ce mois-ci (quota remis à zéro le 1er septembre)');
   });
 
   it('sans quota, compte seulement les demandes reçues', async () => {
     await create(of(current({ requestsQuota: null })));
 
     expect(text()).toContain('24 demandes reçues ce mois-ci');
+    expect(text()).not.toContain('remis à zéro');
+  });
+
+  // le quota suit le mois calendaire, pas le renouvellement : le 1er du mois suivant, même en fin d'année
+  it('dit quand le quota est remis à zéro : le 1er du mois suivant', async () => {
+    await create(of(current()), { now: new Date(2026, 11, 20, 10) });
+
+    expect(plain(compiled.querySelector('section')!)).toContain('(quota remis à zéro le 1er janvier)');
+  });
+
+  it('dit pareil au milieu du mois, même loin du renouvellement', async () => {
+    await create(of(current({ currentPeriodEnd: '2026-08-31T10:00:00+00:00' })), { now: new Date(2026, 9, 14, 10) });
+
+    expect(plain(compiled.querySelector('section')!)).toContain('(quota remis à zéro le 1er novembre)');
   });
 
   it('sans abonnement, présente l\'offre gratuite et propose les offres', async () => {
@@ -506,7 +522,7 @@ describe('SubscriptionComponent', () => {
   it('en retard de paiement, dit que le paiement attend au lieu d\'une date de renouvellement', async () => {
     await create(of(current({ status: 'past_due' })));
 
-    expect(plain(compiled.querySelector('section')!)).toContain('Paiement en attente · 24/30 demandes utilisées');
+    expect(plain(compiled.querySelector('section')!)).toContain('Paiement en attente · 24/30 demandes reçues ce mois-ci');
     expect(plain(compiled.querySelector('section')!)).not.toContain('Renouvellement le');
   });
 
@@ -533,6 +549,50 @@ describe('SubscriptionComponent', () => {
 
     expect(dialog()).toBeNull();
     expect(serviceMock.changePlan).not.toHaveBeenCalled();
+  });
+
+  // annulation programmée : le back refuse (409), sur Stripe une descente aurait effacé l'annulation toute seule
+  it('annulation programmée : les autres offres sont désactivées, la page dit de reprendre l\'abonnement', async () => {
+    await create(of(current({ cancelAtPeriodEnd: true })));
+
+    expect(text()).toContain('Votre abonnement est en cours d’annulation : reprenez-le pour changer d’offre.');
+    expect(planCard('Premium').disabled).toBe(true);
+    expect(planCard('Essentiel').disabled).toBe(true);
+    expect(planCard('Pro').disabled).toBe(false);
+
+    click(planCard('Premium'));
+    // même sans le bouton, le composant refuse d'ouvrir la carte
+    fixture.componentInstance.select(fixture.componentInstance.cards().find((c) => c.plan.code === 'premium')!);
+    fixture.detectChanges();
+
+    expect(dialog()).toBeNull();
+    expect(serviceMock.changePlan).not.toHaveBeenCalled();
+  });
+
+  it('annulation programmée : le lien du message reprend l\'abonnement et débloque les offres', async () => {
+    await create(of(current({ cancelAtPeriodEnd: true })));
+    serviceMock.getCurrent.mockReturnValue(of(current()));
+    const banner = [...compiled.querySelectorAll('p')].find((p) => p.textContent?.includes('en cours d’annulation'))!;
+
+    click(banner.querySelector('button') as HTMLElement);
+
+    expect(serviceMock.resume).toHaveBeenCalledTimes(1);
+    expect(text()).not.toContain('reprenez-le pour changer d’offre');
+    expect(planCard('Premium').disabled).toBe(false);
+  });
+
+  it('pas de message de reprise quand l\'abonnement n\'est pas annulé', async () => {
+    await create();
+
+    expect(text()).not.toContain('en cours d’annulation');
+  });
+
+  it('en retard de paiement et annulé, un seul message : celui du paiement', async () => {
+    await create(of(current({ status: 'past_due', cancelAtPeriodEnd: true })));
+
+    expect(text()).toContain('Vous pourrez changer d’offre une fois le paiement régularisé');
+    expect(text()).not.toContain('reprenez-le pour changer d’offre');
+    expect(planCard('Premium').disabled).toBe(true);
   });
 
   it('hors retard de paiement, les offres restent sélectionnables', async () => {

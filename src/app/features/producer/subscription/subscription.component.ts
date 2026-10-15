@@ -3,7 +3,7 @@ import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, vi
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, first, forkJoin, map, of, switchMap, take, timer } from 'rxjs';
-import { longDate } from '../request-format';
+import { longDate, shortDate } from '../request-format';
 import { formatMoney, formatPrice } from './subscription-format';
 import { BillingCycle, CurrentSubscription, Invoice, Plan, PlanPrice, ScheduledChange, SubscriptionService } from './subscription.service';
 
@@ -122,6 +122,11 @@ export class SubscriptionComponent {
 
   // paiement en retard --> l'accès est limité, Stripe reessaie de prélever, le back refuse tout changement d'offre
   pastDue = computed(() => this.subscription()?.status === 'past_due');
+  // annulation programmée : l'abo continue jusqu'à la fin de la période
+  cancelling = computed(() => !!this.subscription()?.cancelAtPeriodEnd);
+  // ! dans ces 2 cas le back refuse de changer d'offre (409), donc on bloque les cartes avant. Sur Stripe une descente
+  // ! pendant l'annulation l'efface toute seule et le client est prélevé alors qu'il voulait partir
+  locked = computed(() => this.pastDue() || this.cancelling());
 
   planName = computed(() => this.subscription()?.planName ?? 'Gratuit');
 
@@ -134,15 +139,23 @@ export class SubscriptionComponent {
   summary = computed(() => {
     const s = this.subscription();
     if (!s) return 'Profil limité, aperçu anonymisé des demandes.';
+    // * le quota se compte par mois calendaire (le back compte depuis le 1er), pas depuis le renouvellement
+    // * "reçues" comme sur le dashboard, avant c'était "utilisées" et ça faisait croire à une remise à zéro au renouvellement
     const usage =
       s.requestsQuota === null
         ? `${s.requestsThisMonth} demandes reçues ce mois-ci`
-        : `${s.requestsThisMonth}/${s.requestsQuota} demandes utilisées`;
+        : `${s.requestsThisMonth}/${s.requestsQuota} demandes reçues ce mois-ci (quota remis à zéro le ${shortDate(this.nextMonthStart())})`;
     // en retard, Stripe affiche déjà la période suivante : "Renouvellement le" donnerait une date qui n'est pas l'échéance
     if (this.pastDue() && !s.cancelAtPeriodEnd) return `Paiement en attente · ${usage}`;
     const end = s.cancelAtPeriodEnd ? 'Fin de l’abonnement le' : 'Renouvellement le';
     return `${end} ${longDate(s.currentPeriodEnd)} · ${usage}`;
   });
+
+  // le 1er du mois prochain (en ISO pour shortDate)
+  private nextMonthStart(): string {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+  }
 
   badge = computed(() => {
     const s = this.subscription();
@@ -166,7 +179,7 @@ export class SubscriptionComponent {
   }
 
   select(card: PlanCard): void {
-    if (card.isCurrent || this.pastDue()) return;
+    if (card.isCurrent || this.locked()) return;
     this.error.set('');
     this.notice.set('');
     this.pending.set(card);

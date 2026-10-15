@@ -37,6 +37,13 @@
       </p>
     }
 
+    @if (cancelling() && !pastDue()) {
+      <p class="rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri">
+        Votre abonnement est en cours d’annulation : reprenez-le pour changer d’offre.
+        <button type="button" (click)="resume()" [disabled]="busy()" class="cursor-pointer font-semibold underline disabled:opacity-60">Reprendre mon abonnement</button>
+      </p>
+    }
+
     <!-- mensuel / annuel -->
     <div class="flex gap-2" role="group" aria-label="Durée de l'abonnement">
       <button
@@ -65,10 +72,10 @@
         <button
           type="button"
           (click)="select(card)"
-          [disabled]="pastDue() && !card.isCurrent"
+          [disabled]="locked() && !card.isCurrent"
           [attr.aria-pressed]="card.isCurrent"
           class="rounded-xl border bg-white p-4 text-left"
-          [class]="card.isCurrent ? 'cursor-default border-2 border-agri' : pastDue() ? 'cursor-not-allowed border-grey-200 opacity-60' : pending()?.price?.id === card.price.id ? 'cursor-pointer border-2 border-agri/60' : 'cursor-pointer border-grey-200 hover:border-grey-400'"
+          [class]="card.isCurrent ? 'cursor-default border-2 border-agri' : locked() ? 'cursor-not-allowed border-grey-200 opacity-60' : pending()?.price?.id === card.price.id ? 'cursor-pointer border-2 border-agri/60' : 'cursor-pointer border-grey-200 hover:border-grey-400'"
         >
           <span class="flex items-start justify-between gap-3">
             <span class="font-semibold">{{ card.plan.name }}</span>
