@@ -28,6 +28,7 @@ describe('ProducerSearchService', () => {
     verifiedOnly: false,
     minRating: null,
     sort: 'relevance',
+    page: 1,
   };
   let service: ProducerSearchService;
   let http: HttpTestingController;
@@ -55,7 +56,7 @@ describe('ProducerSearchService', () => {
     const req = search();
 
     expect(req.request.method).toBe('GET');
-    expect(req.request.params.keys()).toEqual(['categoryId']);
+    expect(req.request.params.keys()).toEqual(['page', 'pageSize', 'categoryId']);
     expect(req.request.params.get('categoryId')).toBe('cat-1');
   });
 
@@ -66,7 +67,7 @@ describe('ProducerSearchService', () => {
     service.search(noFilter).subscribe((value) => (result = value));
     http.expectOne((r) => r.url === `${apiUrl}/producers`).flush(producers);
 
-    expect(result).toEqual(producers);
+    expect(result).toEqual({ items: producers, total: producers.length });
   });
 
   it('envoie les filtres booléens sous les noms attendus par le back', () => {

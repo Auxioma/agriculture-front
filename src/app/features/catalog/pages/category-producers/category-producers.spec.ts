@@ -87,13 +87,35 @@ describe('CategoryProducersComponent', () => {
     return req.request.params.keys().sort();
   }
 
-  it('cherche les producteurs de la catégorie du slug, avec le seul paramètre categoryId', async () => {
+  it('cherche les producteurs de la catégorie du slug, première page comprise', async () => {
     const ctx = await setup();
 
     const req = await nextSearch(ctx);
 
-    expect(paramKeys(req)).toEqual(['categoryId']);
+    // * Sans autre filtre : la catégorie et la pagination (page 1, 12 par page) seulement
+    expect(paramKeys(req)).toEqual(['categoryId', 'page', 'pageSize']);
     expect(req.request.params.get('categoryId')).toBe('c1');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('12');
+    showResults(ctx, req, []);
+  });
+
+  it('garde la catégorie quand on passe à la page suivante', async () => {
+    const ctx = await setup();
+    const firstPage = await nextSearch(ctx);
+    firstPage.flush(
+      Array.from({ length: 12 }, (_, i) =>
+        makeProducerSummary({ id: `p${i}`, slug: `ferme-${i}` }),
+      ),
+      { headers: { 'X-Total-Count': '30' } },
+    );
+    ctx.harness.detectChanges();
+
+    clickButton(ctx, 'Suivant');
+    const req = await nextSearch(ctx);
+
+    expect(req.request.params.get('categoryId')).toBe('c1');
+    expect(req.request.params.get('page')).toBe('2');
     showResults(ctx, req, []);
   });
 

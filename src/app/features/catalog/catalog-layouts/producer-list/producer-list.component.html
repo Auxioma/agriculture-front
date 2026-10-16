@@ -137,7 +137,7 @@
     </aside>
 
     <!-- ───────────── Résultats ───────────── -->
-    <div>
+    <div id="producer-results" class="scroll-mt-4">
       <!-- Tri -->
       <div class="flex items-center justify-end gap-2 md:justify-start">
         <label for="sort" class="text-xs text-grey-700">Trier par</label>
@@ -266,6 +266,31 @@
           </ul>
         }
       </div>
+
+      <!-- Pagination : seulement s'il y a plus d'une page, et pas pendant un chargement ou une erreur -->
+      @if (totalPages() > 1 && !isLoading() && !hasError() && !locationNotFound()) {
+        <nav aria-label="Pagination" class="mt-6 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            (click)="goToPage(page() - 1)"
+            [disabled]="page() === 1"
+            class="rounded-lg border border-grey-200 bg-white px-4 py-2 text-sm font-semibold text-fonts transition-colors hover:border-grey-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agri disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Précédent
+          </button>
+          <span class="text-sm text-grey-700" aria-live="polite">
+            Page {{ page() }} sur {{ totalPages() }}
+          </span>
+          <button
+            type="button"
+            (click)="goToPage(page() + 1)"
+            [disabled]="page() === totalPages()"
+            class="rounded-lg border border-grey-200 bg-white px-4 py-2 text-sm font-semibold text-fonts transition-colors hover:border-grey-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-agri disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Suivant
+          </button>
+        </nav>
+      }
     </div>
   </div>
 </div>

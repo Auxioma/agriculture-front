@@ -20,8 +20,9 @@ import {
 import { ProducersComponent } from './producers.component';
 
 // * Les filtres, tris, géocodage et états de la liste sont testés en détail via la page d'une catégorie
-// * (category-producers.spec.ts) : ils vivent dans ProducerListComponent, partagé. Ici, seulement ce qui
-// * est propre à /producers : aucune catégorie, fil d'Ariane, titre de la page, liens vers les fiches.
+// * (category-producers.spec.ts) : ils vivent dans ProducerListComponent, partagé. Ici : ce qui est propre
+// * à /producers (aucune catégorie, fil d'Ariane, titre de la page, liens vers les fiches) et la pagination,
+// * qui s'y voit le mieux puisque la liste n'est pas restreinte à une catégorie.
 describe('ProducersComponent', () => {
   const apiUrl = environment.apiURL;
   const producersUrl = `${apiUrl}/producers`;
@@ -62,6 +63,32 @@ describe('ProducersComponent', () => {
     ctx.harness.detectChanges();
   }
 
+  /** Comme showResults, avec l'en-tête X-Total-Count que renvoie le back (total de toutes les pages) */
+  function showPage(
+    ctx: Context,
+    req: TestRequest,
+    producers: ProducerSummary[],
+    total: number,
+  ): void {
+    req.flush(producers, { headers: { 'X-Total-Count': String(total) } });
+    ctx.harness.detectChanges();
+  }
+
+  /** n producteurs distincts, de « Ferme 1 » à « Ferme n » */
+  function makeProducers(n: number, from = 1): ProducerSummary[] {
+    return Array.from({ length: n }, (_, i) =>
+      makeProducerSummary({
+        id: `p${from + i}`,
+        slug: `ferme-${from + i}`,
+        farmName: `Ferme ${from + i}`,
+      }),
+    );
+  }
+
+  function paginationNav(ctx: Context): HTMLElement | null {
+    return ctx.host.querySelector('nav[aria-label="Pagination"]');
+  }
+
   function clickButton(ctx: Context, text: string): void {
     const button = Array.from(ctx.host.querySelectorAll('button')).find((b) => textOf(b) === text);
     if (!button) throw new Error(`Bouton « ${text} » introuvable`);
@@ -69,12 +96,14 @@ describe('ProducersComponent', () => {
     ctx.harness.detectChanges();
   }
 
-  it('cherche tous les producteurs actifs, sans filtre de catégorie', async () => {
+  it('cherche la première page de tous les producteurs actifs, sans filtre de catégorie', async () => {
     const ctx = await setup();
 
     const req = await nextSearch(ctx);
 
-    expect(req.request.params.keys()).toEqual([]);
+    expect(req.request.params.keys().sort()).toEqual(['page', 'pageSize']);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('12');
     showResults(ctx, req, []);
   });
 
@@ -118,6 +147,82 @@ describe('ProducersComponent', () => {
     expect(req.request.params.get('verifiedOnly')).toBe('true');
     expect(req.request.params.has('categoryId')).toBe(false);
     showResults(ctx, req, []);
+  });
+
+  it('affiche le total de tous les producteurs et le nombre de pages', async () => {
+    const ctx = await setup();
+
+    showPage(ctx, await nextSearch(ctx), makeProducers(12), 30);
+
+    expect(textOf(ctx.host)).toContain('30 producteurs trouvés');
+    expect(textOf(paginationNav(ctx))).toContain('Page 1 sur 3');
+  });
+
+  it('demande la page suivante au clic sur « Suivant »', async () => {
+    const ctx = await setup();
+    showPage(ctx, await nextSearch(ctx), makeProducers(12), 30);
+
+    clickButton(ctx, 'Suivant');
+    const req = await nextSearch(ctx);
+
+    expect(req.request.params.get('page')).toBe('2');
+    showPage(ctx, req, makeProducers(12, 13), 30);
+    expect(textOf(paginationNav(ctx))).toContain('Page 2 sur 3');
+    expect(textOf(ctx.host)).toContain('Ferme 13');
+  });
+
+  it('désactive « Précédent » en première page et « Suivant » en dernière page', async () => {
+    const ctx = await setup();
+    showPage(ctx, await nextSearch(ctx), makeProducers(12), 30);
+    const button = (text: string) =>
+      Array.from(ctx.host.querySelectorAll('button')).find((b) => textOf(b) === text)!;
+
+    expect(button('Précédent').disabled).toBe(true);
+    expect(button('Suivant').disabled).toBe(false);
+
+    clickButton(ctx, 'Suivant');
+    showPage(ctx, await nextSearch(ctx), makeProducers(12, 13), 30);
+    clickButton(ctx, 'Suivant');
+    showPage(ctx, await nextSearch(ctx), makeProducers(6, 25), 30);
+
+    expect(textOf(paginationNav(ctx))).toContain('Page 3 sur 3');
+    expect(button('Suivant').disabled).toBe(true);
+    expect(button('Précédent').disabled).toBe(false);
+  });
+
+  it('revient en page 1 quand un filtre change', async () => {
+    const ctx = await setup();
+    showPage(ctx, await nextSearch(ctx), makeProducers(12), 30);
+    clickButton(ctx, 'Suivant');
+    showPage(ctx, await nextSearch(ctx), makeProducers(12, 13), 30);
+    expect(textOf(paginationNav(ctx))).toContain('Page 2 sur 3');
+
+    clickButton(ctx, 'Retrait');
+    const req = await nextSearch(ctx);
+
+    // * Sans retour en page 1, on demanderait la page 2 des producteurs qui proposent le retrait
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('pickupAvailable')).toBe('true');
+    showPage(ctx, req, makeProducers(2), 2);
+  });
+
+  it('masque la pagination quand tous les résultats tiennent sur une page', async () => {
+    const ctx = await setup();
+
+    showPage(ctx, await nextSearch(ctx), makeProducers(5), 5);
+
+    expect(textOf(ctx.host)).toContain('5 producteurs trouvés');
+    expect(paginationNav(ctx)).toBeNull();
+  });
+
+  it("retombe sur le nombre de résultats reçus quand l'en-tête X-Total-Count est absent", async () => {
+    const ctx = await setup();
+
+    // * flush sans en-tête : par exemple si le CORS ne l'expose pas au navigateur
+    showResults(ctx, await nextSearch(ctx), makeProducers(4));
+
+    expect(textOf(ctx.host)).toContain('4 producteurs trouvés');
+    expect(paginationNav(ctx)).toBeNull();
   });
 
   it("affiche l'état vide sans mentionner de catégorie", async () => {

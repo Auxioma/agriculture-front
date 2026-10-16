@@ -1,11 +1,23 @@
-import { NgOptimizedImage } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { DOCUMENT, NgOptimizedImage } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, debounceTime, filter, map, of, startWith, switchMap } from 'rxjs';
 import {
   Coordinates,
   Label,
+  PRODUCERS_PAGE_SIZE,
+  ProducerFilters,
+  ProducerPage,
   ProducerQuery,
   ProducerSort,
   ProducerSummary,
@@ -19,7 +31,7 @@ type SearchState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'location-not-found' }
-  | { status: 'ready'; items: ProducerSummary[] };
+  | { status: 'ready'; items: ProducerSummary[]; total: number };
 
 const DEFAULT_RADIUS_KM = 25;
 
@@ -50,6 +62,7 @@ export class ProducerListComponent {
   private readonly catalog = inject(CatalogService);
   private readonly geocoding = inject(GeocodingService);
   private readonly producerSearch = inject(ProducerSearchService);
+  private readonly document = inject(DOCUMENT);
 
   // ── Labels proposés dans les filtres (GET /api/labels) ──
   readonly labels = toSignal(this.catalog.getLabels().pipe(catchError(() => of([] as Label[]))), {
@@ -76,8 +89,8 @@ export class ProducerListComponent {
     { value: 'newest', label: 'Nouveauté' },
   ];
 
-  /** Tous les filtres regroupés. null tant que la catégorie n'est pas connue (categoryId undefined). */
-  private readonly query = computed<ProducerQuery | null>(() => {
+  /** Tous les filtres regroupés (sans la page). null tant que la catégorie n'est pas connue (categoryId undefined). */
+  private readonly filters = computed<ProducerFilters | null>(() => {
     const categoryId = this.categoryId();
     if (categoryId === undefined) return null;
     return {
@@ -92,6 +105,21 @@ export class ProducerListComponent {
       minRating: this.minRating(),
       sort: this.sort(),
     };
+  });
+
+  /**
+   * Page affichée. linkedSignal : elle revient automatiquement à 1 dès qu'un filtre ou le tri change
+   * (sinon, en page 3, cocher « Bio » afficherait la page 3 des producteurs bio, probablement vide).
+   */
+  readonly page = linkedSignal<ProducerFilters | null, number>({
+    source: this.filters,
+    computation: () => 1,
+  });
+
+  /** Filtres + page : ce qui est envoyé au back. null tant que les filtres ne sont pas prêts. */
+  private readonly query = computed<ProducerQuery | null>(() => {
+    const filters = this.filters();
+    return filters ? { ...filters, page: this.page() } : null;
   });
 
   /**
@@ -114,8 +142,12 @@ export class ProducerListComponent {
     const s = this.state();
     return s.status === 'ready' ? s.items : [];
   });
-  /** L'API ne renvoie pas de total : on compte les résultats reçus */
-  readonly total = computed(() => this.producers().length);
+  /** Nombre de producteurs de TOUTES les pages (en-tête X-Total-Count), pas seulement de la page affichée */
+  readonly total = computed(() => {
+    const s = this.state();
+    return s.status === 'ready' ? s.total : 0;
+  });
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / PRODUCERS_PAGE_SIZE)));
 
   /**
    * 1) si une localisation est saisie, on la convertit en coordonnées GPS (le back n'accepte que lat/lng) ;
@@ -133,11 +165,36 @@ export class ProducerListComponent {
           ? of<SearchState>({ status: 'location-not-found' })
           : this.producerSearch
               .search(q, coords)
-              .pipe(map((items): SearchState => ({ status: 'ready', items }))),
+              .pipe(map((result: ProducerPage): SearchState => ({ status: 'ready', ...result }))),
       ),
       startWith<SearchState>({ status: 'loading' }),
       catchError(() => of<SearchState>({ status: 'error' })),
     );
+  }
+
+  constructor() {
+    // * Si le total diminue entre deux requêtes, la page demandée peut dépasser la dernière : le back répond alors
+    // * 200 avec une liste vide. On revient à la dernière page existante plutôt que d'afficher « Aucun producteur ».
+    effect(() => {
+      const s = this.state();
+      if (
+        s.status === 'ready' &&
+        s.items.length === 0 &&
+        s.total > 0 &&
+        this.page() > this.totalPages()
+      ) {
+        this.page.set(this.totalPages());
+      }
+    });
+  }
+
+  /** Change de page (bornée entre 1 et la dernière) puis remonte en haut des résultats */
+  goToPage(page: number): void {
+    this.page.set(Math.min(Math.max(1, page), this.totalPages()));
+    // * Optionnel (?.) : absent hors navigateur (rendu serveur) et dans certains environnements de test.
+    this.document
+      .getElementById('producer-results')
+      ?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
   onLocationChange(value: string): void {

@@ -19,6 +19,15 @@ export interface ProducerSummary {
   labels: Pick<Label, 'code' | 'name'>[];
 }
 
+/** Nombre de producteurs par page (le back accepte jusqu'à 50 ; 12 par défaut) */
+export const PRODUCERS_PAGE_SIZE = 12;
+
+/** Une page de résultats + le nombre total de producteurs, toutes pages confondues (en-tête X-Total-Count) */
+export interface ProducerPage {
+  items: ProducerSummary[];
+  total: number;
+}
+
 export interface Coordinates {
   latitude: number;
   longitude: number;
@@ -38,4 +47,9 @@ export interface ProducerQuery {
   verifiedOnly: boolean;
   minRating: number | null;
   sort: ProducerSort;
+  /** Numéro de la page demandée, à partir de 1 */
+  page: number;
 }
+
+/** Les filtres seuls, sans la page : changer un filtre ramène à la page 1 */
+export type ProducerFilters = Omit<ProducerQuery, 'page'>;
