@@ -18,6 +18,10 @@ export const routes: Routes = [
       import('./features/producer-space/producer-space.component').then((m) => m.ProducerSpaceComponent),
   },
   {
+    path: 'pricing',
+    loadComponent: () => import('./features/pricing/pricing.component').then((m) => m.PricingComponent),
+  },
+  {
     path: 'about',
     loadComponent: () => import('./features/about/about.component').then((m) => m.AboutComponent),
   },
