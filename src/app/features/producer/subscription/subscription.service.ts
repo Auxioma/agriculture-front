@@ -17,6 +17,9 @@ export interface Plan {
   code: string;
   name: string;
   description: string | null;
+  // droits et limites de l'offre, configures en base (hors formulaire de l'admin) : reply_to_requests, max_products, requests_per_month... ; absent = illimite
+  features: Record<string, unknown> | null;
+  limits: Record<string, unknown> | null;
   prices: PlanPrice[];
 }
 

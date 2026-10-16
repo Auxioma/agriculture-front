@@ -4,7 +4,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, first, forkJoin, map, of, switchMap, take, timer } from 'rxjs';
 import { longDate, shortDate } from '../request-format';
-import { formatMoney, formatPrice } from './subscription-format';
+import { annualSaving, formatMoney, formatPrice } from './subscription-format';
 import { BillingCycle, CurrentSubscription, Invoice, Plan, PlanPrice, ScheduledChange, SubscriptionService } from './subscription.service';
 
 // un abonnement qui donne encore acces (un annule ou expire = retour a l'offre gratuite)
@@ -103,11 +103,8 @@ export class SubscriptionComponent {
       const price = plan.prices.find((p) => p.billingCycle === this.cycle());
       if (!price) return [];
       const monthly = plan.prices.find((p) => p.billingCycle === 'monthly');
-      const saving =
-        price.billingCycle === 'yearly' && monthly && Number(monthly.amount) > 0
-          ? Math.round((1 - Number(price.amount) / (Number(monthly.amount) * 12)) * 100)
-          : null;
-      return [{ plan, price, isCurrent: price.id === currentId, saving: saving && saving > 0 ? saving : null }];
+      const saving = price.billingCycle === 'yearly' ? annualSaving(monthly?.amount ?? null, price.amount) : null;
+      return [{ plan, price, isCurrent: price.id === currentId, saving }];
     });
   });
 

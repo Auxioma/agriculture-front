@@ -11,6 +11,8 @@ const plan = (code: string, name: string, monthly: number, yearly: number): Plan
   code,
   name,
   description: null,
+  features: null,
+  limits: null,
   prices: [
     { id: `${code}-m`, billingCycle: 'monthly', amount: `${monthly}.00`, currencyCode: 'EUR' },
     { id: `${code}-y`, billingCycle: 'yearly', amount: `${yearly}.00`, currencyCode: 'EUR' },
