@@ -23,6 +23,7 @@ export class FooterComponent {
     'Qui sommes-nous ?': '/about',
     'Comment ça marche ?': '/how-it-works',
     'Espace producteurs': '/producer-space',
+    'Tarifs producteurs': '/pricing',
   };
 
   readonly groups = [

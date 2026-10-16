@@ -61,6 +61,9 @@ describe('FooterComponent', () => {
     const space = links.find((a) => a.textContent?.includes('Espace producteurs'));
     expect(space?.getAttribute('href')).toBe('/producer-space');
 
+    const pricing = links.find((a) => a.textContent?.trim() === 'Tarifs producteurs');
+    expect(pricing?.getAttribute('href')).toBe('/pricing');
+
     const faq = links.find((a) => a.textContent?.trim() === 'FAQ');
     expect(faq?.getAttribute('href')).toBe('/faq');
 

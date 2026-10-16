@@ -54,8 +54,8 @@ function planPoints(plan: Plan): string[] {
 
 // page publique « Forfaits » (« Tarif producteurs » dans la barre de navigation) semblable au figma : fil d'Ariane, titre,
 // bascule mensuel / annuel (avec l'economie), puis les offres, dont une recommandee. Branchee sur GET /api/subscription/plans :
-// les offres et leurs prix viennent de la base, rien n'est ecrit en dur. Sous les offres, ce que les cahiers demandent en plus
-// de la maquette : preuve de valeur (la meme demande vue sans puis avec abonnement), conditions et FAQ sur l'abonnement.
+// les offres et leurs prix viennent de la base, rien n'est ecrit en dur. Sous les offres, seulement ce que les cahiers demandent
+// en plus de la maquette : le ROI (demandes qualifiees, visibilite, temps gagne...), les conditions et la FAQ sur l'abonnement.
 // Le client ne paie rien et il n'y a aucune commission sur les ventes (cahier fonctionnel, "Ce que la plateforme ne fait pas").
 @Component({
   selector: 'app-pricing',
@@ -114,7 +114,7 @@ export class PricingComponent {
     }),
   );
 
-  // la preuve de valeur du cahier (fonctionnel, "Abonnements producteurs") : pas de chiffres inventes
+  // le ROI des cahiers (fonctionnel, abonnements producteurs, et graphisme, principes de pricing) : pas de chiffres inventes
   readonly values = [
     'Des demandes qualifiées, proches de chez vous et adaptées à vos produits',
     'De la visibilité locale auprès de particuliers et de professionnels',
@@ -123,7 +123,7 @@ export class PricingComponent {
     'Aucune commission sur vos ventes',
   ];
 
-  // les memes regles que la page "Mon abonnement" et la FAQ (cahier : prix, renouvellement, annulation, facture, upgrade et downgrade)
+  // seulement ce que les cahiers demandent de dire : prix, renouvellement, annulation, facture, upgrade et downgrade, engagement annuel
   readonly conditions = [
     {
       term: 'Mensuel',
@@ -135,15 +135,11 @@ export class PricingComponent {
     },
     {
       term: "Changer d'offre",
-      text: "Une offre plus haute prend effet tout de suite : seule la différence, au prorata de la période en cours, est facturée. Une offre plus basse prend effet à la prochaine échéance. Sous engagement annuel, le passage au mensuel attend la fin de l'engagement.",
+      text: "Une offre plus haute prend effet tout de suite. Une offre plus basse prend effet à la prochaine échéance. Sous engagement annuel, le passage au mensuel attend la fin de l'engagement.",
     },
     {
-      term: 'Paiement et factures',
-      text: 'Le paiement passe par Stripe : nous ne stockons aucune donnée de carte. Le renouvellement, la date du prochain paiement et chaque facture, téléchargeable, sont dans votre espace « Mon abonnement ».',
-    },
-    {
-      term: 'Paiement refusé',
-      text: "Vous êtes prévenu et Stripe réessaie. En attendant, votre accès aux demandes complètes et aux réponses est limité jusqu'à régularisation.",
+      term: 'Renouvellement et factures',
+      text: 'La date de renouvellement et chaque facture, téléchargeable, sont dans votre espace « Mon abonnement ».',
     },
   ];
 

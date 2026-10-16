@@ -224,23 +224,11 @@ describe('PricingComponent', () => {
     }
   });
 
-  it('montre la même demande sans abonnement puis avec abonnement', async () => {
+  it('donne le ROI du cahier, sans chiffre inventé ni exemple de demande', async () => {
     await create();
 
-    const without = compiled.querySelector('[aria-label="Demande vue sans abonnement"]')!;
-    const withSub = compiled.querySelector('[aria-label="Demande vue avec abonnement"]')!;
-    expect(plain(without)).toContain('Client');
-    expect(plain(without)).toContain('réservés aux producteurs abonnés');
-    expect(plain(without)).not.toContain('Budget indicatif');
-    expect(plain(withSub)).toContain('Camille R.');
-    expect(plain(withSub)).toContain('12 €/kg');
-    expect(plain(withSub)).toContain('Bonjour, je cherche des tomates bio pour samedi.');
-    expect(text()).toContain('Exemple fictif');
-  });
-
-  it('donne la preuve de valeur du cahier, sans chiffre inventé', async () => {
-    await create();
-
+    expect(plain(compiled.querySelector('[aria-labelledby="value-title"]')!)).toContain("Ce que vous apporte l'abonnement");
+    expect(text()).not.toContain('Exemple fictif');
     expect(text()).toContain('Des demandes qualifiées');
     expect(text()).toContain('De la visibilité locale');
     expect(text()).toContain('Du temps gagné');
@@ -248,17 +236,23 @@ describe('PricingComponent', () => {
     expect(text()).toContain('Aucune commission sur vos ventes');
   });
 
-  it('écrit les conditions avant de payer : engagement, changement d\'offre, annulation, factures', async () => {
+  it('écrit les conditions des cahiers avant de payer, et rien de plus : engagement, changement d\'offre, annulation, factures', async () => {
     await create();
 
-    const conditions = plain(compiled.querySelector('[aria-labelledby="conditions-title"]')!);
+    const section = compiled.querySelector('[aria-labelledby="conditions-title"]')!;
+    expect([...section.querySelectorAll('dt')].map((dt) => dt.textContent?.trim())).toEqual([
+      'Mensuel',
+      'Annuel',
+      "Changer d'offre",
+      'Renouvellement et factures',
+    ]);
+    const conditions = plain(section);
     expect(conditions).toContain('Sans engagement');
     expect(conditions).toContain('Engagement de 12 mois');
     expect(conditions).toContain('sans remboursement');
-    expect(conditions).toContain('au prorata');
+    expect(conditions).toContain('Une offre plus haute prend effet tout de suite');
     expect(conditions).toContain('prend effet à la prochaine échéance');
     expect(conditions).toContain('chaque facture, téléchargeable');
-    expect(conditions).toContain('aucune donnée de carte');
   });
 
   it('si les offres ne se chargent pas, le dit mais garde le reste de la page', async () => {
