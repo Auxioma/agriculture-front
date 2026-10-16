@@ -19,6 +19,14 @@
     </p>
   } @else {
     <form [formGroup]="form" (ngSubmit)="submit(false)" class="mx-auto mt-4 space-y-4 px-4 pb-4 lg:max-w-xl lg:px-0">
+      @if (r.locked) {
+        <!-- le back refuse l'envoi sans abonnement (403) : on le dit avant, le brouillon reste possible -->
+        <p class="rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri">
+          Envoyer une réponse demande un abonnement actif. Vous pouvez enregistrer un brouillon en attendant.
+          <a routerLink="/producer/subscription" class="font-semibold underline">Voir les abonnements</a>
+        </p>
+      }
+
       <!-- rappel de la demande -->
       <p class="rounded-full bg-badge-bg px-4 py-1.5 text-sm font-medium text-agri">
         {{ r.clientName }} · {{ r.product ?? 'Demande' }}{{ r.quantity !== null ? ' · ' + requestQuantity(r) : '' }}
@@ -108,7 +116,7 @@
       <div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
         <button
           type="submit"
-          [disabled]="sending()"
+          [disabled]="sending() || r.locked"
           class="w-full cursor-pointer rounded-xl border-2 border-agri bg-agri py-3 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60"
         >
           Envoyer la réponse

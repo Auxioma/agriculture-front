@@ -38,7 +38,12 @@
           </div>
         }
       </dl>
-      @if (r.message) {
+      @if (r.locked) {
+        <!-- cahier : sans abonnement, le message complet, les pieces jointes et les coordonnees sont bloques -->
+        <p class="mt-4 border-t border-grey-200 pt-3 text-sm text-secondary">
+          Le message du client, ses pièces jointes et son budget sont réservés aux producteurs abonnés.
+        </p>
+      } @else if (r.message) {
         <p class="mt-4 border-t border-grey-200 pt-3 text-sm">{{ r.message }}</p>
       }
     </section>
@@ -61,17 +66,32 @@
     <!-- actions -->
     @switch (r.status) {
       @case ('new') {
-        <div class="space-y-3 pt-2">
-          <a
-            [routerLink]="['/producer/requests', r.requestId, 'reply']"
-            class="block w-full rounded-xl border-2 border-agri bg-agri py-3 text-center text-sm font-bold text-white"
-          >
-            Répondre à la demande
-          </a>
-          <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">
-            Ouvrir le chat
-          </button>
-        </div>
+        @if (r.locked) {
+          <!-- CTA de deblocage : repondre et ouvrir le chat demandent un abonnement -->
+          <div class="space-y-3 pt-2">
+            <p class="rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri">
+              Vous voyez un aperçu de cette demande. Abonnez-vous pour la voir en entier et y répondre.
+            </p>
+            <a
+              routerLink="/producer/subscription"
+              class="block w-full rounded-xl border-2 border-agri bg-agri py-3 text-center text-sm font-bold text-white"
+            >
+              Débloquer la demande
+            </a>
+          </div>
+        } @else {
+          <div class="space-y-3 pt-2">
+            <a
+              [routerLink]="['/producer/requests', r.requestId, 'reply']"
+              class="block w-full rounded-xl border-2 border-agri bg-agri py-3 text-center text-sm font-bold text-white"
+            >
+              Répondre à la demande
+            </a>
+            <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">
+              Ouvrir le chat
+            </button>
+          </div>
+        }
 
         <!-- refuser (avec confirmation) ou mettre de cote -->
         @if (confirmingDecline()) {

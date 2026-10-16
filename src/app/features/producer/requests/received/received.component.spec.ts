@@ -16,6 +16,7 @@ const request = (overrides: Partial<ReceivedRequest>): ReceivedRequest => ({
   receivedAt: '2026-08-10T10:00:00+02:00',
   respondedAt: null,
   declined: false,
+  locked: false,
   ...overrides,
 });
 

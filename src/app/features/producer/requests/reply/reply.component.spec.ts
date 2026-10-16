@@ -21,6 +21,7 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
   clientType: 'individual',
   isNew: true,
   highVolume: false,
+  locked: false,
   desiredDate: '2026-08-23T12:00:00+00:00',
   department: '69',
   pickupWanted: true,
@@ -285,5 +286,23 @@ describe('ReplyComponent', () => {
 
     expect(serviceMock.sendReply).not.toHaveBeenCalled();
     expect(text()).toContain('Vérifiez les nombres saisis');
+  });
+
+  // le back refuse l'envoi sans abonnement (403) : la page le dit avant, le brouillon reste possible
+  it('sans abonnement : un message le dit, l\'envoi est désactivé mais le brouillon reste possible', async () => {
+    await create(detail({ locked: true }));
+
+    expect(text()).toContain('Envoyer une réponse demande un abonnement actif');
+    expect(compiled.querySelector('a[href="/producer/subscription"]')?.textContent?.trim()).toBe('Voir les abonnements');
+    const buttons = [...compiled.querySelectorAll('button')];
+    expect(buttons.find((b) => b.textContent?.trim() === 'Envoyer la réponse')!.disabled).toBe(true);
+    expect(buttons.find((b) => b.textContent?.trim() === 'Enregistrer le brouillon')!.disabled).toBe(false);
+  });
+
+  it('avec un abonnement : pas de message, l\'envoi est possible', async () => {
+    await create();
+
+    expect(text()).not.toContain('demande un abonnement actif');
+    expect([...compiled.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Envoyer la réponse')!.disabled).toBe(false);
   });
 });

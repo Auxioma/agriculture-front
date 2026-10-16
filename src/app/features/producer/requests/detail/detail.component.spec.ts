@@ -21,6 +21,7 @@ const detail = (overrides: Partial<RequestDetail> = {}): RequestDetail => ({
   clientType: 'individual',
   isNew: true,
   highVolume: false,
+  locked: false,
   desiredDate: '2026-08-23T12:00:00+00:00',
   department: '69',
   pickupWanted: true,
@@ -212,5 +213,44 @@ describe('DetailComponent', () => {
     await create(throwError(() => new Error('403')));
 
     expect(text()).toContain('Cette demande est introuvable ou ne vous est pas accessible.');
+  });
+
+  // cahier fonctionnel, "Producteur non abonné" : aperçu limité et bouton de déblocage ; répondre et le chat demandent un abonnement
+  it('sans abonnement : aperçu limité, le bouton de déblocage remplace « Répondre » et « Ouvrir le chat »', async () => {
+    await create(of(detail({ locked: true, clientName: 'Client', budgetMax: null, message: null, attachments: [] })));
+
+    expect(text()).toContain('Le message du client, ses pièces jointes et son budget sont réservés aux producteurs abonnés.');
+    expect(text()).toContain('Vous voyez un aperçu de cette demande');
+    const unlock = [...compiled.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Débloquer la demande')!;
+    expect(unlock.getAttribute('href')).toBe('/producer/subscription');
+    expect(text()).not.toContain('Répondre à la demande');
+    expect(button('Ouvrir le chat')).toBeUndefined();
+    // l'essentiel reste visible : produit, quantité, zone, date
+    expect(text()).toContain('Tomates bio');
+    expect(text()).toContain('20 kg');
+    expect(text()).toContain('Lyon (69)');
+    expect(text()).toContain('23 août 2026');
+    expect(text()).not.toContain('Budget indicatif');
+    // refuser, archiver et signaler ne demandent pas d'abonnement
+    expect(button('Refuser poliment')).toBeTruthy();
+    expect(button('Archiver cette demande')).toBeTruthy();
+    expect(reportLink()).toBeTruthy();
+  });
+
+  it('avec un abonnement : pas de bouton de déblocage, « Répondre » et le chat sont là', async () => {
+    await create(of(detail({ message: 'souhaite une réponse rapide' })));
+
+    expect(text()).toContain('souhaite une réponse rapide');
+    expect(text()).not.toContain('réservés aux producteurs abonnés');
+    expect(text()).not.toContain('Débloquer la demande');
+    expect(text()).toContain('Répondre à la demande');
+    expect(button('Ouvrir le chat')).toBeTruthy();
+  });
+
+  it('une demande déjà traitée n\'affiche pas le bouton de déblocage, même sans abonnement', async () => {
+    await create(of(detail({ locked: true, status: 'treated', respondedAt: '2026-08-12T12:00:00+00:00' })));
+
+    expect(text()).toContain('Vous avez répondu à cette demande');
+    expect(text()).not.toContain('Débloquer la demande');
   });
 });
