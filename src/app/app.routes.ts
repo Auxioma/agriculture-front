@@ -52,4 +52,22 @@ export const routes: Routes = [
     ],
   },
   { path: 'auth', children: AUTH_ROUTES },
+  {
+    path: 'categories',
+    loadChildren: () => import('./features/catalog/catalog.routes').then((m) => m.CATALOG_ROUTES),
+  },
+  {
+    path: 'producers',
+    loadComponent: () =>
+      import('./features/catalog/pages/producers/producers.component').then(
+        (m) => m.ProducersComponent,
+      ),
+  },
+  {
+    path: 'producers/:id',
+    loadComponent: () =>
+      import('./features/catalog/pages/producer-detail/producer-detail.component').then(
+        (m) => m.ProducerDetailComponent,
+      ),
+  },
 ];
