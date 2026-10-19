@@ -109,7 +109,12 @@
       </button>
     }
 
-    <div #carouselTrack (scroll)="updateScrollState()" data-carousel="popularCategories" class="no-scrollbar flex gap-3 overflow-x-auto pb-2">
+    <div
+      #carouselTrack
+      (scroll)="updateScrollState()"
+      data-carousel="categories"
+      class="no-scrollbar flex gap-3 overflow-x-auto pb-2"
+    >
       @for (category of popularCategories(); track category.id) {
         <a
           [routerLink]="category.slug ? ['/categories', category.slug] : ['/categories']"
@@ -164,7 +169,13 @@
           aria-label="Producteurs précédents"
           class="absolute left-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-agri shadow-md"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-4 w-4"
+          >
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
@@ -181,11 +192,17 @@
             [routerLink]="['/producers', producer.slug]"
             class="block w-72 shrink-0 overflow-hidden rounded-2xl border border-grey-200 bg-white shadow-sm"
           >
-            <img [src]="producer.photoUrl" [alt]="producer.farmName" class="h-48 w-full object-cover" />
+            <img
+              [src]="producer.photoUrl"
+              [alt]="producer.farmName"
+              class="h-48 w-full object-cover"
+            />
             <div class="p-4">
               <div class="flex items-start justify-between gap-2">
                 <h3 class="font-bold">{{ producer.farmName }}</h3>
-                <span class="flex shrink-0 items-center gap-1 text-sm font-semibold text-gold-wheat">
+                <span
+                  class="flex shrink-0 items-center gap-1 text-sm font-semibold text-gold-wheat"
+                >
                   ★ {{ producer.averageRating }}
                 </span>
               </div>
@@ -217,7 +234,13 @@
           aria-label="Producteurs suivants"
           class="absolute right-1 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-agri shadow-md"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-4 w-4"
+          >
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </button>
@@ -280,7 +303,9 @@
 <!-- comment ca marche (semblable au figma) -->
 <section class="px-4 py-6 lg:px-16 lg:py-10">
   <h2 class="text-lg font-bold lg:text-2xl">Comment ça marche ?</h2>
-  <div class="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8 lg:divide-x lg:divide-dashed lg:divide-grey-400">
+  <div
+    class="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8 lg:divide-x lg:divide-dashed lg:divide-grey-400"
+  >
     @for (step of howItWorksSteps; track step.eyebrow; let i = $index) {
       <div class="relative lg:px-6 lg:first:pl-0">
         <!-- etapes impaires (mobile) : le cercle flotte a droite, au niveau du titre, plutot
@@ -291,9 +316,13 @@
         >
           {{ i + 1 }}
         </span>
-        <p class="text-sm font-bold text-agri lg:pr-0" [class.pr-16]="i % 2 === 1">{{ step.eyebrow }}</p>
+        <p class="text-sm font-bold text-agri lg:pr-0" [class.pr-16]="i % 2 === 1">
+          {{ step.eyebrow }}
+        </p>
         <h3 class="mt-1 font-bold lg:pr-0" [class.pr-16]="i % 2 === 1">{{ step.title }}</h3>
-        <p class="mt-1 text-sm text-grey-700 lg:pr-0" [class.pr-16]="i % 2 === 1">{{ step.text }}</p>
+        <p class="mt-1 text-sm text-grey-700 lg:pr-0" [class.pr-16]="i % 2 === 1">
+          {{ step.text }}
+        </p>
       </div>
     }
   </div>
@@ -303,17 +332,28 @@
 <section class="bg-badge-bg px-4 py-10 lg:px-16 lg:py-16">
   <div class="lg:text-center">
     <p class="text-xs font-bold uppercase tracking-wide text-agri">Pourquoi acheter en direct ?</p>
-    <h2 class="mt-2 text-2xl font-bold lg:text-3xl">Une qualité qu'on ne retrouve qu'à la source</h2>
+    <h2 class="mt-2 text-2xl font-bold lg:text-3xl">
+      Une qualité qu'on ne retrouve qu'à la source
+    </h2>
     <p class="mt-2 text-sm text-grey-700 lg:mx-auto lg:max-w-xl lg:text-base">
-      Le direct producteur, c'est plus qu'un bon prix : c'est comprendre d'où vient ce que vous mangez.
+      Le direct producteur, c'est plus qu'un bon prix : c'est comprendre d'où vient ce que vous
+      mangez.
     </p>
   </div>
 
   <div class="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
     @for (item of whyDirectItems; track item.title) {
       <div class="flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm">
-        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-badge-bg text-agri">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+        <span
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-badge-bg text-agri"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="h-5 w-5"
+          >
             @switch (item.icon) {
               @case ('sprout') {
                 <path
@@ -350,7 +390,9 @@
 <section class="px-4 py-10 lg:px-16 lg:py-16">
   <div class="lg:text-center">
     <p class="text-xs font-bold uppercase tracking-wide text-agri">Vous êtes agriculteurs ?</p>
-    <h2 class="mt-2 text-2xl font-bold lg:text-3xl">Recevez des demandes qualifiées, sans commission</h2>
+    <h2 class="mt-2 text-2xl font-bold lg:text-3xl">
+      Recevez des demandes qualifiées, sans commission
+    </h2>
     <p class="mt-2 text-sm text-grey-700 lg:mx-auto lg:max-w-3xl lg:text-base">
       Créez votre profil, indiquez vos produits et vos disponibilités. Vous recevrez uniquement des
       demandes pertinentes autour de vous, et vous répondez quand vous êtes disponible.
@@ -389,7 +431,9 @@
     <span class="hidden lg:inline">Soyez vu par des clients qui cherchent près de chez eux</span>
   </h2>
   <p class="mt-2 text-sm text-grey-700 lg:mx-auto lg:max-w-3xl lg:text-base">
-    <span class="lg:hidden">Plus votre profil est complet, plus vous apparaissez dans les recherches locales.</span>
+    <span class="lg:hidden"
+      >Plus votre profil est complet, plus vous apparaissez dans les recherches locales.</span
+    >
     <span class="hidden lg:inline">
       Votre profil producteur est mis en avant selon votre localisation, vos produits et vos
       disponibilités. Plus il est complet, plus vous apparaissez dans les recherches.

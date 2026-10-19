@@ -118,7 +118,9 @@ describe('HomeComponent', () => {
     expect(compiled.textContent).toContain('Fruits');
     expect(compiled.textContent).toContain('Miel & Produits de la ruche');
 
-    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('[data-carousel="categories"] img');
+    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll(
+      '[data-carousel="categories"] img',
+    );
     expect(images.length).toBe(5);
     expect(images[0].src).toContain('/images/categories/fruits.jpg');
   });
@@ -126,7 +128,7 @@ describe('HomeComponent', () => {
   it("utilise l'image de repli quand une catégorie n'a pas d'imageUrl", () => {
     const images: NodeListOf<HTMLImageElement> = (
       fixture.nativeElement as HTMLElement
-    ).querySelectorAll('.overflow-x-auto img');
+    ).querySelectorAll('[data-carousel="categories"] img');
 
     expect(images[1].alt).toBe('Légumes');
     expect(images[1].src).toContain('/images/categories/default.jpg');
@@ -135,7 +137,7 @@ describe('HomeComponent', () => {
   it('chaque carte mène à la page de sa catégorie', () => {
     const links: NodeListOf<HTMLAnchorElement> = (
       fixture.nativeElement as HTMLElement
-    ).querySelectorAll('.overflow-x-auto a');
+    ).querySelectorAll('[data-carousel="categories"] a');
 
     expect(links[0].getAttribute('href')).toBe('/categories/fruits');
     expect(links[4].getAttribute('href')).toBe('/categories/miel');
@@ -149,7 +151,9 @@ describe('HomeComponent', () => {
     const otherFixture = TestBed.createComponent(HomeComponent);
     otherFixture.detectChanges();
 
-    const link: HTMLAnchorElement = otherFixture.nativeElement.querySelector('.overflow-x-auto a');
+    const link: HTMLAnchorElement = otherFixture.nativeElement.querySelector(
+      '[data-carousel="categories"] a',
+    );
     expect(link.getAttribute('href')).toBe('/categories');
   });
 
@@ -160,7 +164,7 @@ describe('HomeComponent', () => {
     otherFixture.detectChanges();
 
     const compiled = otherFixture.nativeElement as HTMLElement;
-    expect(compiled.querySelectorAll('.overflow-x-auto a').length).toBe(0);
+    expect(compiled.querySelectorAll('[data-carousel="categories"] a').length).toBe(0);
     // le reste de la page s'affiche normalement
     expect(compiled.textContent).toContain('agricole réuni');
   });
@@ -172,7 +176,9 @@ describe('HomeComponent', () => {
   });
 
   it('affiche la flèche droite quand ça déborde, puis la gauche une fois scrollé', () => {
-    const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="categories"]');
+    const track: HTMLDivElement = fixture.nativeElement.querySelector(
+      '[data-carousel="categories"]',
+    );
     Object.defineProperty(track, 'scrollWidth', { value: 1000, configurable: true });
     Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true });
     Object.defineProperty(track, 'scrollLeft', { value: 0, configurable: true, writable: true });
@@ -197,7 +203,9 @@ describe('HomeComponent', () => {
   });
 
   it('scrollCarousel fait défiler le carrousel dans le bon sens', () => {
-    const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="categories"]');
+    const track: HTMLDivElement = fixture.nativeElement.querySelector(
+      '[data-carousel="categories"]',
+    );
     Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true });
     const scrollBySpy = vi.fn();
     track.scrollBy = scrollBySpy;
@@ -250,7 +258,7 @@ describe('HomeComponent', () => {
     expect(text).not.toContain('Nos agriculteurs du mois');
     expect(text).toContain('agricole réuni');
   });
-  
+
   it('affiche les producteurs à la une dans un carrousel horizontal défilable', () => {
     const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="farmers"]');
     expect(track).toBeTruthy();
@@ -260,7 +268,9 @@ describe('HomeComponent', () => {
     fixture.componentInstance.updateFarmersScrollState();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('button[aria-label="Producteurs suivants"]')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Producteurs suivants"]'),
+    ).toBeTruthy();
 
     const scrollBySpy = vi.fn();
     track.scrollBy = scrollBySpy;
@@ -276,7 +286,7 @@ describe('HomeComponent', () => {
     expect(text).toContain('Etape 3 — Achetez en direct');
   });
 
-  it('affiche les 4 raisons d\'acheter en direct', () => {
+  it("affiche les 4 raisons d'acheter en direct", () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Pourquoi acheter en direct');
     expect(text).toContain('Fraîcheur');
@@ -285,7 +295,7 @@ describe('HomeComponent', () => {
     expect(text).toContain('Dialogue');
   });
 
-  it('affiche le bloc producteur avec le CTA vers l\'inscription producteur', () => {
+  it("affiche le bloc producteur avec le CTA vers l'inscription producteur", () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Vous êtes agriculteurs');
     expect(compiled.textContent).toContain('0%');
