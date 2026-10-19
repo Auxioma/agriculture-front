@@ -95,6 +95,10 @@ export const routes: Routes = [
           import('./features/producer/subscription/payment-methods/payment-methods.component').then((m) => m.PaymentMethodsComponent),
       },
       {
+        path: 'products',
+        loadComponent: () => import('./features/producer/products/products.component').then((m) => m.ProductsComponent),
+      },
+      {
         path: 'support',
         loadComponent: () => import('./features/producer/support/support.component').then((m) => m.SupportComponent),
       },

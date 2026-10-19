@@ -157,6 +157,13 @@ describe('DashboardComponent', () => {
     expect(unlock.getAttribute('href')).toBe('/producer/subscription');
   });
 
+  it('« Gérer mes produits disponibles » mène à la page des produits', async () => {
+    await create();
+
+    const link = [...compiled.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Gérer mes produits disponibles')!;
+    expect(link.getAttribute('href')).toBe('/producer/products');
+  });
+
   it('avec un abonnement : pas de message d\'aperçu limité', async () => {
     await create();
 
