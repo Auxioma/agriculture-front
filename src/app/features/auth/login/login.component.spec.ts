@@ -104,6 +104,17 @@ describe('LoginComponent', () => {
       expect(component.errorMessage).toBeNull();
     });
 
+    it('devrait envoyer un producteur directement sur son espace /producer', () => {
+      authServiceMock.login.mockReturnValue(of({ token: 'fake-jwt' }));
+      authServiceMock.fetchCurrentUser.mockReturnValue(
+        of({ id: '1', email: 'agri@test.com', firstName: 'Agri', lastName: 'Test', roles: ['ROLE_PRODUCER'] }),
+      );
+
+      component.onSubmit();
+
+      expect(routerNavigateSpy).toHaveBeenCalledWith(['/producer']);
+    });
+
     it('devrait afficher une erreur 401 sans naviguer', () => {
       authServiceMock.login.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 401 })),

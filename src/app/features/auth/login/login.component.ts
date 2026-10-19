@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Router, RouterLink } from '@angular/router';
 import { AuthRoleService } from '../auth-role.service';
+import { hasProducerRole } from '../../producer/producer-role';
 
 @Component({
   selector: 'app-login',
@@ -35,9 +36,10 @@ export class LoginComponent {
     this.authService.login(this.form.getRawValue()).subscribe({
       next: () => {
         this.authService.fetchCurrentUser().subscribe({
-          next: () => {
+          next: (user) => {
             this.isSubmitting = false;
-            this.router.navigate(['/']); // à remplacer par la vraie route de tableau de bord
+            // les producteurs arrivent directement sur leur espace, les autres sur l'accueil
+            this.router.navigate([hasProducerRole(user.roles) ? '/producer' : '/']);
           },
           error: () => {
             this.isSubmitting = false;

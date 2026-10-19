@@ -1,0 +1,45 @@
+<div class="min-h-screen bg-background lg:flex">
+  <!-- barre laterale (desktop) -->
+  <aside class="hidden w-60 shrink-0 border-r border-grey-200 bg-white px-4 py-6 lg:sticky lg:top-0 lg:block lg:h-screen lg:self-start">
+    <a routerLink="/" class="mb-8 block px-3 text-lg font-semibold text-agri">TrouveMoi Agri</a>
+    <nav aria-label="Espace producteur" class="space-y-1">
+      @for (item of items; track item.label) {
+        <a
+          [routerLink]="item.link"
+          routerLinkActive="bg-badge-bg text-agri!"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-grey-700"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0">
+            <path [attr.d]="item.icon"></path>
+          </svg>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <main class="min-w-0 flex-1 pb-20 lg:px-12 lg:py-10 lg:pb-10">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- barre d'onglets (mobile) -->
+  <nav
+    aria-label="Espace producteur"
+    class="fixed inset-x-0 bottom-0 z-10 flex border-t border-grey-200 bg-white lg:hidden"
+  >
+    @for (item of items; track item.label) {
+      <a
+        [routerLink]="item.link"
+        routerLinkActive="text-agri!"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex flex-1 cursor-pointer flex-col items-center gap-1 py-2 text-xs text-grey-500"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+          <path [attr.d]="item.icon"></path>
+        </svg>
+        {{ item.label }}
+      </a>
+    }
+  </nav>
+</div>

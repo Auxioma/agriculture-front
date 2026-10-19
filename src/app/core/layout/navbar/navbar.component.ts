@@ -6,7 +6,7 @@ import { catchError, of } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { CatalogService } from '../../../features/catalog/services/catalog.service';
 import { Category } from '../../../features/catalog/models/category.model';
-
+import { hasProducerRole } from '../../../features/producer/producer-role';
 // * Seules Default (invité), Client et Producteur sont reprises ici -! pas la variante Admin
 // * (les admins n'utilisent pas ce front public de toute facon).
 //
@@ -46,10 +46,7 @@ export class NavbarComponent {
   selectedFilterCategories = signal<string[]>([]);
 
   // * Le rôle reste calculé ici plutôt que sur AuthService voir NOTES.md.
-  isProducer = computed(() => {
-    const roles = this.authService.currentUser()?.roles ?? [];
-    return roles.includes('ROLE_PRODUCER') || roles.includes('ROLE_PRODUCER_TEAM');
-  });
+  isProducer = computed(() => hasProducerRole(this.authService.currentUser()?.roles ?? []));
 
   // 5 catégories les plus populaires (GET /api/categories?sort=popular&limit=5).
   // En cas d'erreur API on affiche une liste vide : la navbar ne doit jamais casser.
@@ -68,7 +65,7 @@ export class NavbarComponent {
   ]);
 
   // codes cgu/mentions-legales/confidentialite repris du docblock de LegalController.php (route
-  // GET /api/legal/{code}), pas inventes. "Qui sommes-nous" reste une supposition, pas de route confirmee
+  // GET /api/legal/{code}), pas inventes. "Qui sommes-nous" => page /about (faite), les pages legales pas encore
   readonly aboutLinks: MenuLink[] = [
     { label: 'Qui sommes-nous', path: '/about' },
     { label: 'CGU', path: '/legal/cgu' },
