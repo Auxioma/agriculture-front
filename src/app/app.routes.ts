@@ -18,6 +18,10 @@ export const routes: Routes = [
       import('./features/producer-space/producer-space.component').then((m) => m.ProducerSpaceComponent),
   },
   {
+    path: 'pricing',
+    loadComponent: () => import('./features/pricing/pricing.component').then((m) => m.PricingComponent),
+  },
+  {
     path: 'about',
     loadComponent: () => import('./features/about/about.component').then((m) => m.AboutComponent),
   },
@@ -48,6 +52,51 @@ export const routes: Routes = [
         path: '',
         loadComponent: () =>
           import('./features/producer/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
+      {
+        path: 'requests',
+        loadComponent: () =>
+          import('./features/producer/requests/requests.component').then((m) => m.RequestsComponent),
+      },
+      {
+        path: 'requests/received',
+        loadComponent: () =>
+          import('./features/producer/requests/received/received.component').then((m) => m.ReceivedComponent),
+      },
+      {
+        path: 'requests/quotes',
+        loadComponent: () => import('./features/producer/requests/quotes/quotes.component').then((m) => m.QuotesComponent),
+      },
+      {
+        path: 'requests/quotes/:id',
+        loadComponent: () =>
+          import('./features/producer/requests/quotes/detail/quote-detail.component').then((m) => m.QuoteDetailComponent),
+      },
+      // apres requests/received et requests/quotes : sinon "received" ou "quotes" serait pris pour un identifiant de demande
+      {
+        path: 'requests/:id',
+        loadComponent: () => import('./features/producer/requests/detail/detail.component').then((m) => m.DetailComponent),
+      },
+      {
+        path: 'requests/:id/reply',
+        loadComponent: () => import('./features/producer/requests/reply/reply.component').then((m) => m.ReplyComponent),
+      },
+      {
+        path: 'requests/:id/report',
+        loadComponent: () => import('./features/producer/requests/report/report.component').then((m) => m.ReportComponent),
+      },
+      {
+        path: 'subscription',
+        loadComponent: () => import('./features/producer/subscription/subscription.component').then((m) => m.SubscriptionComponent),
+      },
+      {
+        path: 'subscription/payment-methods',
+        loadComponent: () =>
+          import('./features/producer/subscription/payment-methods/payment-methods.component').then((m) => m.PaymentMethodsComponent),
+      },
+      {
+        path: 'support',
+        loadComponent: () => import('./features/producer/support/support.component').then((m) => m.SupportComponent),
       },
     ],
   },

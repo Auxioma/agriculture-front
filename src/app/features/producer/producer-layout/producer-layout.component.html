@@ -7,7 +7,7 @@
         <a
           [routerLink]="item.link"
           routerLinkActive="bg-badge-bg text-agri!"
-          [routerLinkActiveOptions]="{ exact: true }"
+          [routerLinkActiveOptions]="{ exact: item.link === '/producer' }"
           class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-grey-700"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0">
@@ -32,7 +32,7 @@
       <a
         [routerLink]="item.link"
         routerLinkActive="text-agri!"
-        [routerLinkActiveOptions]="{ exact: true }"
+        [routerLinkActiveOptions]="{ exact: item.link === '/producer' }"
         class="flex flex-1 cursor-pointer flex-col items-center gap-1 py-2 text-xs text-grey-500"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">

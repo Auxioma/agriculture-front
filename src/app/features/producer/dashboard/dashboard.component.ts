@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { DashboardRequest } from './dashboard.model';
+import { requestDetails, requestTitle } from '../request-format';
 import { DashboardService } from './dashboard.service';
 
 type RequestFilter = 'urgent' | 'all' | 'near';
@@ -13,7 +13,6 @@ const FILTERS: { id: RequestFilter; label: string; title: string }[] = [
   { id: 'near', label: '< 10 km', title: 'Demandes à moins de 10 km' },
 ];
 
-const UNITS: Record<string, string> = { kg: 'kg', unite: 'unité' };
 const SUBSCRIPTION_STATUSES: Record<string, string> = {
   active: 'Actif',
   trialing: "Période d'essai",
@@ -31,9 +30,10 @@ const MISSING_PROFILE_PARTS: Record<string, string> = {
 };
 
 // dashboard producteur semblable au figma, branche sur GET /api/producer/dashboard (un seul appel : chiffres,
-// demandes disponibles, abonnement et completion du profil). Les chips de filtre ne sont affichees qu'en mobile,
-// comme sur la maquette : en desktop on reste sur "Urgentes". Les boutons n'ont pas encore de destination :
-// les pages demandes / abonnement / profil / produits n'existent pas.
+// demandes disponibles, abonnement et completion du profil). Les chips de filtre sont les memes en mobile et en
+// desktop (la maquette desktop n'avait que "Urgentes", on a garde les memes fonctionnalites partout). Les boutons
+// "Gerer mon abonnement", "Completer mon profil" et "Gerer mes produits" n'ont pas encore de destination : ces
+// pages n'existent pas.
 @Component({
   selector: 'app-producer-dashboard',
   standalone: true,
@@ -46,6 +46,9 @@ export class DashboardComponent {
 
   readonly filters = FILTERS;
   filter = signal<RequestFilter>('urgent');
+
+  // sans abonnement les demandes sont en aperçu limité : un bouton de déblocage les accompagne
+  previewOnly = computed(() => (this.dashboard()?.requests ?? []).some((r) => r.locked));
 
   filterTitle = computed(() => FILTERS.find((f) => f.id === this.filter())!.title);
 
@@ -78,33 +81,6 @@ export class DashboardComponent {
     return parts.length ? `Ajoutez ${parts.join(' et ')} pour être plus visible.` : 'Votre profil est complet.';
   });
 
-  requestTitle(request: DashboardRequest): string {
-    const product = request.product ?? 'Demande';
-    return request.quantity === null ? product : `${product} - ${this.quantity(request)}`;
-  }
-
-  // ex. "Lyon · 4 km · budget 12€/kg", ou le message du client quand il n'y a pas de budget
-  requestDetails(request: DashboardRequest): string {
-    const budget =
-      request.budgetMax !== null ? `budget ${request.budgetMax}${request.currency ?? ''}${this.unitSuffix(request)}` : request.message;
-
-    return [request.city, request.distanceKm !== null ? `${request.distanceKm} km` : null, budget]
-      .filter((part) => !!part)
-      .join(' · ');
-  }
-
-  private unit(request: DashboardRequest): string {
-    return UNITS[request.unit ?? ''] ?? request.unit ?? '';
-  }
-
-  private unitSuffix(request: DashboardRequest): string {
-    return request.unit ? `/${this.unit(request)}` : '';
-  }
-
-  private quantity(request: DashboardRequest): string {
-    const unit = this.unit(request);
-    if (unit === 'kg') return `${request.quantity}kg`;
-    const plural = unit === 'unité' && request.quantity! > 1 ? 's' : '';
-    return `${request.quantity} ${unit}${plural}`.trim();
-  }
+  readonly requestTitle = requestTitle;
+  readonly requestDetails = requestDetails;
 }

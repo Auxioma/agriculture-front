@@ -1,0 +1,89 @@
+<!-- mobile : fleche de retour a gauche du titre ; desktop : lien avec son texte en haut, titre dans la colonne centree -->
+<header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
+  <a [routerLink]="['/producer/requests', id]" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    <span class="sr-only lg:not-sr-only">Retour à la demande</span>
+  </a>
+  <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-lg lg:text-3xl">Signaler cette demande</h1>
+</header>
+
+@if (request() === null) {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Cette demande est introuvable ou ne vous est pas accessible.</p>
+} @else if (request(); as r) {
+  <div class="mx-auto mt-4 space-y-5 px-4 pb-4 lg:max-w-lg lg:px-0">
+    <!-- rappel de la demande -->
+    <div class="rounded-lg bg-badge-bg px-4 py-3">
+      <p class="font-semibold">{{ r.product ?? 'Demande' }}</p>
+      <p class="text-xs text-secondary">{{ summary(r) }}</p>
+    </div>
+
+    @if (sent()) {
+      <p role="status" class="rounded-lg bg-badge-bg px-4 py-3 text-sm font-medium text-agri">
+        Signalement envoyé. Merci, notre équipe va l'examiner.
+      </p>
+      <a [routerLink]="['/producer/requests', id]" class="block w-full rounded-xl border-2 border-agri bg-white py-3 text-center text-sm font-bold text-agri">
+        Retour à la demande
+      </a>
+    } @else {
+      <form (submit)="$event.preventDefault(); submit()" class="space-y-5">
+        <fieldset class="space-y-2">
+          <legend class="mb-2 font-semibold">Motif du signalement</legend>
+          @for (option of reasons; track option.code) {
+            <label
+              class="flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-3"
+              [class]="reason() === option.code ? 'border-agri bg-badge-bg text-agri' : 'border-grey-200 bg-white'"
+            >
+              <input type="radio" name="reason" [value]="option.code" [checked]="reason() === option.code" (change)="reason.set(option.code); error.set('')" class="mt-1 accent-agri" />
+              <span class="text-sm">
+                <span class="block font-semibold">{{ option.label }}</span>
+                @if (option.hint) {
+                  <span class="block text-xs text-secondary">{{ option.hint }}</span>
+                }
+              </span>
+            </label>
+          }
+        </fieldset>
+
+        <div>
+          <label for="message" class="mb-1 block text-sm font-medium">Description (optionnel)</label>
+          <textarea
+            id="message"
+            rows="4"
+            maxlength="2000"
+            placeholder="Ajoutez des précisions utiles pour notre équipe…"
+            (input)="message.set(messageBox.value)"
+            #messageBox
+            class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-grey-500"
+          ></textarea>
+        </div>
+
+        <p class="text-xs text-secondary">
+          Notre équipe examine chaque signalement. Vous pouvez continuer à échanger avec le client pendant l'examen.
+        </p>
+
+        @if (error()) {
+          <p role="alert" class="text-sm text-danger">{{ error() }}</p>
+        }
+
+        <!-- mobile : "Envoyer" puis "Annuler" ; desktop : "Annuler" a gauche et "Envoyer" a droite -->
+        <div class="space-y-3 lg:flex lg:flex-row-reverse lg:justify-between lg:space-y-0">
+          <button
+            type="submit"
+            [disabled]="sending()"
+            class="w-full cursor-pointer rounded-xl border-2 border-agri bg-agri py-3 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60 lg:w-auto lg:px-8"
+          >
+            Envoyer le signalement
+          </button>
+          <a
+            [routerLink]="['/producer/requests', id]"
+            class="block w-full rounded-xl border-2 border-agri bg-white py-3 text-center text-sm font-bold text-agri lg:w-auto lg:px-8"
+          >
+            Annuler
+          </a>
+        </div>
+      </form>
+    }
+  </div>
+}
