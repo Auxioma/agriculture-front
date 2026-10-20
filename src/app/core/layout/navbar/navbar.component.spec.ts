@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NavbarComponent } from './navbar.component';
 import { AuthService } from '../../auth/auth.service';
 import type { CurrentUser } from '../../auth/auth.models';
+import { CatalogService } from '../../../features/catalog/services/catalog.service';
+import { makeCategory } from '../../../features/catalog/testing/catalog.fixtures';
 
 // * Mock local, volontairement séparé de core/auth/auth.service.mock.ts :
 
@@ -25,21 +28,42 @@ function makeCurrentUser(roles: string[]): CurrentUser {
   return { id: '1', email: 'test@example.com', firstName: 'Test', lastName: 'User', roles };
 }
 
+// catégories populaires renvoyées par le mock de CatalogService (ids utilisés par les chips des filtres)
+const POPULAR_CATEGORIES = [
+  makeCategory({ id: 'c1', name: 'Fruits', slug: 'fruits' }),
+  makeCategory({ id: 'c2', name: 'Légumes', slug: 'legumes' }),
+  makeCategory({ id: 'c3', name: 'Miel & Produits de la ruche', slug: 'miel' }),
+];
+
 describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let authServiceMock: NavbarAuthServiceMock;
+  let catalogServiceMock: { getPopularCategories: ReturnType<typeof vi.fn> };
 
   function linkTexts(): string[] {
     const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('a');
     return Array.from(links).map((a) => a.textContent?.trim() ?? '');
   }
 
+  // menu mobile fermé : un seul bouton "Catégories" dans le dom (le desktop)
+  function openDesktopCategoriesDropdown(): void {
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+    const toggle = Array.from(buttons).find((btn) => btn.textContent?.trim() === 'Catégories');
+    toggle?.click();
+    fixture.detectChanges();
+  }
+
   beforeEach(async () => {
     authServiceMock = createNavbarAuthServiceMock();
+    catalogServiceMock = { getPopularCategories: vi.fn(() => of(POPULAR_CATEGORIES)) };
 
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
-      providers: [{ provide: AuthService, useValue: authServiceMock }, provideRouter([])],
+      providers: [
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: CatalogService, useValue: catalogServiceMock },
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NavbarComponent);
@@ -50,6 +74,14 @@ describe('NavbarComponent', () => {
     authServiceMock.currentUser.mockReturnValue(null);
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('demande les catégories populaires au service à la création', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    expect(catalogServiceMock.getPopularCategories).toHaveBeenCalled();
   });
 
   it('devrait afficher la navigation invité (Connexion/Inscription) sans être connecté', () => {
@@ -119,7 +151,9 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
 
     const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
-    const logoutButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Déconnexion'));
+    const logoutButton = Array.from(buttons).find((btn) =>
+      btn.textContent?.includes('Déconnexion'),
+    );
     logoutButton?.click();
 
     expect(authServiceMock.logout).toHaveBeenCalled();
@@ -168,6 +202,7 @@ describe('NavbarComponent', () => {
     const texts = linkTexts();
     expect(texts).toContain('Fruits');
     expect(texts).toContain('Miel & Produits de la ruche');
+    expect(texts).toContain('Voir toutes les catégories');
 
     fixture.componentInstance.closeMobileMenu();
     fixture.detectChanges();
@@ -189,6 +224,69 @@ describe('NavbarComponent', () => {
 
     expect(fixture.componentInstance.isMenuOpen('categories')).toBe(true);
     expect(linkTexts()).toContain('Fruits');
+  });
+
+  it('devrait lier chaque catégorie à sa page et ajouter un lien vers /categories dans le dropdown', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    openDesktopCategoriesDropdown();
+
+    const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('ul a');
+    const hrefByLabel = new Map(
+      Array.from(links).map((a) => [a.textContent?.trim(), a.getAttribute('href')]),
+    );
+
+    expect(hrefByLabel.get('Fruits')).toBe('/categories/fruits');
+    expect(hrefByLabel.get('Miel & Produits de la ruche')).toBe('/categories/miel');
+    expect(hrefByLabel.get('Voir toutes les catégories')).toBe('/categories');
+  });
+
+  it('devrait afficher le lien "Voir toutes les catégories" en dernier dans le dropdown', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    const links = fixture.componentInstance.categoryLinks();
+
+    expect(links.length).toBe(POPULAR_CATEGORIES.length + 1);
+    expect(links[links.length - 1]).toEqual({
+      label: 'Voir toutes les catégories',
+      path: '/categories',
+      isAll: true,
+    });
+  });
+
+  it("devrait renvoyer vers /categories quand une catégorie n'a pas de slug", () => {
+    catalogServiceMock.getPopularCategories.mockReturnValue(
+      of([makeCategory({ id: 'c9', name: 'Sans slug', slug: null })]),
+    );
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+
+    // le composant lit le service dans son constructeur : on en recrée un avec le nouveau mock
+    fixture = TestBed.createComponent(NavbarComponent);
+    fixture.detectChanges();
+    openDesktopCategoriesDropdown();
+
+    const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('ul a');
+    const sansSlug = Array.from(links).find((a) => a.textContent?.trim() === 'Sans slug');
+    expect(sansSlug?.getAttribute('href')).toBe('/categories');
+  });
+
+  it('devrait garder le dropdown utilisable avec le seul lien "Voir toutes" quand l\'API échoue', () => {
+    catalogServiceMock.getPopularCategories.mockReturnValue(throwError(() => new Error('boom')));
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+
+    fixture = TestBed.createComponent(NavbarComponent);
+    fixture.detectChanges();
+    openDesktopCategoriesDropdown();
+
+    const texts = linkTexts();
+    expect(texts).toContain('Voir toutes les catégories');
+    expect(texts).not.toContain('Fruits');
   });
 
   it('devrait déplier le menu déroulant "A propos" en desktop au clic', () => {
@@ -268,18 +366,20 @@ describe('NavbarComponent', () => {
     fixture.componentInstance.toggleFilters();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.isFilterCategorySelected('Fruits')).toBe(false);
+    expect(fixture.componentInstance.isFilterCategorySelected('c1')).toBe(false);
 
     const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
     const fruitsChip = Array.from(buttons).find((btn) => btn.textContent?.trim() === 'Fruits');
     fruitsChip?.click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.isFilterCategorySelected('Fruits')).toBe(true);
+    // les chips mémorisent l'id de la catégorie, pas son nom
+    expect(fixture.componentInstance.isFilterCategorySelected('c1')).toBe(true);
+    expect(fixture.componentInstance.isFilterCategorySelected('Fruits')).toBe(false);
 
     fruitsChip?.click();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.isFilterCategorySelected('Fruits')).toBe(false);
+    expect(fixture.componentInstance.isFilterCategorySelected('c1')).toBe(false);
   });
 });

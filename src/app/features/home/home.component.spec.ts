@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomeComponent } from './home.component';
 import { ProducerService } from './producer.service';
 import { FeaturedProducer } from './producer.model';
+import { CatalogService } from '../catalog/services/catalog.service';
+import { makeCategory } from '../catalog/testing/catalog.fixtures';
 import { FaqService } from './faq.service';
 import { FaqArticle } from './faq.model';
 
@@ -19,8 +21,40 @@ const FEATURED_PRODUCERS: FeaturedProducer[] = [
     averageRating: 4.9,
     reviewCount: 12,
     photoUrl: '/images/categories/miel.jpg',
-    labels: [{ code: 'bio', name: 'Bio' }, { code: 'local', name: 'Local' }],
+    labels: [
+      { code: 'bio', name: 'Bio' },
+      { code: 'local', name: 'Local' },
+    ],
   },
+];
+
+// 5 catégories populaires, dont une sans image (repli) pour tester l'image par défaut
+const POPULAR_CATEGORIES = [
+  makeCategory({
+    id: 'c1',
+    name: 'Fruits',
+    slug: 'fruits',
+    imageUrl: '/images/categories/fruits.jpg',
+  }),
+  makeCategory({ id: 'c2', name: 'Légumes', slug: 'legumes', imageUrl: null }),
+  makeCategory({
+    id: 'c3',
+    name: 'Produits laitiers',
+    slug: 'produits-laitiers',
+    imageUrl: '/images/categories/produits-laitiers.jpg',
+  }),
+  makeCategory({
+    id: 'c4',
+    name: 'Viandes & Volailles',
+    slug: 'viandes-volailles',
+    imageUrl: '/images/categories/viandes-volailles.jpg',
+  }),
+  makeCategory({
+    id: 'c5',
+    name: 'Miel & Produits de la ruche',
+    slug: 'miel',
+    imageUrl: '/images/categories/miel.jpg',
+  }),
 ];
 
 const FAQ_ARTICLES: FaqArticle[] = [
@@ -31,10 +65,12 @@ const FAQ_ARTICLES: FaqArticle[] = [
 describe('HomeComponent', () => {
   let fixture: ComponentFixture<HomeComponent>;
   let producerServiceMock: { getFeatured: ReturnType<typeof vi.fn> };
+  let catalogServiceMock: { getPopularCategories: ReturnType<typeof vi.fn> };
   let faqServiceMock: { getAll: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     producerServiceMock = { getFeatured: vi.fn(() => of(FEATURED_PRODUCERS)) };
+    catalogServiceMock = { getPopularCategories: vi.fn(() => of(POPULAR_CATEGORIES)) };
     faqServiceMock = { getAll: vi.fn(() => of(FAQ_ARTICLES)) };
 
     await TestBed.configureTestingModule({
@@ -42,6 +78,7 @@ describe('HomeComponent', () => {
       providers: [
         provideRouter([]),
         { provide: ProducerService, useValue: producerServiceMock },
+        { provide: CatalogService, useValue: catalogServiceMock },
         { provide: FaqService, useValue: faqServiceMock },
       ],
     }).compileComponents();
@@ -71,23 +108,77 @@ describe('HomeComponent', () => {
     expect(text).toContain('Demandes gratuites pour les clients');
   });
 
-  it('devrait afficher les 5 catégories populaires avec leur photo', () => {
+  it('demande les catégories populaires au service au chargement', () => {
+    expect(catalogServiceMock.getPopularCategories).toHaveBeenCalled();
+  });
+
+  it('devrait afficher les 5 catégories populaires renvoyées par le service, avec leur photo', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Catégories populaires');
+    expect(compiled.textContent).toContain('Fruits');
+    expect(compiled.textContent).toContain('Miel & Produits de la ruche');
 
-    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll('[data-carousel="categories"] img');
+    const images: NodeListOf<HTMLImageElement> = compiled.querySelectorAll(
+      '[data-carousel="categories"] img',
+    );
     expect(images.length).toBe(5);
     expect(images[0].src).toContain('/images/categories/fruits.jpg');
   });
 
-  it('cache les flèches du carrousel tant qu\'il ne déborde pas', () => {
+  it("utilise l'image de repli quand une catégorie n'a pas d'imageUrl", () => {
+    const images: NodeListOf<HTMLImageElement> = (
+      fixture.nativeElement as HTMLElement
+    ).querySelectorAll('[data-carousel="categories"] img');
+
+    expect(images[1].alt).toBe('Légumes');
+    expect(images[1].src).toContain('/images/categories/default.jpg');
+  });
+
+  it('chaque carte mène à la page de sa catégorie', () => {
+    const links: NodeListOf<HTMLAnchorElement> = (
+      fixture.nativeElement as HTMLElement
+    ).querySelectorAll('[data-carousel="categories"] a');
+
+    expect(links[0].getAttribute('href')).toBe('/categories/fruits');
+    expect(links[4].getAttribute('href')).toBe('/categories/miel');
+  });
+
+  it("renvoie vers /categories quand une catégorie n'a pas de slug", () => {
+    catalogServiceMock.getPopularCategories.mockReturnValue(
+      of([makeCategory({ id: 'c1', name: 'Sans slug', slug: null })]),
+    );
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const link: HTMLAnchorElement = otherFixture.nativeElement.querySelector(
+      '[data-carousel="categories"] a',
+    );
+    expect(link.getAttribute('href')).toBe('/categories');
+  });
+
+  it("n'affiche aucune carte et ne plante pas quand l'API des catégories échoue", () => {
+    catalogServiceMock.getPopularCategories.mockReturnValue(throwError(() => new Error('boom')));
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const compiled = otherFixture.nativeElement as HTMLElement;
+    expect(compiled.querySelectorAll('[data-carousel="categories"] a').length).toBe(0);
+    // le reste de la page s'affiche normalement
+    expect(compiled.textContent).toContain('agricole réuni');
+  });
+
+  it("cache les flèches du carrousel tant qu'il ne déborde pas", () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('button[aria-label="Catégories précédentes"]')).toBeNull();
     expect(compiled.querySelector('button[aria-label="Catégories suivantes"]')).toBeNull();
   });
 
   it('affiche la flèche droite quand ça déborde, puis la gauche une fois scrollé', () => {
-    const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="categories"]');
+    const track: HTMLDivElement = fixture.nativeElement.querySelector(
+      '[data-carousel="categories"]',
+    );
     Object.defineProperty(track, 'scrollWidth', { value: 1000, configurable: true });
     Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true });
     Object.defineProperty(track, 'scrollLeft', { value: 0, configurable: true, writable: true });
@@ -95,18 +186,26 @@ describe('HomeComponent', () => {
     fixture.componentInstance.updateScrollState();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('button[aria-label="Catégories suivantes"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Catégories suivantes"]'),
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]'),
+    ).toBeNull();
 
     track.scrollLeft = 700;
     fixture.componentInstance.updateScrollState();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Catégories précédentes"]'),
+    ).toBeTruthy();
   });
 
   it('scrollCarousel fait défiler le carrousel dans le bon sens', () => {
-    const track: HTMLDivElement = fixture.nativeElement.querySelector('[data-carousel="categories"]');
+    const track: HTMLDivElement = fixture.nativeElement.querySelector(
+      '[data-carousel="categories"]',
+    );
     Object.defineProperty(track, 'clientWidth', { value: 300, configurable: true });
     const scrollBySpy = vi.fn();
     track.scrollBy = scrollBySpy;
@@ -133,6 +232,12 @@ describe('HomeComponent', () => {
     expect(text).toContain('Local');
   });
 
+  it('lie la fiche du producteur à la une à son slug', () => {
+    const link: HTMLAnchorElement = fixture.nativeElement.querySelector('a[href^="/producers/"]');
+
+    expect(link.getAttribute('href')).toBe('/producers/ferme-dupont');
+  });
+
   it('ne montre pas la section quand le service ne renvoie aucun producteur', async () => {
     producerServiceMock.getFeatured.mockReturnValue(of([]));
 
@@ -141,6 +246,17 @@ describe('HomeComponent', () => {
 
     const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).not.toContain('Nos agriculteurs du mois');
+  });
+
+  it("ne plante pas et masque la section quand l'API des producteurs échoue", () => {
+    producerServiceMock.getFeatured.mockReturnValue(throwError(() => new Error('boom')));
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('Nos agriculteurs du mois');
+    expect(text).toContain('agricole réuni');
   });
 
   it('affiche les producteurs à la une dans un carrousel horizontal défilable', () => {
@@ -152,7 +268,9 @@ describe('HomeComponent', () => {
     fixture.componentInstance.updateFarmersScrollState();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('button[aria-label="Producteurs suivants"]')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Producteurs suivants"]'),
+    ).toBeTruthy();
 
     const scrollBySpy = vi.fn();
     track.scrollBy = scrollBySpy;
@@ -168,7 +286,7 @@ describe('HomeComponent', () => {
     expect(text).toContain('Etape 3 — Achetez en direct');
   });
 
-  it('affiche les 4 raisons d\'acheter en direct', () => {
+  it("affiche les 4 raisons d'acheter en direct", () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Pourquoi acheter en direct');
     expect(text).toContain('Fraîcheur');
@@ -177,7 +295,7 @@ describe('HomeComponent', () => {
     expect(text).toContain('Dialogue');
   });
 
-  it('affiche le bloc producteur avec le CTA vers l\'inscription producteur', () => {
+  it("affiche le bloc producteur avec le CTA vers l'inscription producteur", () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Vous êtes agriculteurs');
     expect(compiled.textContent).toContain('0%');
