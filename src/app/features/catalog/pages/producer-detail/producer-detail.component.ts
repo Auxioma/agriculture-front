@@ -20,6 +20,8 @@ import {
   formatRadius,
   formatReviewDate,
   labelBadgeClass,
+  productPrice,
+  productQuantity,
   summarizeOpeningHours,
 } from '../../utils/producer-format';
 
@@ -166,6 +168,8 @@ export class ProducerDetailComponent {
   readonly formatRadius = formatRadius;
   readonly formatReviewDate = formatReviewDate;
   readonly labelBadgeClass = labelBadgeClass;
+  readonly productPrice = productPrice;
+  readonly productQuantity = productQuantity;
 
   constructor() {
     // * SEO : un titre et une description propres à chaque fiche (rendus aussi côté serveur)

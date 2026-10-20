@@ -121,6 +121,75 @@ describe('ProducerDetailComponent', () => {
     );
   });
 
+  it('montre ce que le producteur a renseigné pour chaque produit', async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          {
+            id: 'a',
+            name: 'Tomates',
+            variety: 'Cœur de bœuf',
+            description: 'Cultivées en plein champ',
+            seasonStartMonth: 6,
+            seasonEndMonth: 9,
+            quantity: '50.000',
+            unit: { code: 'kg', label: 'Kilogramme' },
+            price: '3.50',
+            currencyCode: 'EUR',
+            labels: [{ code: 'bio', name: 'Bio' }],
+            photos: [{ url: 'http://localhost/tomates.jpg', alt: 'Cœurs de bœuf' }],
+          },
+        ],
+      }),
+    );
+
+    const section = ctx.host.querySelector('#disponibilites') as HTMLElement;
+    const text = textOf(section);
+    expect(text).toContain('Tomates · Cœur de bœuf — Disponible de juin à septembre');
+    expect(text).toContain('50 kg · 3,50 €/kg');
+    expect(text).toContain('Cultivées en plein champ');
+    // * Les labels de produit sont déclarés : la fiche le dit, ils ne passent pas pour des badges vérifiés.
+    expect(text).toContain('Bio');
+    expect(text).toContain('déclarés par le producteur');
+    const photo = section.querySelector('img') as HTMLImageElement;
+    expect(photo.getAttribute('src')).toBe('http://localhost/tomates.jpg');
+    expect(photo.getAttribute('alt')).toBe('Cœurs de bœuf');
+  });
+
+  it("n'affiche ni volume, ni prix, ni labels, ni photos quand le producteur ne les a pas renseignés", async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          { id: 'a', name: 'Miel', seasonStartMonth: 1, seasonEndMonth: 12, quantity: null, price: null, labels: [], photos: [] },
+        ],
+      }),
+    );
+
+    const section = ctx.host.querySelector('#disponibilites') as HTMLElement;
+    expect(textOf(section)).toBe("Produits & disponibilités Miel — Disponible toute l'année");
+    expect(section.querySelector('img')).toBeNull();
+    expect(textOf(section)).not.toContain('déclarés par le producteur');
+  });
+
+  it("une photo sans texte alternatif prend le nom du produit", async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [{ id: 'a', name: 'Pommes', seasonStartMonth: null, seasonEndMonth: null, photos: [{ url: 'http://localhost/p.jpg', alt: null }] }],
+      }),
+    );
+
+    expect((ctx.host.querySelector('#disponibilites img') as HTMLImageElement).getAttribute('alt')).toBe('Pommes');
+  });
+
   it('masque les sections sans donnée au lieu de les afficher vides', async () => {
     const ctx = await setup();
 

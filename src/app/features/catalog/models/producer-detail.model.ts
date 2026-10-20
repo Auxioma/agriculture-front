@@ -18,12 +18,27 @@ export interface OpeningHour {
   isClosed: boolean;
 }
 
-/** Produit proposé par le producteur, avec sa période de disponibilité (mois de 1 à 12) */
+/**
+ * Produit proposé par le producteur, avec sa période de disponibilité (mois de 1 à 12) : celle que le producteur a
+ * choisie, ou la saison du catalogue à défaut. Les champs optionnels (?) sont ceux que le producteur renseigne (ou non)
+ * dans « Produits et disponibilités » : la fiche masque simplement ce qui manque.
+ */
 export interface ProducerProductSummary {
   id: string;
   name: string;
   seasonStartMonth: number | null;
   seasonEndMonth: number | null;
+  variety?: string | null;
+  description?: string | null;
+  /** Volume estimé, un décimal en texte (« 50.000 »), avec son unité : celle du producteur, ou celle du catalogue */
+  quantity?: string | null;
+  unit?: { code: string; label: string } | null;
+  /** Prix indicatif, un décimal en texte (« 3.50 »), par unité */
+  price?: string | null;
+  currencyCode?: string | null;
+  /** Labels DÉCLARÉS par le producteur pour ce produit, non vérifiés : à ne pas confondre avec ProducerDetail.labels */
+  labels?: ProducerLabelBadge[];
+  photos?: { url: string; alt: string | null }[];
 }
 
 /**

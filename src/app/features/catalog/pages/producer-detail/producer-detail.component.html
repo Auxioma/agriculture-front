@@ -139,14 +139,61 @@
       @if (p.products?.length) {
         <section id="disponibilites" class="mt-8 scroll-mt-4">
           <h2 class="text-base font-bold text-fonts">Produits &amp; disponibilités</h2>
-          <ul class="mt-2 space-y-1 text-sm text-grey-700">
+          <ul class="mt-2 space-y-2 text-sm text-grey-700">
             @for (product of p.products; track product.id) {
               @let availability =
                 availabilityLabel(product.seasonStartMonth, product.seasonEndMonth);
-              <li>
-                {{ product.name }}
-                @if (availability) {
-                  — {{ availability }}
+              @let quantity = productQuantity(product);
+              @let price = productPrice(product);
+              <li class="rounded-lg border border-grey-200 bg-white p-3">
+                <p class="font-medium text-fonts">
+                  {{ product.name }}
+                  @if (product.variety) {
+                    · {{ product.variety }}
+                  }
+                  @if (availability) {
+                    — {{ availability }}
+                  }
+                </p>
+                @if (quantity || price) {
+                  <p class="mt-0.5">
+                    {{ quantity }}
+                    @if (quantity && price) {
+                      ·
+                    }
+                    {{ price }}
+                  </p>
+                }
+                @if (product.description) {
+                  <p class="mt-1">{{ product.description }}</p>
+                }
+                <!-- ces labels sont déclarés par le producteur pour ce produit, pas vérifiés : seuls ceux de l'exploitation (en haut) le sont -->
+                @if (product.labels?.length) {
+                  <ul class="mt-2 flex flex-wrap items-center gap-1.5" aria-label="Labels déclarés par le producteur">
+                    @for (label of product.labels; track label.code) {
+                      <li
+                        class="rounded-md px-2 py-0.5 text-xs font-semibold"
+                        [class]="labelBadgeClass(label.code)"
+                      >
+                        {{ label.name }}
+                      </li>
+                    }
+                    <li class="text-xs text-grey-500">déclarés par le producteur</li>
+                  </ul>
+                }
+                @if (product.photos?.length) {
+                  <ul class="mt-2 flex flex-wrap gap-2">
+                    @for (photo of product.photos; track photo.url) {
+                      <li>
+                        <img
+                          [src]="photo.url"
+                          [alt]="photo.alt || product.name"
+                          loading="lazy"
+                          class="block h-16 w-16 rounded-lg object-cover"
+                        />
+                      </li>
+                    }
+                  </ul>
                 }
               </li>
             }
