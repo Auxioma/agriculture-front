@@ -169,7 +169,9 @@
         <div>
           <label for="price" class="mb-1 block font-medium">{{ priceLabel() }} <span class="font-normal text-secondary">(facultatif)</span></label>
           <input id="price" formControlName="price" inputmode="decimal" placeholder="3,50" [class]="input" />
-          <p class="mt-1 text-xs text-secondary">Volume et prix sont indicatifs. Le prix est par unité.</p>
+          <p class="mt-1 text-xs text-secondary">
+            Volume et prix sont indicatifs, le prix est par unité. Comme la description, les labels et les photos, ils sont visibles sur votre fiche publique.
+          </p>
         </div>
 
         @if (catalogLabels().length > 0) {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { productDetails, productTitle, seasonLabel, unitText } from './product-format';
+import { MONTH_OPTIONS, productDetails, productTitle, seasonLabel, unitText } from './product-format';
 import { ProducerProduct } from './products.service';
 
 const product = (overrides: Partial<ProducerProduct> = {}): ProducerProduct => ({
@@ -15,8 +15,14 @@ const product = (overrides: Partial<ProducerProduct> = {}): ProducerProduct => (
   unit: null,
   seasonStartMonth: null,
   seasonEndMonth: null,
+  availability: null,
+  labels: [],
+  photos: [],
   ...overrides,
 });
+
+const KG = { id: 'u-kg', code: 'kg', label: 'Kilogramme' };
+const UNITE = { id: 'u-unite', code: 'unite', label: 'Unité' };
 
 // les espaces insecables de l'Intl deviennent des espaces simples
 const plain = (text: string) => text.replace(/\s/g, ' ');
@@ -67,7 +73,7 @@ describe('productDetails', () => {
       estimatedVolume: '90.000',
       defaultPrice: '3.50',
       currencyCode: 'EUR',
-      unit: { code: 'kg', label: 'Kilogramme' },
+      unit: KG,
       seasonStartMonth: 6,
       seasonEndMonth: 9,
     });
@@ -77,16 +83,16 @@ describe('productDetails', () => {
 
   it('ce qui n\'est pas renseigné n\'apparaît pas', () => {
     expect(productDetails(product())).toBe("Toute l'année");
-    expect(plain(productDetails(product({ defaultPrice: '2.00', unit: { code: 'kg', label: 'Kilogramme' } })))).toBe("Toute l'année · 2,00 €/kg");
-    expect(productDetails(product({ estimatedVolume: '12.000', unit: { code: 'kg', label: 'Kilogramme' } }))).toBe("Toute l'année · 12 kg");
+    expect(plain(productDetails(product({ defaultPrice: '2.00', unit: KG })))).toBe("Toute l'année · 2,00 €/kg");
+    expect(productDetails(product({ estimatedVolume: '12.000', unit: KG }))).toBe("Toute l'année · 12 kg");
   });
 
   it('les décimales du volume gardent la virgule française, sans zéros inutiles', () => {
-    expect(productDetails(product({ estimatedVolume: '87.500', unit: { code: 'kg', label: 'Kilogramme' } }))).toContain('87,5 kg');
+    expect(productDetails(product({ estimatedVolume: '87.500', unit: KG }))).toContain('87,5 kg');
   });
 
   it('une unité « unité » passe au pluriel', () => {
-    expect(productDetails(product({ estimatedVolume: '30.000', unit: { code: 'unite', label: 'Unité' } }))).toContain('30 unités');
+    expect(productDetails(product({ estimatedVolume: '30.000', unit: UNITE }))).toContain('30 unités');
   });
 
   it('sans unité dans le catalogue : volume sans unité et prix sans « /unité »', () => {
@@ -97,5 +103,36 @@ describe('productDetails', () => {
 
   it('un prix sans devise est en euros', () => {
     expect(plain(productDetails(product({ defaultPrice: '15.22' })))).toContain('15,22 €');
+  });
+});
+
+describe('productDetails avec la période du producteur', () => {
+  const withSlot = (slot: Partial<NonNullable<ProducerProduct['availability']>>) =>
+    product({
+      seasonStartMonth: 6,
+      seasonEndMonth: 9,
+      estimatedVolume: '90.000',
+      unit: KG,
+      availability: { startMonth: 3, endMonth: 5, quantity: '50.000', unit: UNITE, ...slot },
+    });
+
+  it("sa période, son volume et son unité l'emportent sur ceux du catalogue", () => {
+    expect(plain(productDetails({ ...withSlot({}), defaultPrice: '3.50' }))).toBe('Mars-Mai · 50 unités · 3,50 €/unité');
+  });
+
+  it('un créneau sans mois garde la saison du catalogue, un créneau sans volume celui de la fiche', () => {
+    expect(productDetails(withSlot({ startMonth: null, endMonth: null, quantity: null }))).toBe('Juin-Sept · 90 unités');
+  });
+
+  it("un créneau sans unité retombe sur l'unité du catalogue", () => {
+    expect(productDetails(withSlot({ unit: null }))).toBe('Mars-Mai · 50 kg');
+  });
+});
+
+describe('MONTH_OPTIONS', () => {
+  it('douze mois, de 1 à 12', () => {
+    expect(MONTH_OPTIONS).toHaveLength(12);
+    expect(MONTH_OPTIONS[0]).toEqual({ value: 1, label: 'Janvier' });
+    expect(MONTH_OPTIONS[11]).toEqual({ value: 12, label: 'Décembre' });
   });
 });

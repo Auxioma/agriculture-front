@@ -3,6 +3,8 @@ import {
   availabilityLabel,
   formatRadius,
   labelBadgeClass,
+  productPrice,
+  productQuantity,
   summarizeOpeningHours,
 } from './producer-format';
 
@@ -100,5 +102,47 @@ describe('labelBadgeClass', () => {
     expect(labelBadgeClass('bio')).toContain('bg-agri');
     expect(labelBadgeClass('local')).toContain('bg-earth');
     expect(labelBadgeClass('hve')).toContain('bg-badge-bg');
+  });
+});
+
+describe('productQuantity', () => {
+  const kg = { code: 'kg', label: 'Kilogramme' };
+  const piece = { code: 'unite', label: 'Unité' };
+
+  it('donne le volume avec son unité, sans zéros inutiles', () => {
+    expect(productQuantity({ quantity: '50.000', unit: kg })).toBe('50 kg');
+    expect(productQuantity({ quantity: '12.500', unit: kg })).toBe('12,5 kg');
+  });
+
+  it("met « unité » au pluriel à partir de 2", () => {
+    expect(productQuantity({ quantity: '1', unit: piece })).toBe('1 unité');
+    expect(productQuantity({ quantity: '30', unit: piece })).toBe('30 unités');
+  });
+
+  it("dit « volume » quand il n'y a pas d'unité, et rien sans volume", () => {
+    expect(productQuantity({ quantity: '50', unit: null })).toBe('volume 50');
+    expect(productQuantity({ quantity: null, unit: kg })).toBeNull();
+    expect(productQuantity({ unit: kg })).toBeNull();
+    expect(productQuantity({ quantity: 'abc', unit: kg })).toBeNull();
+  });
+});
+
+describe('productPrice', () => {
+  const kg = { code: 'kg', label: 'Kilogramme' };
+  // * l'espace avant « € » est insécable : on le compare comme une espace simple
+  const plain = (text: string | null) => text?.replace(/\s/g, ' ');
+
+  it('donne le prix par unité, toujours avec deux décimales', () => {
+    expect(plain(productPrice({ price: '3.50', currencyCode: 'EUR', unit: kg }))).toBe('3,50 €/kg');
+    expect(plain(productPrice({ price: '12', currencyCode: 'EUR', unit: kg }))).toBe('12,00 €/kg');
+  });
+
+  it("n'ajoute rien sans unité, et prend l'euro sans devise", () => {
+    expect(plain(productPrice({ price: '3.5', currencyCode: null, unit: null }))).toBe('3,50 €');
+  });
+
+  it('ne dit rien sans prix', () => {
+    expect(productPrice({ price: null, currencyCode: 'EUR', unit: kg })).toBeNull();
+    expect(productPrice({})).toBeNull();
   });
 });
