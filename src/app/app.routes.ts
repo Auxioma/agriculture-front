@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
 import { producerGuard } from './features/producer/producer.guard';
+import { clientGuard } from './features/client/client.guard';
 
 export const routes: Routes = [
   {
@@ -15,7 +16,9 @@ export const routes: Routes = [
   {
     path: 'producer-space',
     loadComponent: () =>
-      import('./features/producer-space/producer-space.component').then((m) => m.ProducerSpaceComponent),
+      import('./features/producer-space/producer-space.component').then(
+        (m) => m.ProducerSpaceComponent,
+      ),
   },
   {
     path: 'about',
@@ -27,7 +30,8 @@ export const routes: Routes = [
   },
   {
     path: 'contact',
-    loadComponent: () => import('./features/contact/contact.component').then((m) => m.ContactComponent),
+    loadComponent: () =>
+      import('./features/contact/contact.component').then((m) => m.ContactComponent),
   },
   {
     path: 'resources',
@@ -42,14 +46,26 @@ export const routes: Routes = [
     path: 'producer',
     canActivate: [producerGuard],
     loadComponent: () =>
-      import('./features/producer/producer-layout/producer-layout.component').then((m) => m.ProducerLayoutComponent),
+      import('./features/producer/producer-layout/producer-layout.component').then(
+        (m) => m.ProducerLayoutComponent,
+      ),
     children: [
       {
         path: '',
         loadComponent: () =>
-          import('./features/producer/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/producer/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
     ],
+  },
+  {
+    path: 'requests/new',
+    canActivate: [clientGuard],
+    loadChildren: () =>
+      import('./features/client/request-funnel/request-funnel.routes').then(
+        (m) => m.REQUEST_FUNNEL_ROUTES,
+      ),
   },
   { path: 'auth', children: AUTH_ROUTES },
   {

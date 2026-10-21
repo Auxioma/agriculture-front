@@ -26,4 +26,6 @@ export const serverRoutes: ServerRoute[] = [
     path: '**',
     renderMode: RenderMode.Prerender,
   },
+  // espace client
+  { path: 'requests/**', renderMode: RenderMode.Client },
 ];

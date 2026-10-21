@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthRoleService } from '../auth-role.service';
 import { hasProducerRole } from '../../producer/producer-role';
 
@@ -17,6 +17,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   authRole = inject(AuthRoleService);
 
   form = this.fb.nonNullable.group({
@@ -38,8 +39,7 @@ export class LoginComponent {
         this.authService.fetchCurrentUser().subscribe({
           next: (user) => {
             this.isSubmitting = false;
-            // les producteurs arrivent directement sur leur espace, les autres sur l'accueil
-            this.router.navigate([hasProducerRole(user.roles) ? '/producer' : '/']);
+            this.router.navigateByUrl(this.afterLoginUrl(user.roles));
           },
           error: () => {
             this.isSubmitting = false;
@@ -52,6 +52,12 @@ export class LoginComponent {
         this.handleError(err);
       },
     });
+  }
+
+  private afterLoginUrl(roles: string[]): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl?.startsWith('/') && !returnUrl.startsWith('//')) return returnUrl;
+    return hasProducerRole(roles) ? '/producer' : '/';
   }
 
   private handleError(err: HttpErrorResponse): void {
