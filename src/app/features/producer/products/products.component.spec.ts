@@ -270,25 +270,66 @@ describe('ProductsComponent', () => {
   });
 
   describe("l'ajout d'un produit", () => {
-    it("propose d'abord les catégories qui ont encore des produits à ajouter", async () => {
+    it("propose d'abord toutes les catégories du catalogue, même celles dont le producteur a déjà des produits", async () => {
       await create();
 
       click(button('+ Ajouter un produit'));
 
       expect(dialog()?.querySelector('h2')?.textContent).toBe('Ajouter un produit');
-      // Tomates, Pommes de terre et Miel sont deja la (le back refuserait un doublon) : la categorie du miel n'a plus rien a proposer
-      expect(optionsOf('#category')).toEqual(['Choisir une catégorie', 'Fruits', 'Légumes', 'Autres']);
+      expect(optionsOf('#category')).toEqual(['Choisir une catégorie', 'Fruits', 'Légumes', 'Miel & Produits de la ruche', 'Autres']);
       expect(optionsOf('#product')).toEqual(['Choisir un produit']);
     });
 
-    it('puis les produits de la catégorie choisie, sans ceux déjà dans la liste', async () => {
+    it('puis les produits de la catégorie choisie, y compris ceux déjà dans la liste (une autre variété)', async () => {
       await create();
       click(button('+ Ajouter un produit'));
 
+      // Tomates et Pommes de terre sont deja dans la liste
       pick('#category', 'c-legumes');
-      expect(optionsOf('#product')).toEqual(['Choisir un produit', 'Carottes']);
+      expect(optionsOf('#product')).toEqual(['Choisir un produit', 'Tomates', 'Pommes de terre', 'Carottes']);
       pick('#category', 'others');
       expect(optionsOf('#product')).toEqual(['Choisir un produit', 'Poulet fermier']);
+    });
+
+    it('un produit déjà dans la liste se rajoute avec une autre variété', async () => {
+      await create();
+      click(button('+ Ajouter un produit'));
+
+      choose('p-tomates');
+      type('variety', 'Roma');
+      click(button('Ajouter'));
+
+      expect(serviceMock.create).toHaveBeenCalledWith('p-tomates', expect.objectContaining({ variety: 'Roma' }));
+    });
+
+    it('la même variété du même produit deux fois est refusée sans appeler le back', async () => {
+      await create();
+      click(button('+ Ajouter un produit'));
+      choose('p-tomates');
+
+      // la casse et les espaces ne comptent pas, comme cote back
+      type('variety', '  cœur de BŒUF ');
+      click(button('Ajouter'));
+      expect(alert()).toContain('Vous avez déjà ce produit avec cette variété');
+
+      // « sans variété » est une variété : Miel de fleurs est deja la sans variete
+      choose('p-miel');
+      type('variety', '');
+      click(button('Ajouter'));
+      expect(alert()).toContain('Vous avez déjà ce produit avec cette variété');
+
+      expect(serviceMock.create).not.toHaveBeenCalled();
+    });
+
+    it('sans autre ligne du même produit dans la liste, la variété saisie passe', async () => {
+      await create(of([]));
+      click(button('+ Ajouter un produit'));
+      choose('p-tomates');
+      type('variety', 'Cœur de bœuf');
+
+      click(button('Ajouter'));
+
+      expect(serviceMock.create).toHaveBeenCalledTimes(1);
     });
 
     it('changer de catégorie vide le produit choisi', async () => {
@@ -303,7 +344,7 @@ describe('ProductsComponent', () => {
       expect(alert()).toContain('Choisissez un produit.');
     });
 
-    it('sans produit à ajouter dans le catalogue, le dit', async () => {
+    it('sans produit dans le catalogue, le dit', async () => {
       await create(of([TOMATES, POMMES_DE_TERRE, MIEL]));
       TestBed.resetTestingModule();
       await TestBed.configureTestingModule({
@@ -316,7 +357,7 @@ describe('ProductsComponent', () => {
 
       click(button('+ Ajouter un produit'));
 
-      expect(dialog()?.textContent).toContain('Aucun autre produit disponible dans le catalogue.');
+      expect(dialog()?.textContent).toContain('Aucun produit dans le catalogue.');
     });
 
     it("envoie le produit actif, en euros, avec l'unité du catalogue, puis recharge la liste", async () => {
@@ -625,6 +666,23 @@ describe('ProductsComponent', () => {
       expect(serviceMock.update).toHaveBeenCalledWith('pp3', expect.objectContaining({ isActive: false, labelIds: [] }));
       expect(text()).toContain('Produit modifié.');
       expect(serviceMock.getProducts).toHaveBeenCalledTimes(2);
+    });
+
+    it("changer la variété d'une ligne ne peut pas prendre celle d'une autre ligne du même produit", async () => {
+      const gala = { ...TOMATES, id: 'g', variety: 'Gala' };
+      const golden = { ...TOMATES, id: 'h', variety: 'Golden' };
+      await create(of([gala, golden]));
+      click(rowButton('Golden'));
+
+      type('variety', ' gala');
+      click(button('Enregistrer'));
+      expect(alert()).toContain('Vous avez déjà ce produit avec cette variété');
+      expect(serviceMock.update).not.toHaveBeenCalled();
+
+      // enregistrer sans changer la variété n'est pas un doublon avec soi-même
+      type('variety', 'Golden');
+      click(button('Enregistrer'));
+      expect(serviceMock.update).toHaveBeenCalledWith('h', expect.objectContaining({ variety: 'Golden' }));
     });
 
     it('modifier la description, la période et la disponibilité', async () => {

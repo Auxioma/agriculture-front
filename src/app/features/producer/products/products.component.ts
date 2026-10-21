@@ -102,15 +102,14 @@ export class ProductsComponent {
   volumeLabel = computed(() => (this.unit() ? `Volume estimé (${unitText(this.unit()!.code)})` : 'Volume estimé'));
   priceLabel = computed(() => (this.unit() ? `Prix indicatif (€/${unitText(this.unit()!.code)})` : 'Prix indicatif (€)'));
 
-  // produits a ajouter : ceux du catalogue qui ne sont pas deja dans la liste (le back refuse un doublon, 409), par categorie
-  // (on choisit la categorie, puis le produit) ; une categorie sans produit a ajouter n'est pas proposee
+  // produits a ajouter : tout le catalogue, par categorie (on choisit la categorie, puis le produit). Un produit deja dans la
+  // liste reste propose : un producteur a plusieurs varietes du meme produit (Gala, Golden), une ligne chacune. Seule la meme
+  // variete deux fois est refusee (voir save, et 409 cote back).
   groups = computed(() => {
-    const taken = new Set((this.products() ?? []).map((p) => p.productId));
-    const free = this.catalog().filter((p) => !taken.has(p.id));
     const groups = this.categories()
-      .map((category) => ({ id: category.id, name: category.name, products: free.filter((p) => p.categoryId === category.id) }))
+      .map((category) => ({ id: category.id, name: category.name, products: this.catalog().filter((p) => p.categoryId === category.id) }))
       .filter((group) => group.products.length > 0);
-    const orphans = free.filter((p) => !this.categories().some((c) => c.id === p.categoryId));
+    const orphans = this.catalog().filter((p) => !this.categories().some((c) => c.id === p.categoryId));
     return orphans.length > 0 ? [...groups, { id: OTHERS, name: 'Autres', products: orphans }] : groups;
   });
   // les produits de la categorie choisie
@@ -244,6 +243,16 @@ export class ProductsComponent {
     }
     if ((start === null) !== (end === null)) {
       this.formError.set('Choisissez le début et la fin de la période.');
+      return;
+    }
+    // la meme variete du meme produit deux fois (casse et espaces ignores, comme le back) : on le dit avant d'envoyer
+    const productId = target === 'new' ? value.productId : target.productId;
+    const variety = value.variety.trim().toLowerCase();
+    const twin = (this.products() ?? []).some(
+      (p) => p.productId === productId && p.id !== (target === 'new' ? '' : target.id) && (p.variety ?? '').trim().toLowerCase() === variety,
+    );
+    if (twin) {
+      this.formError.set('Vous avez déjà ce produit avec cette variété : indiquez une autre variété.');
       return;
     }
 

@@ -99,6 +99,9 @@
             @for (product of p.products; track product.id) {
               <li class="rounded-full bg-badge-bg px-3 py-1 text-xs font-medium text-agri">
                 {{ product.name }}
+                @if (product.variety) {
+                  · {{ product.variety }}
+                }
               </li>
             }
           </ul>

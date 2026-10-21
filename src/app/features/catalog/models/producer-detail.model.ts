@@ -24,7 +24,10 @@ export interface OpeningHour {
  * dans « Produits et disponibilités » : la fiche masque simplement ce qui manque.
  */
 export interface ProducerProductSummary {
+  /** Identifiant de la ligne du producteur : un même produit du catalogue revient une fois par variété (Gala, Golden) */
   id: string;
+  /** Identifiant du produit du catalogue */
+  productId?: string;
   name: string;
   seasonStartMonth: number | null;
   seasonEndMonth: number | null;

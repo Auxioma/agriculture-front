@@ -159,6 +159,29 @@ describe('ProducerDetailComponent', () => {
     expect(photo.getAttribute('alt')).toBe('Cœurs de bœuf');
   });
 
+  it('montre une ligne par variété quand le producteur a plusieurs variétés du même produit', async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          { id: 'l1', productId: 'pommes', name: 'Pommes', variety: 'Gala', seasonStartMonth: 9, seasonEndMonth: 12 },
+          { id: 'l2', productId: 'pommes', name: 'Pommes', variety: 'Golden', seasonStartMonth: 10, seasonEndMonth: 1 },
+        ],
+      }),
+    );
+
+    // * Les pastilles du haut disent la variété (sinon « Pommes » deux fois), la section en dessous a une carte par ligne.
+    const chips = Array.from(ctx.host.querySelectorAll('ul.flex-wrap li.rounded-full')).map((li) => textOf(li));
+    expect(chips).toEqual(['Pommes · Gala', 'Pommes · Golden']);
+    const cards = Array.from(ctx.host.querySelectorAll('#disponibilites > ul > li')).map((li) => textOf(li));
+    expect(cards).toEqual([
+      "Pommes · Gala — Disponible de septembre à décembre",
+      "Pommes · Golden — Disponible d'octobre à janvier",
+    ]);
+  });
+
   it("n'affiche ni volume, ni prix, ni labels, ni photos quand le producteur ne les a pas renseignés", async () => {
     const ctx = await setup();
 

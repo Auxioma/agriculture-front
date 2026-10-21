@@ -112,13 +112,14 @@
             </div>
           </div>
           @if (groups().length === 0) {
-            <p class="-mt-2 text-xs text-secondary">Aucun autre produit disponible dans le catalogue.</p>
+            <p class="-mt-2 text-xs text-secondary">Aucun produit dans le catalogue.</p>
           }
         }
 
         <div>
           <label for="variety" class="mb-1 block font-medium">Variété <span class="font-normal text-secondary">(facultatif)</span></label>
           <input id="variety" formControlName="variety" maxlength="120" placeholder="Cœur de bœuf" [class]="input" />
+          <p class="mt-1 text-xs text-secondary">Un même produit peut avoir plusieurs variétés : ajoutez-le une fois par variété.</p>
         </div>
 
         <div>
