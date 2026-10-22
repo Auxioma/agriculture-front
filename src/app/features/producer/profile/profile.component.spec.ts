@@ -9,15 +9,23 @@ const EXPLOITATION: Exploitation = {
   profile: {
     farmName: 'Ferme Dupont',
     description: 'Maraîchage bio en circuit court.',
+    story: null,
+    city: 'Lyon',
+    postalCode: null,
+    addressVisibility: null,
     verificationStatus: 'verified',
     pickupAvailable: true,
     deliveryAvailable: false,
+    photoUrl: null,
   },
   labels: [
-    { name: 'HVE', verifiedAt: '2026-09-22T10:18:03+02:00', expiresAt: null },
-    { name: 'Bio', verifiedAt: null, expiresAt: null },
+    { labelId: 'l-hve', name: 'HVE', verifiedAt: '2026-09-22T10:18:03+02:00', expiresAt: null },
+    { labelId: 'l-bio', name: 'Bio', verifiedAt: null, expiresAt: null },
   ],
-  zones: [{ radiusKm: '15.00' }, { radiusKm: '40.00' }],
+  zones: [
+    { id: 'z-15', radiusKm: '15.00', rules: null },
+    { id: 'z-40', radiusKm: '40.00', rules: null },
+  ],
   openingHours: [
     { weekday: 1, opensAt: '09:00', closesAt: '18:00', isClosed: false },
     { weekday: 2, opensAt: '09:00', closesAt: '18:00', isClosed: false },
@@ -105,6 +113,28 @@ describe('ProfileComponent', () => {
 
     expect(rows().map(([, value]) => value)).toEqual(['À renseigner', 'À renseigner', 'À renseigner', 'À renseigner']);
     expect(compiled.textContent).toContain('Ajoutez une description');
+  });
+
+  it('remplit le bandeau mobile avec la couverture quand il y en a une', async () => {
+    await create(of({ ...EXPLOITATION, profile: { ...EXPLOITATION.profile, photoUrl: 'http://localhost/couverture.jpg' } }));
+
+    const cover = compiled.querySelector('section img');
+    expect(cover?.getAttribute('src')).toBe('http://localhost/couverture.jpg');
+    // le figma desktop n'a pas de bandeau : la couverture est cachee des lg (jsdom ne rend pas le CSS, on verifie la classe)
+    expect(cover?.classList.contains('lg:hidden')).toBe(true);
+  });
+
+  it('laisse le bandeau vert sans couverture', async () => {
+    await create();
+
+    expect(compiled.querySelector('section img')).toBeNull();
+  });
+
+  it('mène à la page de modification avec « Modifier mon profil »', async () => {
+    await create();
+
+    const edit = [...compiled.querySelectorAll('.flex-col > a')].find((a) => a.textContent?.trim() === 'Modifier mon profil');
+    expect(edit?.getAttribute('href')).toBe('/producer/profile/edit');
   });
 
   it('propose les quatre boutons du figma', async () => {
