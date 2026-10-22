@@ -10,8 +10,12 @@
   <div class="pb-6 lg:mx-auto lg:mt-4 lg:max-w-xl">
     <!-- identite : sur mobile le rond d'initiales est dans un bandeau vert et le nom dessous, sur desktop le rond est a gauche du nom -->
     <section class="lg:flex lg:items-start lg:gap-4">
-      <div class="bg-agri px-4 py-3 lg:bg-transparent lg:p-0">
-        <div aria-hidden="true" class="flex size-18 items-center justify-center rounded-full border border-grey-200 bg-white text-2xl font-bold text-agri">
+      <!-- la couverture choisie dans "Modifier mon profil" remplit le bandeau (mobile), vert tant qu'il n'y en a pas -->
+      <div class="relative bg-agri px-4 py-3 lg:bg-transparent lg:p-0">
+        @if (data.profile.photoUrl) {
+          <img [src]="data.profile.photoUrl" alt="" class="absolute inset-0 size-full object-cover lg:hidden" />
+        }
+        <div aria-hidden="true" class="relative flex size-18 items-center justify-center rounded-full border border-grey-200 bg-white text-2xl font-bold text-agri">
           {{ initials() }}
         </div>
       </div>

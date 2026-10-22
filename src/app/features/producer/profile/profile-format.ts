@@ -31,3 +31,28 @@ export function availability(available: boolean | null, yes: string, no: string)
 
   return available ? yes : no;
 }
+
+// ce que le producteur lit a cote d'un label qu'il a coche --> rien s'il ne l'a pas revendique
+export function labelStatus(claimed: ProfileLabel | undefined, now: Date = new Date()): string | null {
+  if (!claimed) return null;
+  if (claimed.verifiedAt === null) return 'En attente de validation';
+
+  return claimed.expiresAt !== null && new Date(claimed.expiresAt) <= now ? 'Expiré' : 'Validé';
+}
+
+// "12,5" ou "12.5" --> nombre, null si vide, NaN si ce n'est pas un nombre
+export function parseKm(text: string): number | null {
+  const value = text.trim().replace(',', '.');
+
+  return value === '' ? null : Number(value);
+}
+
+// 12.5 --> "12,5" (le champ est en francais)
+export function kmText(km: number): string {
+  return String(km).replace('.', ',');
+}
+
+// " lyon " et "Lyon" sont la meme ville
+export function sameCity(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}

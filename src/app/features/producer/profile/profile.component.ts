@@ -11,7 +11,7 @@ const VERIFICATION: Record<string, { text: string; verified: boolean }> = {
   pending: { text: 'Vérification en cours', verified: false },
 };
 
-//! mon exploitation. Les boutons du bas n'ont pas encore de destination
+//! mon exploitation. Avis clients, Statistiques et Paramètres n'ont pas encore de destination
 @Component({
   selector: 'app-producer-profile',
   standalone: true,
@@ -23,7 +23,7 @@ export class ProfileComponent {
   exploitation = toSignal(inject(ProfileService).getExploitation().pipe(catchError(() => of(null))));
 
   readonly actions: { label: string; link?: string; style: string }[] = [
-    { label: 'Modifier mon profil', style: 'bg-agri text-white' },
+    { label: 'Modifier mon profil', link: '/producer/profile/edit', style: 'bg-agri text-white' },
     { label: 'Avis clients', style: 'bg-gold-wheat text-fonts' },
     { label: 'Statistiques', style: 'border border-agri bg-badge-bg text-agri' },
     { label: 'Paramètres', style: 'border border-grey-400 bg-grey-200 text-grey-700' },

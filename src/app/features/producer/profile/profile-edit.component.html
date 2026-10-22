@@ -1,0 +1,104 @@
+<header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
+  <a routerLink="/producer/profile" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    <span class="sr-only lg:not-sr-only">Retour au profil</span>
+  </a>
+  <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-xl lg:text-3xl">Modifier mon profil</h1>
+</header>
+
+@if (state() === 'error') {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:mx-auto lg:max-w-xl lg:px-0">Impossible de charger votre profil pour le moment.</p>
+} @else if (state() === 'ready') {
+  <form [formGroup]="form" (ngSubmit)="save()" class="mt-4 space-y-6 px-4 pb-6 lg:mx-auto lg:max-w-xl lg:px-0">
+    <!-- couverture -> la photo choisie remplace le bandeau vert du profil-->
+    <div>
+      <div class="relative mb-10">
+        <label class="relative flex h-36 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-grey-400 bg-grey-200 text-center text-xs text-secondary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-agri">
+          @if (cover(); as url) {
+            <img [src]="url" alt="" class="absolute inset-0 size-full object-cover" />
+            <span class="relative rounded-full bg-white/90 px-3 py-1 font-medium text-fonts">Changer la photo de couverture</span>
+          } @else {
+            <span>Photo de couverture — cliquer pour changer</span>
+          }
+          <input #coverInput type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" (change)="pickCover(coverInput)" />
+        </label>
+        <div aria-hidden="true" class="absolute -bottom-9 left-4 flex size-18 items-center justify-center rounded-full border-4 border-background bg-grey-200 text-xl font-bold text-grey-700">
+          {{ initials() }}
+        </div>
+      </div>
+      @if (coverError()) {
+        <p role="alert" class="-mt-8 mb-8 text-sm text-danger">{{ coverError() }}</p>
+      }
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label for="farm-name" class="mb-1 block text-sm font-medium">Nom de l'exploitation</label>
+        <input id="farm-name" formControlName="farmName" maxlength="255" [class]="input" />
+        @if (form.controls.farmName.touched && form.controls.farmName.invalid) {
+          <p class="mt-1 text-xs text-danger">Le nom de l'exploitation est obligatoire.</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="mb-1 block text-sm font-medium">Présentation</label>
+        <textarea id="description" formControlName="description" rows="3" placeholder="Votre exploitation en deux phrases" [class]="input"></textarea>
+      </div>
+      <div>
+        <label for="city" class="mb-1 block text-sm font-medium">Ville</label>
+        <input id="city" formControlName="city" autocomplete="address-level2" [class]="input" />
+      </div>
+    </div>
+
+    <fieldset>
+      <legend class="mb-2 text-sm font-semibold">Labels et certifications</legend>
+      <div class="flex flex-wrap gap-x-5 gap-y-2">
+        @for (label of catalog(); track label.id) {
+          <label class="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="checkbox" class="size-4 accent-agri" [checked]="ticked().has(label.id)" (change)="toggleLabel(label.id)" />
+            {{ label.name }}
+            @if (labelStatus(claimedLabel(label.id)); as status) {
+              <span class="text-xs text-secondary">({{ status }})</span>
+            }
+          </label>
+        }
+      </div>
+      @if (losesValidatedLabel()) {
+        <p class="mt-2 text-xs text-secondary">Un label déjà validé que vous retirez devra être validé de nouveau si vous le cochez plus tard.</p>
+      }
+    </fieldset>
+
+    <div class="space-y-4">
+      <h2 class="text-sm font-semibold">Zone de vente et disponibilités</h2>
+      <div>
+        <label for="radius" class="mb-1 block text-sm font-medium">Rayon de vente</label>
+        <div class="relative">
+          <input id="radius" formControlName="radius" inputmode="decimal" placeholder="20" [class]="input" class="pr-10" />
+          <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-secondary">km</span>
+        </div>
+      </div>
+      <app-hours-field [(hours)]="hours" />
+      <div class="space-y-2">
+        <label class="flex cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" formControlName="pickup" class="size-4 accent-agri" />
+          Retrait à la ferme
+        </label>
+        <label class="flex cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" formControlName="delivery" class="size-4 accent-agri" />
+          Livraison possible
+        </label>
+      </div>
+    </div>
+
+    @if (error()) {
+      <p role="alert" class="text-sm text-danger">{{ error() }}</p>
+    }
+    <div class="flex flex-col gap-3 lg:flex-row">
+      <button type="submit" [disabled]="saving()" class="cursor-pointer rounded-lg bg-agri px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+        {{ saving() ? "Enregistrement…" : "Enregistrer les modifications" }}
+      </button>
+      <a routerLink="/producer/profile" class="cursor-pointer rounded-lg border border-agri bg-badge-bg px-5 py-2.5 text-center text-sm font-semibold text-agri">Annuler</a>
+    </div>
+  </form>
+}
