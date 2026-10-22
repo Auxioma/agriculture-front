@@ -1,0 +1,49 @@
+<fieldset>
+  <legend class="mb-1 text-sm font-medium">Horaires d'ouverture</legend>
+  <ul class="divide-y divide-grey-200 rounded-lg border border-grey-200 bg-white">
+    @for (day of days(); track day.weekday) {
+      <li class="flex items-start gap-2 px-3 py-2 text-sm">
+        <label class="flex w-24 shrink-0 cursor-pointer items-center gap-2 py-1.5 font-medium">
+          <input type="checkbox" class="size-4 accent-agri" [checked]="day.entries.length > 0" (change)="toggle(day.weekday)" />
+          {{ day.label }}
+        </label>
+        <div class="min-w-0 flex-1 space-y-2">
+          @for (entry of day.entries; track $index) {
+            <div class="flex items-center gap-2">
+              <input
+                type="time"
+                [value]="entry.slot.opensAt"
+                (change)="edit(entry.index, 'opensAt', $event)"
+                [attr.aria-label]="'Ouverture le ' + day.label.toLowerCase()"
+                class="min-w-0 flex-1 rounded-lg border border-grey-200 bg-white px-2 py-1.5 text-sm"
+              />
+              <span aria-hidden="true">–</span>
+              <input
+                type="time"
+                [value]="entry.slot.closesAt"
+                (change)="edit(entry.index, 'closesAt', $event)"
+                [attr.aria-label]="'Fermeture le ' + day.label.toLowerCase()"
+                class="min-w-0 flex-1 rounded-lg border border-grey-200 bg-white px-2 py-1.5 text-sm"
+              />
+              @if (day.entries.length > 1) {
+                <button
+                  type="button"
+                  (click)="remove(entry.index)"
+                  [attr.aria-label]="'Retirer ce créneau du ' + day.label.toLowerCase()"
+                  class="shrink-0 cursor-pointer px-1 text-lg leading-none text-secondary"
+                >
+                  ×
+                </button>
+              }
+            </div>
+          } @empty {
+            <span class="block py-1.5 text-secondary">Fermé</span>
+          }
+          @if (day.entries.length > 0) {
+            <button type="button" (click)="add(day.weekday)" class="cursor-pointer text-xs font-medium text-agri">+ Ajouter un créneau</button>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+</fieldset>
