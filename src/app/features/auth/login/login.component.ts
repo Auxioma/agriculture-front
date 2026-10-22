@@ -57,7 +57,7 @@ export class LoginComponent {
   private afterLoginUrl(roles: string[]): string {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     if (returnUrl?.startsWith('/') && !returnUrl.startsWith('//')) return returnUrl;
-    return hasProducerRole(roles) ? '/producer' : '/';
+    return hasProducerRole(roles) ? '/producer' : '/client';
   }
 
   private handleError(err: HttpErrorResponse): void {

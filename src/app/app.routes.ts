@@ -60,6 +60,23 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'client',
+    canActivate: [clientGuard],
+    loadComponent: () =>
+      import('./features/client/client-layout/client-layout.component').then(
+        (m) => m.ClientLayoutComponent,
+      ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/client/dashboard/dashboard.component').then(
+            (m) => m.ClientDashboardComponent,
+          ),
+      },
+    ],
+  },
+  {
     path: 'requests/new',
     canActivate: [clientGuard],
     loadChildren: () =>

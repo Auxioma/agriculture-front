@@ -22,10 +22,12 @@ export const serverRoutes: ServerRoute[] = [
     path: 'producer/**',
     renderMode: RenderMode.Client,
   },
+  // espace client
+  { path: 'client', renderMode: RenderMode.Client },
+  { path: 'client/**', renderMode: RenderMode.Client },
+  { path: 'requests/**', renderMode: RenderMode.Client },
   {
     path: '**',
     renderMode: RenderMode.Prerender,
   },
-  // espace client
-  { path: 'requests/**', renderMode: RenderMode.Client },
 ];
