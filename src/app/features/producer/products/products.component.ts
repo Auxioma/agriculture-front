@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Observable, catchError, concatMap, from, map, of, switchMap, toArray } from 'rxjs';
+import { PHOTO_MAX_BYTES, PHOTO_TYPES } from '../photo-rules';
 import { MONTH_OPTIONS, productDetails, productTitle, unitText } from './product-format';
 import { AvailabilityPayload, ProducerProduct, ProductPhoto, ProductUnit, ProductsService, payloadOf } from './products.service';
 
@@ -12,9 +13,6 @@ const OTHERS = 'others';
 
 const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-grey-500';
 
-// les memes regles que le back (ProductPhotoStorage) : on previent avant d'envoyer
-const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 const PHOTO_MAX = 5;
 
 // "12,5" ou "12.5" -> nombre, null si vide, NaN si ce n'est pas un nombre

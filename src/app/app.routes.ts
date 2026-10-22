@@ -103,6 +103,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/producer/profile/profile.component').then((m) => m.ProfileComponent),
       },
       {
+        path: 'profile/edit',
+        loadComponent: () => import('./features/producer/profile/profile-edit.component').then((m) => m.ProfileEditComponent),
+      },
+      {
         path: 'support',
         loadComponent: () => import('./features/producer/support/support.component').then((m) => m.SupportComponent),
       },
