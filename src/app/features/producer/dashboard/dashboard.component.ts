@@ -31,9 +31,7 @@ const MISSING_PROFILE_PARTS: Record<string, string> = {
 
 // dashboard producteur semblable au figma, branche sur GET /api/producer/dashboard (un seul appel : chiffres,
 // demandes disponibles, abonnement et completion du profil). Les chips de filtre sont les memes en mobile et en
-// desktop (la maquette desktop n'avait que "Urgentes", on a garde les memes fonctionnalites partout). Les boutons
-// "Gerer mon abonnement", "Completer mon profil" et "Gerer mes produits" n'ont pas encore de destination : ces
-// pages n'existent pas.
+// desktop (la maquette desktop n'avait que "Urgentes", on a garde les memes fonctionnalites partout).
 @Component({
   selector: 'app-producer-dashboard',
   standalone: true,
