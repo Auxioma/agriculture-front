@@ -74,6 +74,13 @@ export const routes: Routes = [
             (m) => m.ClientDashboardComponent,
           ),
       },
+      {
+        path: 'favorites',
+        loadComponent: () =>
+          import('./features/client/dashboard/favorites/favorites.component').then(
+            (m) => m.FavoritesComponent,
+          ),
+      },
     ],
   },
   {

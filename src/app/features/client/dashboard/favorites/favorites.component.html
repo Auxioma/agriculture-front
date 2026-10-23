@@ -1,0 +1,68 @@
+<section class="mx-auto w-full max-w-5xl px-4 py-6 lg:px-8">
+  <h1 class="mb-4 text-2xl font-bold text-fonts lg:text-3xl">Mes favoris</h1>
+
+  <!-- Onglets -->
+  <div class="no-scrollbar mb-5 flex gap-2 overflow-x-auto" role="tablist">
+    @for (tab of tabs; track tab.type) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="activeType() === tab.type"
+        (click)="activeType.set(tab.type)"
+        class="whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+        [class]="
+          activeType() === tab.type
+            ? 'border-agri bg-agri text-white'
+            : 'border-grey-400 bg-white text-grey-700 hover:bg-grey-200'
+        "
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="text-grey-500">Chargement…</p>
+  } @else if (error()) {
+    <p class="text-danger">Impossible de charger vos favoris. Réessayez plus tard.</p>
+  } @else if (visible().length === 0) {
+    <div class="rounded-xl border border-grey-200 bg-white p-8 text-center">
+      <p class="mb-3 text-grey-700">Aucun favori dans cette catégorie.</p>
+      <a routerLink="/producers" class="font-medium text-agri underline"
+        >Découvrir les producteurs</a
+      >
+    </div>
+  } @else {
+    <ul class="grid gap-3 lg:grid-cols-2">
+      @for (fav of visible(); track fav.id) {
+        <li class="flex items-center gap-3 rounded-xl border border-grey-200 bg-white p-3">
+          <a [routerLink]="link(fav)" class="flex min-w-0 flex-1 items-center gap-3">
+            <span
+              class="flex size-12 shrink-0 items-center justify-center rounded-full bg-badge-bg font-semibold text-agri"
+            >
+              {{ initials(fav) }}
+            </span>
+            <span class="min-w-0">
+              <span class="flex items-center gap-1 font-semibold text-fonts">
+                <span class="truncate">{{ label(fav) }}</span>
+                @if (fav.target?.verified) {
+                  <span class="text-agri" aria-label="Producteur vérifié">✔</span>
+                }
+              </span>
+              <span class="block truncate text-sm text-grey-500">{{ subtitle(fav) }}</span>
+            </span>
+          </a>
+
+          <button
+            type="button"
+            (click)="remove(fav)"
+            class="p-2 text-agri"
+            [attr.aria-label]="'Retirer ' + label(fav) + ' des favoris'"
+          >
+            ♥
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>
