@@ -7,6 +7,8 @@ import { HourSlot } from './profile.service';
 @Component({
   selector: 'app-hours-field',
   standalone: true,
+  // bloc, pas "inline" : sinon l'espace que lui laisse le formulaire (space-y) est ignore
+  host: { class: 'block' },
   templateUrl: './hours-field.component.html',
 })
 export class HoursFieldComponent {

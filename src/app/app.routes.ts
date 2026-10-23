@@ -107,6 +107,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/producer/profile/profile-edit.component').then((m) => m.ProfileEditComponent),
       },
       {
+        path: 'profile/settings',
+        loadComponent: () => import('./features/producer/settings/settings.component').then((m) => m.SettingsComponent),
+      },
+      {
         path: 'support',
         loadComponent: () => import('./features/producer/support/support.component').then((m) => m.SupportComponent),
       },

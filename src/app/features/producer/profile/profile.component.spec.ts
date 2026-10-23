@@ -137,6 +137,13 @@ describe('ProfileComponent', () => {
     expect(edit?.getAttribute('href')).toBe('/producer/profile/edit');
   });
 
+  it('mène aux paramètres avec « Paramètres »', async () => {
+    await create();
+
+    const settings = [...compiled.querySelectorAll('.flex-col > a')].find((a) => a.textContent?.trim() === 'Paramètres');
+    expect(settings?.getAttribute('href')).toBe('/producer/profile/settings');
+  });
+
   it('propose les quatre boutons du figma', async () => {
     await create();
 

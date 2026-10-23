@@ -1,0 +1,32 @@
+<header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
+  <a routerLink="/producer/profile" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    <span class="sr-only lg:not-sr-only">Retour à mon profil</span>
+  </a>
+  <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-xl lg:text-3xl">Paramètres</h1>
+</header>
+
+<ul class="mt-4 space-y-1 px-4 pb-6 lg:mx-auto lg:max-w-xl lg:px-0">
+  @for (item of items; track item.title) {
+    <li>
+      <a [routerLink]="item.link" class="flex cursor-pointer items-center gap-4 rounded-lg py-2.5">
+        <span aria-hidden="true" class="flex size-10 shrink-0 items-center justify-center rounded-full bg-badge-bg text-agri">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5">
+            @for (d of item.icon; track d) {
+              <path [attr.d]="d"></path>
+            }
+          </svg>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-medium">{{ item.title }}</span>
+          <span class="block text-xs text-secondary">{{ item.hint }}</span>
+        </span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4 shrink-0 text-grey-500">
+          <path d="M9 6l6 6-6 6"></path>
+        </svg>
+      </a>
+    </li>
+  }
+</ul>
