@@ -8,25 +8,126 @@
   <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-xl lg:text-3xl">Paramètres</h1>
 </header>
 
-<ul class="mt-4 space-y-1 px-4 pb-6 lg:mx-auto lg:max-w-xl lg:px-0">
-  @for (item of items; track item.title) {
-    <li>
-      <a [routerLink]="item.link" class="flex cursor-pointer items-center gap-4 rounded-lg py-2.5">
-        <span aria-hidden="true" class="flex size-10 shrink-0 items-center justify-center rounded-full bg-badge-bg text-agri">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5">
-            @for (d of item.icon; track d) {
-              <path [attr.d]="d"></path>
-            }
-          </svg>
-        </span>
-        <span class="min-w-0 flex-1">
-          <span class="block font-medium">{{ item.title }}</span>
-          <span class="block text-xs text-secondary">{{ item.hint }}</span>
-        </span>
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4 shrink-0 text-grey-500">
-          <path d="M9 6l6 6-6 6"></path>
-        </svg>
-      </a>
-    </li>
+<div class="mt-4 space-y-1 px-4 pb-6 lg:mx-auto lg:max-w-xl lg:px-0">
+  @if (notice()) {
+    <p role="status" class="mb-2 rounded-lg bg-badge-bg px-4 py-3 text-sm font-medium text-agri">{{ notice() }}</p>
   }
-</ul>
+  @if (error()) {
+    <p role="alert" class="mb-2 text-sm text-danger">{{ error() }}</p>
+  }
+
+  <ul class="space-y-1">
+    @for (section of sections; track section.id) {
+      <li>
+        <h2>
+          <button
+            type="button"
+            (click)="toggleSection(section.id)"
+            [attr.aria-expanded]="isOpen(section.id)"
+            [attr.aria-controls]="'panel-' + section.id"
+            class="flex w-full cursor-pointer items-center gap-4 rounded-lg py-2.5 text-left"
+          >
+            <span aria-hidden="true" class="flex size-10 shrink-0 items-center justify-center rounded-full bg-badge-bg text-agri">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5">
+                @for (d of section.icon; track d) {
+                  <path [attr.d]="d"></path>
+                }
+              </svg>
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block font-medium">{{ section.title }}</span>
+              <span class="block min-h-4 text-xs text-secondary">{{ hint(section) }}</span>
+            </span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4 shrink-0 text-grey-500 transition-transform" [class.rotate-180]="isOpen(section.id)">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </button>
+        </h2>
+
+        @if (isOpen(section.id)) {
+          <div [id]="'panel-' + section.id" class="mb-3 rounded-xl border border-grey-200 bg-white p-4">
+            @switch (section.id) {
+              @case ('security') {
+                <app-password-section />
+              }
+              @case ('data') {
+                <app-personal-data-section />
+              }
+              @case ('help') {
+                <!-- les liens ne dependent pas des preferences : seule l'adresse du support (reglage de l'admin) vient du back -->
+                <div class="space-y-3 text-sm">
+                  <a routerLink="/faq" class="block font-semibold text-agri">Consulter la FAQ</a>
+                  <a routerLink="/producer/support" class="block rounded-lg border border-agri bg-badge-bg px-5 py-2.5 text-center font-semibold text-agri lg:inline-block">Contacter le support</a>
+                  @if (preferences()?.supportEmail; as email) {
+                    <a [href]="'mailto:' + email" class="block text-secondary">{{ email }}</a>
+                  }
+                </div>
+              }
+              @default {
+                @if (preferences() === undefined) {
+                  <p class="text-sm text-secondary" role="status">Chargement…</p>
+                } @else if (preferences(); as prefs) {
+                  @switch (section.id) {
+                    @case ('notifications') {
+                      <ul class="space-y-3">
+                        @for (item of notifications; track item.type) {
+                          <li class="flex items-center justify-between gap-3 text-sm">
+                            <span [id]="'notification-' + item.type">{{ item.label }}</span>
+                            <button
+                              type="button"
+                              role="switch"
+                              [attr.aria-checked]="prefs.emailNotifications[item.type]"
+                              [attr.aria-labelledby]="'notification-' + item.type"
+                              (click)="toggleEmail(item.type)"
+                              class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors"
+                              [class]="prefs.emailNotifications[item.type] ? 'bg-agri' : 'bg-grey-400'"
+                            >
+                              <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="prefs.emailNotifications[item.type]"></span>
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                      <p class="mt-3 text-xs text-secondary">
+                        Ces réglages concernent les e-mails : toutes vos notifications restent visibles dans l'application.
+                      </p>
+                    }
+                    @case ('language') {
+                      <fieldset>
+                        <legend class="sr-only">Langue</legend>
+                        @for (language of languages; track language.code) {
+                          <label class="flex cursor-pointer items-center gap-3 py-1.5 text-sm" [class.font-semibold]="prefs.locale === language.code" [class.text-agri]="prefs.locale === language.code">
+                            <input type="radio" name="language" class="size-4 accent-agri" [value]="language.code" [checked]="prefs.locale === language.code" (change)="chooseLanguage(language.code)" />
+                            {{ language.label }}
+                          </label>
+                        }
+                      </fieldset>
+                      @if (languageNote()) {
+                        <p class="mt-2 text-xs text-secondary">{{ languageNote() }}</p>
+                      }
+                    }
+                    @case ('currency') {
+                      <fieldset>
+                        <legend class="sr-only">Devise</legend>
+                        @for (currency of currencies; track currency.code) {
+                          <label class="flex cursor-pointer items-center gap-3 py-1.5 text-sm" [class.font-semibold]="prefs.currency === currency.code" [class.text-agri]="prefs.currency === currency.code">
+                            <input type="radio" name="currency" class="size-4 accent-agri" [value]="currency.code" [checked]="prefs.currency === currency.code" (change)="chooseCurrency(currency.code)" />
+                            {{ currency.label }}
+                          </label>
+                        }
+                      </fieldset>
+                      @if (currencyNote()) {
+                        <p class="mt-2 text-xs text-secondary">{{ currencyNote() }}</p>
+                      }
+                    }
+                  }
+                } @else {
+                  <p class="text-sm text-grey-700">Impossible de charger vos préférences pour le moment.</p>
+                }
+              }
+            }
+          </div>
+        }
+      </li>
+    }
+  </ul>
+</div>
