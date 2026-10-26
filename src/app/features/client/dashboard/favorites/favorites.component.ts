@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { FavoriteService } from './favorite.service';
 import { Favorite, FavoriteType } from './favorite.model';
+import { initials } from '../../utils/initials';
 
 type Tab = { type: FavoriteType; label: string; route: string };
 
@@ -20,7 +21,7 @@ export class FavoritesComponent {
     { type: 'category', label: 'Catégories', route: '/categories' },
   ];
 
-  readonly favorites = signal<Favorite[]>([]);
+  readonly favorites = this.service.favorites;
   readonly activeType = signal<FavoriteType>('producer_profile');
   readonly loading = signal(true);
   readonly error = signal(false);
@@ -31,11 +32,8 @@ export class FavoritesComponent {
   );
 
   constructor() {
-    this.service.list().subscribe({
-      next: (data) => {
-        this.favorites.set(data);
-        this.loading.set(false);
-      },
+    this.service.load().subscribe({
+      next: () => this.loading.set(false),
       error: () => {
         this.error.set(true);
         this.loading.set(false);
@@ -48,12 +46,7 @@ export class FavoritesComponent {
   }
 
   initials(f: Favorite): string {
-    return this.label(f)
-      .split(' ')
-      .filter((w) => w.length > 2) // ignore "de", "des", "&"
-      .slice(0, 2)
-      .map((w) => w[0].toUpperCase())
-      .join('');
+    return initials(this.label(f));
   }
 
   subtitle(f: Favorite): string {
@@ -72,12 +65,7 @@ export class FavoritesComponent {
     }
   }
 
-  // Mise à jour optimiste : on retire tout de suite, on restaure si l'API échoue
   remove(fav: Favorite): void {
-    const previous = this.favorites();
-    this.favorites.set(previous.filter((f) => f.id !== fav.id));
-    this.service.remove(fav.id).subscribe({
-      error: () => this.favorites.set(previous),
-    });
+    this.service.remove(fav.id).subscribe();
   }
 }

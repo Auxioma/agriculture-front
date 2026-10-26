@@ -1,14 +1,14 @@
 export type RequestStatus = 'replied' | 'pending';
 
 export interface DashboardRequest {
-  id: number;
+  id: string;
   title: string;
   sentAt: string; // date ISO
   status: RequestStatus;
 }
 
 export interface DashboardMessage {
-  id: number;
+  id: string;
   producerName: string;
   initials: string;
   subtitle: string;
@@ -16,7 +16,7 @@ export interface DashboardMessage {
 }
 
 export interface DashboardFavorite {
-  id: number;
+  id: string;
   slug: string | null;
   name: string;
   initials: string;
