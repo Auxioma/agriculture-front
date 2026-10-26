@@ -144,6 +144,8 @@ describe('SettingsComponent', () => {
     await create();
     open('Devise');
     expect(radios('currency').map((r) => r.checked)).toEqual([true, false, false, false]);
+    // * avec l'euro, rien à rappeler
+    expect(compiled.querySelector('#panel-currency')?.textContent).not.toContain('restent en euros');
 
     radios('currency')[3].click();
     fixture.detectChanges();
@@ -151,6 +153,10 @@ describe('SettingsComponent', () => {
     expect(service.updatePreferences).toHaveBeenCalledWith({ currency: 'CHF' });
     expect(heading(header('Devise'))).toBe('Devise Franc Suisse (CHF)');
     expect(compiled.querySelector('#panel-currency')?.textContent).toContain("restent en euros");
+
+    radios('currency')[0].click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('#panel-currency')?.textContent).not.toContain('restent en euros');
   });
 
   it('donne la FAQ, le support et l adresse du support réglée par l admin', async () => {
