@@ -15,6 +15,8 @@ export interface ProfileInfo {
   postalCode: string | null;
   addressVisibility: string | null;
   verificationStatus: string;
+  // date de la derniere validation par l'equipe ; null si le profil n'est pas verifie ou qu'aucune validation n'a ete tracee
+  verifiedAt: string | null;
   pickupAvailable: boolean | null;
   deliveryAvailable: boolean | null;
   photoUrl: string | null;

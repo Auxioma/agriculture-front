@@ -25,7 +25,7 @@ const previewOf = (file: File): string => (typeof URL.createObjectURL === 'funct
 //  - Ecarts avec le figma : les horaires sont un editeur par jour (le back garde des creneaux, pas du texte libre) et
 //    le "< 15 km" de la livraison n'existe pas en base.
 //  - Les labels cochés sont seulement revendiques : ils ne deviennent des badges qu'une fois valides par l'admin
-//    (le justificatif se depose dans "Labels et certifications", page a venir).
+//    (le justificatif se depose dans "Labels et certifications" : lien sous la liste).
 @Component({
   selector: 'app-profile-edit',
   standalone: true,

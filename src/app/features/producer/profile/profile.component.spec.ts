@@ -14,6 +14,7 @@ const EXPLOITATION: Exploitation = {
     postalCode: null,
     addressVisibility: null,
     verificationStatus: 'verified',
+    verifiedAt: null,
     pickupAvailable: true,
     deliveryAvailable: false,
     photoUrl: null,

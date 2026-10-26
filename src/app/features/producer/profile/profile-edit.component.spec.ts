@@ -16,6 +16,7 @@ const EXPLOITATION: Exploitation = {
     postalCode: '69001',
     addressVisibility: 'city',
     verificationStatus: 'verified',
+    verifiedAt: null,
     pickupAvailable: true,
     deliveryAvailable: false,
     photoUrl: 'http://localhost/couverture.jpg',
@@ -292,12 +293,13 @@ describe('ProfileEditComponent', () => {
     expect(service['uploadCover'].mock.invocationCallOrder[0]).toBeLessThan(service['syncLabels'].mock.invocationCallOrder[0]);
   });
 
-  it('ramene au profil avec Annuler et avec le lien de retour', async () => {
+  it('ramene au profil avec Annuler et le retour, et mene aux justificatifs des labels', async () => {
     await create();
 
     const links = [...compiled.querySelectorAll('a')].map((a) => [a.textContent?.trim(), a.getAttribute('href')]);
     expect(links).toEqual([
       ['Retour au profil', '/producer/profile'],
+      ['Ajouter un justificatif ou suivre la vérification', '/producer/profile/labels'],
       ['Annuler', '/producer/profile'],
     ]);
   });
