@@ -7,6 +7,7 @@ import { AuthService } from '../../auth/auth.service';
 import type { CurrentUser } from '../../auth/auth.models';
 import { CatalogService } from '../../../features/catalog/services/catalog.service';
 import { makeCategory } from '../../../features/catalog/testing/catalog.fixtures';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 // * Mock local, volontairement séparé de core/auth/auth.service.mock.ts :
 
@@ -39,6 +40,7 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let authServiceMock: NavbarAuthServiceMock;
   let catalogServiceMock: { getPopularCategories: ReturnType<typeof vi.fn> };
+  let notificationsMock: { latest: ReturnType<typeof vi.fn> };
 
   function linkTexts(): string[] {
     const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('a');
@@ -56,12 +58,14 @@ describe('NavbarComponent', () => {
   beforeEach(async () => {
     authServiceMock = createNavbarAuthServiceMock();
     catalogServiceMock = { getPopularCategories: vi.fn(() => of(POPULAR_CATEGORIES)) };
+    notificationsMock = { latest: vi.fn(() => of([])) };
 
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: CatalogService, useValue: catalogServiceMock },
+        { provide: NotificationsService, useValue: notificationsMock },
         provideRouter([]),
       ],
     }).compileComponents();
@@ -333,12 +337,43 @@ describe('NavbarComponent', () => {
     expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeTruthy();
   });
 
-  it('ne devrait pas afficher la cloche de notifications pour un utilisateur connecté', () => {
+  it('devrait remplacer le lien de la cloche par la cloche à card pour un utilisateur connecté', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeFalsy();
+    // * une seule cloche, la meme en mobile et en desktop (sinon deux lectures du back et deux cards)
+    expect(fixture.nativeElement.querySelectorAll('app-notification-bell')).toHaveLength(1);
+    expect(notificationsMock.latest).toHaveBeenCalledTimes(1);
+  });
+
+  it('devrait afficher la même cloche à un producteur', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('app-notification-bell')).toHaveLength(1);
+  });
+
+  it('ne devrait rien demander au back pour un invité', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-notification-bell')).toBeNull();
+    expect(notificationsMock.latest).not.toHaveBeenCalled();
+  });
+
+  it('devrait ouvrir la card des notifications au clic sur la cloche d\'un utilisateur connecté', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('app-notification-bell button').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#notification-card')).toBeTruthy();
   });
 
   it('devrait ouvrir le panneau filtres au clic et afficher produit/localisation/date', () => {
