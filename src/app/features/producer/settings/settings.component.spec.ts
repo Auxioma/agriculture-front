@@ -11,7 +11,15 @@ import { Preferences, SettingsService } from './settings.service';
 const PREFERENCES: Preferences = {
   locale: 'fr',
   currency: 'EUR',
-  emailNotifications: { new_relevant_request: true, payment_failed: true, subscription_renewing_soon: false },
+  notifications: {
+    new_relevant_request: true,
+    request_expiring_soon: true,
+    new_message: false,
+    payment_failed: true,
+    subscription_renewing_soon: false,
+    profile_validated: true,
+    new_review: false,
+  },
   supportEmail: 'support@trouvemoi.com',
 };
 
@@ -24,7 +32,7 @@ describe('SettingsComponent', () => {
     service = {
       getPreferences: vi.fn(() => preferences$),
       updatePreferences: vi.fn((change) =>
-        of({ ...PREFERENCES, ...change, emailNotifications: { ...PREFERENCES.emailNotifications, ...change.emailNotifications } }),
+        of({ ...PREFERENCES, ...change, notifications: { ...PREFERENCES.notifications, ...change.notifications } }),
       ),
     };
     await TestBed.configureTestingModule({
@@ -90,23 +98,42 @@ describe('SettingsComponent', () => {
 
     expect([...compiled.querySelectorAll('#panel-notifications li')].map((li) => text(li))).toEqual([
       'Nouvelle demande pertinente',
+      'Demande expirant bientôt',
+      'Nouveau message',
       'Paiement échoué',
       'Abonnement bientôt renouvelé',
+      'Profil validé',
+      'Nouvel avis client',
     ]);
-    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false']);
-    expect(compiled.textContent).toContain("toutes vos notifications restent visibles dans l'application");
+    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'true', 'false', 'true', 'false']);
+    expect(compiled.textContent).toContain("Une notification désactivée ne vous est plus envoyée, ni par e-mail ni dans l'application.");
   });
 
   it('enregistre un interrupteur dès qu on le change, avec le seul champ modifié', async () => {
     await create();
     open('Notifications');
 
-    switches()[1].click();
+    switches()[3].click();
     fixture.detectChanges();
 
-    expect(service.updatePreferences).toHaveBeenCalledWith({ emailNotifications: { payment_failed: false } });
-    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'false', 'false']);
+    expect(service.updatePreferences).toHaveBeenCalledWith({ notifications: { payment_failed: false } });
+    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'false', 'false', 'true', 'false']);
     expect(compiled.querySelector('[role=status]')?.textContent).toContain('Préférences enregistrées.');
+  });
+
+  it('chaque interrupteur enregistre sa propre notification, à l inverse de son état', async () => {
+    await create();
+    open('Notifications');
+    const types = ['new_relevant_request', 'request_expiring_soon', 'new_message', 'payment_failed', 'subscription_renewing_soon', 'profile_validated', 'new_review'];
+
+    types.forEach((type, i) => {
+      const before = PREFERENCES.notifications[type as keyof Preferences['notifications']];
+      switches()[i].click();
+      fixture.detectChanges();
+
+      expect(service.updatePreferences).toHaveBeenLastCalledWith({ notifications: { [type]: !before } });
+    });
+    expect(service.updatePreferences).toHaveBeenCalledTimes(7);
   });
 
   it('remet l interrupteur comme avant et dit pourquoi quand l enregistrement échoue', async () => {
@@ -114,10 +141,10 @@ describe('SettingsComponent', () => {
     service.updatePreferences.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 422, error: { error: 'Notification inconnue.' } })));
     open('Notifications');
 
-    switches()[2].click();
+    switches()[4].click();
     fixture.detectChanges();
 
-    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false']);
+    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'true', 'false', 'true', 'false']);
     expect(compiled.querySelector('[role=alert]')?.textContent).toContain('Notification inconnue.');
     expect(compiled.querySelector('[role=status]')).toBeNull();
   });

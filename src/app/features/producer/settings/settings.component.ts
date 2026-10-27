@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { messageOf } from '../message-of';
 import { PasswordSectionComponent } from './password-section.component';
 import { PersonalDataSectionComponent } from './personal-data-section.component';
-import { EmailType, Preferences, PreferencesChange, SettingsService } from './settings.service';
+import { NotificationType, Preferences, PreferencesChange, SettingsService } from './settings.service';
 
 // tracés svg des icones (trait de 2), une ligne = un ou plusieurs <path>
 const BELL = ['M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9', 'M13.73 21a2 2 0 0 1-3.46 0'];
@@ -26,11 +26,17 @@ const SECTIONS: { id: SectionId; title: string; hint: string; icon: string[] }[]
   { id: 'currency', title: 'Devise', hint: '', icon: EURO },
 ];
 
-// les trois e-mails que le figma laisse couper ; les autres notifications du cahier partent toujours
-const NOTIFICATIONS: { type: EmailType; label: string }[] = [
+// les notifications qu'on peut couper : les trois du figma (dans son ordre) et les notifications producteur du cahier que le back envoie aussi.
+// Les autres partent toujours (refus ou complement de profil, invitation d'equipe, reponse du support...). "Reponse client" n'y est pas :
+// rien ne l'envoie encore. Le cahier dit "avis publie", le back envoie "Nouvel avis client" des la creation de l'avis.
+const NOTIFICATIONS: { type: NotificationType; label: string }[] = [
   { type: 'new_relevant_request', label: 'Nouvelle demande pertinente' },
+  { type: 'request_expiring_soon', label: 'Demande expirant bientôt' },
+  { type: 'new_message', label: 'Nouveau message' },
   { type: 'payment_failed', label: 'Paiement échoué' },
   { type: 'subscription_renewing_soon', label: 'Abonnement bientôt renouvelé' },
+  { type: 'profile_validated', label: 'Profil validé' },
+  { type: 'new_review', label: 'Nouvel avis client' },
 ];
 
 // langues et devises du cahier fonctionnel (internationalisation)
@@ -51,7 +57,7 @@ const CURRENCIES = [
 //! page Parametres semblable au figma : six rubriques qui s'ouvrent vers le bas (plusieurs peuvent l'etre en meme temps), toutes
 // fermees au depart. Notifications, langue et devise s'enregistrent des qu'on les change (GET et PUT /api/me/preferences) ;
 // la securite et les donnees personnelles ont leur propre composant.
-//  - Un interrupteur de notification coupe l'e-mail, pas la notification dans l'application (c'est dit sous la liste).
+//  - Un interrupteur coupe la notification partout, par e-mail et dans l'application (la cloche de la navbar) : c'est dit sous la liste.
 //  - Langue et devise sont enregistrees mais ne changent rien pour l'instant : le front n'est pas traduit et les offres sont en euros.
 //    Une phrase le dit des qu'on choisit autre chose que le francais ou l'euro.
 @Component({
@@ -105,11 +111,11 @@ export class SettingsComponent {
     return section.hint;
   }
 
-  toggleEmail(type: EmailType): void {
+  toggleNotification(type: NotificationType): void {
     const preferences = this.preferences();
     if (!preferences) return;
-    const value = !preferences.emailNotifications[type];
-    this.save({ emailNotifications: { [type]: value } }, { ...preferences, emailNotifications: { ...preferences.emailNotifications, [type]: value } });
+    const value = !preferences.notifications[type];
+    this.save({ notifications: { [type]: value } }, { ...preferences, notifications: { ...preferences.notifications, [type]: value } });
   }
 
   chooseLanguage(code: string): void {

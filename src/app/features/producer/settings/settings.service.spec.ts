@@ -28,11 +28,11 @@ describe('SettingsService', () => {
   });
 
   it('n envoie que le champ modifie', () => {
-    service.updatePreferences({ emailNotifications: { payment_failed: false } }).subscribe();
+    service.updatePreferences({ notifications: { payment_failed: false } }).subscribe();
 
     const req = http.expectOne(`${api}/me/preferences`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ emailNotifications: { payment_failed: false } });
+    expect(req.request.body).toEqual({ notifications: { payment_failed: false } });
     req.flush({});
   });
 

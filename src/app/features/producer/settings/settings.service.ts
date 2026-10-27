@@ -2,14 +2,21 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
-// les trois e-mails que le producteur peut couper (back : NotificationPreferences::EMAIL_TYPES)
-export type EmailType = 'new_relevant_request' | 'payment_failed' | 'subscription_renewing_soon';
+// les notifications que le producteur peut couper, par e-mail et dans l'application (back : NotificationPreferences::SWITCHABLE_TYPES)
+export type NotificationType =
+  | 'new_relevant_request'
+  | 'request_expiring_soon'
+  | 'new_message'
+  | 'payment_failed'
+  | 'subscription_renewing_soon'
+  | 'profile_validated'
+  | 'new_review';
 
 // GET et PUT /api/me/preferences. supportEmail est un reglage de l'admin (parametres de la plateforme), pas du producteur.
 export interface Preferences {
   locale: string;
   currency: string;
-  emailNotifications: Record<EmailType, boolean>;
+  notifications: Record<NotificationType, boolean>;
   supportEmail: string;
 }
 
@@ -17,7 +24,7 @@ export interface Preferences {
 export interface PreferencesChange {
   locale?: string;
   currency?: string;
-  emailNotifications?: Partial<Record<EmailType, boolean>>;
+  notifications?: Partial<Record<NotificationType, boolean>>;
 }
 
 @Injectable({ providedIn: 'root' })
