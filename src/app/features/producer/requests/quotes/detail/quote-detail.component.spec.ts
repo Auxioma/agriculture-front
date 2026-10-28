@@ -54,6 +54,7 @@ describe('QuoteDetailComponent', () => {
 
   const text = () => compiled.textContent?.replace(/\s+/g, ' ').trim() ?? '';
   const button = (label: string) => [...compiled.querySelectorAll('button')].find((b) => b.textContent?.trim() === label);
+  const link = (label: string) => [...compiled.querySelectorAll('a')].find((a) => a.textContent?.trim() === label);
 
   beforeEach(() => TestBed.resetTestingModule());
 
@@ -145,7 +146,7 @@ describe('QuoteDetailComponent', () => {
     expect(button('Modifier ce devis')).toBeUndefined();
     expect(button('Relancer le client')).toBeUndefined();
     expect(button('Archiver ce devis')).toBeTruthy();
-    expect(button('Discuter avec le client')).toBeUndefined();
+    expect(link('Discuter avec le client')).toBeUndefined();
   });
 
   it('un devis accepté est clos : bandeau "Accepté par", discussion avec le client, archivage', async () => {
@@ -154,7 +155,8 @@ describe('QuoteDetailComponent', () => {
     expect(text()).toContain('Acceptée');
     expect(text()).toContain('Client professionnel');
     expect(text()).toContain('Accepté par Coopérative Sud le 9 août');
-    expect(button('Discuter avec le client')).toBeTruthy();
+    // la messagerie ouvre le fil de cette demande
+    expect(link('Discuter avec le client')?.getAttribute('href')).toBe('/producer/messages?request=req1');
     expect(button('Archiver ce devis')).toBeTruthy();
     expect(button('Modifier ce devis')).toBeUndefined();
     expect(button('Relancer le client')).toBeUndefined();

@@ -10,7 +10,7 @@ const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client p
 
 // page "Detail de la demande" semblable au figma, branchee sur GET /api/producer/requests/{id}. On y arrive en
 // cliquant une carte de "Demandes disponibles" ou de "Demandes reçues". "Repondre" mene a la page de reponse et
-// "Signaler" a celle du signalement ; "Ouvrir le chat" n'a pas encore de destination (la messagerie n'existe pas).
+// "Signaler" a celle du signalement ; "Ouvrir le chat" n'a pas de destination : une conversation n'existe qu'apres une reponse, voir NOTES.md.
 // Une demande deja traitee, archivee ou plus ouverte n'a plus les boutons "Repondre" / "Ouvrir le chat".
 // "Refuser poliment" (avec confirmation) et "Archiver cette demande" sont les deux autres actions du cahier : le refus
 // la range dans les traitees, l'archivage la met de cote pour ce producteur seulement.

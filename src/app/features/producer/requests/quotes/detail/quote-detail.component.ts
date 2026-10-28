@@ -11,9 +11,8 @@ const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client p
 
 // page "Detail du devis", branchee sur GET /api/producer/quotes/{id}. On y arrive en cliquant un
 // devis de la page "Mes devis". "Archiver ce devis" pose le statut archive (POST .../archive) puis ramene a "Mes devis".
-// "Relancer le client" et
-// "Discuter avec le client" n'ont pas encore de destination : c'est la messagerie, partagee avec le cote client, voir
-// NOTES.md. Pas de "Modifier ce devis" : le cahier n'en prevoit pas (un devis envoye ne change plus, seul un brouillon
+// "Relancer le client" n'a pas encore de destination. "Discuter avec le client" ouvre la messagerie sur la
+// conversation de cette demande. Pas de "Modifier ce devis" : le cahier n'en prevoit pas (un devis envoye ne change plus, seul un brouillon
 // se modifie). Le bouton "Accepter le devis" de la maquette mobile n'est pas fait non plus : c'est le client qui
 // accepte un devis, pas le producteur (cahier fonctionnel, statuts d'une reponse).
 // Un devis accepte (maquettes) affiche "Devis clos" et un bandeau "Accepte par ...". la date d'acceptation n'existe

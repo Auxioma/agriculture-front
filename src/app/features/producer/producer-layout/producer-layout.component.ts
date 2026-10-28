@@ -14,7 +14,7 @@ export class ProducerLayoutComponent {
   readonly items = [
     { label: 'Accueil', link: '/producer', icon: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10' },
     { label: 'Demandes', link: '/producer/requests', icon: 'M4 6h16 M4 12h16 M4 18h10' },
-    { label: 'Messages', link: undefined, icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
+    { label: 'Messages', link: '/producer/messages', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
     {
       label: 'Abonnement',
       link: '/producer/subscription',

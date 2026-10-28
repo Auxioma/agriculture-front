@@ -1,0 +1,200 @@
+@if (thread() === null) {
+  <div class="space-y-3 px-4 py-8 lg:px-0 lg:py-0">
+    <a routerLink="/producer/messages" class="text-sm font-semibold text-agri underline lg:hidden">Retour aux messages</a>
+    <p class="text-sm text-grey-700">Cette conversation est introuvable ou ne vous est pas accessible.</p>
+  </div>
+} @else {
+  <div class="flex h-full flex-col">
+    <!-- mobile -> fleche de retour a gauche du nom et menu a droite ; desktop : le nom, et "Signaler" en lien a droite -->
+    <header class="shrink-0 px-4 pt-4 lg:px-0 lg:pt-0">
+      <div class="flex items-center gap-2">
+        <a routerLink="/producer/messages" aria-label="Retour aux conversations" class="-ml-1 shrink-0 p-1 lg:hidden">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6">
+            <path d="M15 18l-6-6 6-6"></path>
+          </svg>
+        </a>
+        <h2 class="min-w-0 flex-1 truncate text-xl font-bold lg:text-3xl">{{ conversation()?.clientName ?? 'Conversation' }}</h2>
+
+        <button
+          type="button"
+          aria-label="Signaler cette conversation"
+          (click)="openReport()"
+          class="hidden shrink-0 cursor-pointer text-sm font-medium text-grey-700 underline lg:block"
+        >
+          Signaler
+        </button>
+        <div class="relative shrink-0 lg:hidden">
+          <button
+            type="button"
+            aria-label="Plus d'actions"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="menuOpen()"
+            (click)="menuOpen.set(!menuOpen())"
+            class="cursor-pointer p-1"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6">
+              <circle cx="12" cy="5" r="1.8"></circle>
+              <circle cx="12" cy="12" r="1.8"></circle>
+              <circle cx="12" cy="19" r="1.8"></circle>
+            </svg>
+          </button>
+          @if (menuOpen()) {
+            <div role="menu" class="absolute right-0 z-10 mt-1 w-56 rounded-lg border border-grey-200 bg-white py-1 shadow-md">
+              <button type="button" role="menuitem" (click)="openReport()" class="block w-full cursor-pointer px-4 py-2.5 text-left text-sm">
+                Signaler cette conversation
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+      @if (conversation(); as c) {
+        <p class="mt-1 text-sm text-grey-700">{{ clientTypes[c.clientType] }}</p>
+      }
+    </header>
+
+    @if (conversation(); as c) {
+      <!-- la demande a laquelle la conversation est liee (cahier : conversation liee a une demande precise) -->
+      <div class="mx-4 mt-3 flex shrink-0 items-center justify-between gap-3 rounded-lg border border-gold-wheat bg-white px-3 py-2 text-sm lg:mx-0">
+        <span class="min-w-0">Demande liée · {{ requestTitle(c) }}</span>
+        <a [routerLink]="['/producer/requests', c.requestId]" class="shrink-0 font-semibold text-earth underline">Voir</a>
+      </div>
+    }
+
+    @if (reporting()) {
+      <form (submit)="$event.preventDefault(); report()" class="mx-4 mt-3 shrink-0 space-y-3 rounded-lg border border-grey-200 bg-white p-4 lg:mx-0">
+        <fieldset class="space-y-2">
+          <legend class="mb-1 text-sm font-semibold">Motif du signalement</legend>
+          @for (option of reasons; track option.code) {
+            <label class="flex cursor-pointer items-start gap-2 text-sm">
+              <input type="radio" name="reason" [value]="option.code" [checked]="reason() === option.code" (change)="reason.set(option.code); error.set('')" class="mt-0.5 accent-agri" />
+              {{ option.label }}
+            </label>
+          }
+        </fieldset>
+        <div>
+          <label for="report-message" class="mb-1 block text-sm font-medium">Description (optionnel)</label>
+          <textarea
+            id="report-message"
+            #reportBox
+            rows="3"
+            maxlength="2000"
+            (input)="reportMessage.set(reportBox.value)"
+            class="w-full rounded-lg border border-grey-200 px-3 py-2 text-sm"
+          ></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" [disabled]="sending()" class="cursor-pointer rounded-lg bg-agri px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+            Envoyer le signalement
+          </button>
+          <button type="button" (click)="reporting.set(false); error.set('')" class="cursor-pointer rounded-lg border border-grey-400 px-4 py-2 text-sm font-medium text-grey-700">
+            Annuler
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (thread()?.status === 'reported') {
+      <p class="mx-4 mt-3 shrink-0 rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri lg:mx-0">Cette conversation a été signalée, notre équipe l'examine.</p>
+    }
+
+    <!-- le fil defile dans sa zone, le champ de saisie reste en bas -->
+    <div #scroller role="log" aria-label="Messages" aria-live="polite" class="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-2 lg:px-0">
+      @if (thread() === undefined) {
+        <p class="py-8 text-center text-sm text-grey-700">Chargement…</p>
+      } @else if (!days().length) {
+        <p class="py-8 text-center text-sm text-grey-700">Aucun message pour le moment. Écrivez le premier.</p>
+      }
+
+      @for (day of days(); track day.label) {
+        <p class="w-full rounded-full bg-grey-200 py-1 text-center text-xs text-grey-700">{{ day.label }}</p>
+
+        @for (m of day.messages; track m.id) {
+          @if (m.isSystem) {
+            <p class="text-center text-xs text-grey-700">{{ m.content }}</p>
+          } @else {
+            <div class="flex flex-col" [class]="isMine(m) ? 'items-end' : 'items-start'">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm lg:max-w-[70%]" [class]="isMine(m) ? 'bg-earth text-white' : 'border border-grey-200 bg-white'">
+                @if (m.moderated) {
+                  <p class="italic">Message masqué par la modération.</p>
+                } @else if (m.content) {
+                  <p class="break-words whitespace-pre-line">{{ m.content }}</p>
+                }
+                @for (file of m.attachments; track file.id) {
+                  <a [href]="file.url" target="_blank" rel="noopener" class="mt-1 flex items-center gap-2 underline">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0">
+                      <path d="M21 11l-9 9a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"></path>
+                    </svg>
+                    <span class="min-w-0 break-all">{{ file.fileName }}</span>
+                  </a>
+                }
+              </div>
+              <p class="mt-1 flex items-center gap-1 text-xs text-grey-700">
+                {{ clockTime(m.createdAt) }}
+                @if (isMine(m)) {
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4" [class]="m.readAt ? 'text-gold-wheat' : 'text-grey-500'">
+                    @if (m.readAt) {
+                      <path d="M1.5 12.5l4 4L14 8 M9.5 16.5l1.5 1.5L22 8"></path>
+                    } @else {
+                      <path d="M5 12.5l4.5 4.5L19 8"></path>
+                    }
+                  </svg>
+                  <span class="sr-only">{{ m.readAt ? 'Lu' : 'Envoyé' }}</span>
+                }
+              </p>
+            </div>
+          }
+        }
+      }
+    </div>
+
+    <div class="shrink-0">
+      @if (error()) {
+        <p role="alert" class="px-4 pb-2 text-sm text-danger lg:px-0">{{ error() }}</p>
+      }
+
+      <!-- reponses rapides du cahier : une rangee qui defile en mobile, qui passe a la ligne en desktop -->
+      <div role="group" aria-label="Réponses rapides" class="no-scrollbar flex gap-2 overflow-x-auto px-4 py-2 lg:flex-wrap lg:px-0">
+        @for (reply of quickReplies; track reply.label) {
+          <button
+            type="button"
+            [title]="reply.text"
+            (click)="quickReply(reply.text)"
+            class="shrink-0 cursor-pointer rounded-full border border-gold-wheat bg-white px-3 py-1.5 text-xs font-medium text-earth"
+          >
+            {{ reply.label }}
+          </button>
+        }
+      </div>
+
+      <form (submit)="$event.preventDefault(); send()" class="flex items-center gap-2 border-t border-grey-200 bg-white px-4 py-3 lg:px-3">
+        <label class="shrink-0 cursor-pointer rounded p-1 text-grey-700 focus-within:outline-2 focus-within:outline-agri">
+          <span class="sr-only">Joindre un fichier (jpeg, png, webp ou pdf, 10 Mo maximum)</span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+            <path d="M21 11l-9 9a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"></path>
+          </svg>
+          <input #file type="file" accept="image/jpeg,image/png,image/webp,application/pdf" [disabled]="sending()" (change)="attach(file)" class="sr-only" />
+        </label>
+        <input
+          #box
+          type="text"
+          aria-label="Votre message"
+          placeholder="Écrivez un message..."
+          maxlength="5000"
+          [value]="draft()"
+          (input)="draft.set(box.value)"
+          class="min-w-0 flex-1 rounded-full bg-grey-200 px-4 py-2.5 text-sm placeholder:text-grey-700"
+        />
+        <button
+          type="submit"
+          aria-label="Envoyer"
+          [disabled]="!draft().trim() || sending()"
+          class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-earth text-white disabled:opacity-50"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
+            <path d="M3 11.5L21 3l-8.5 18-2.2-7.3z"></path>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+}

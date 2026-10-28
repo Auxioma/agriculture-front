@@ -60,7 +60,7 @@
       </a>
     }
 
-    <!-- "Relancer" et "Discuter" ne sont pas encore branchés -->
+    <!-- "Relancer" n'est pas encore branché -->
     @if (canFollowUp(q)) {
       <div class="space-y-3 pt-2">
         <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">
@@ -76,9 +76,13 @@
           </svg>
           {{ acceptedText(q) }}
         </p>
-        <button type="button" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">
+        <a
+          routerLink="/producer/messages"
+          [queryParams]="{ request: q.requestId }"
+          class="block w-full rounded-xl border-2 border-agri bg-white py-3 text-center text-sm font-bold text-agri"
+        >
           Discuter avec le client
-        </button>
+        </a>
       </div>
     }
     @if (q.status !== 'archived') {
