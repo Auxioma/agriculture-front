@@ -180,7 +180,7 @@
         <a routerLink="/producer/requests">Demandes</a>
         <a routerLink="/producer/requests/quotes">Mes devis</a>
         <a routerLink="/pricing">Tarif producteurs</a>
-        <a routerLink="/messages">Messagerie</a>
+        <a routerLink="/producer/messages">Messagerie</a>
       } @else {
         <ng-container
           *ngTemplateOutlet="
@@ -468,7 +468,7 @@
           <a routerLink="/producer/requests" (click)="closeMobileMenu()">Demandes</a>
           <a routerLink="/producer/requests/quotes" (click)="closeMobileMenu()">Mes devis</a>
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
-          <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
+          <a routerLink="/producer/messages" (click)="closeMobileMenu()">Messagerie</a>
         } @else {
           <ng-container
             *ngTemplateOutlet="

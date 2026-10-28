@@ -86,6 +86,16 @@ export const routes: Routes = [
         loadComponent: () => import('./features/producer/requests/report/report.component').then((m) => m.ReportComponent),
       },
       {
+        path: 'messages',
+        loadComponent: () => import('./features/producer/messages/messages.component').then((m) => m.MessagesComponent),
+        children: [
+          {
+            path: ':id',
+            loadComponent: () => import('./features/producer/messages/thread/thread.component').then((m) => m.ThreadComponent),
+          },
+        ],
+      },
+      {
         path: 'subscription',
         loadComponent: () => import('./features/producer/subscription/subscription.component').then((m) => m.SubscriptionComponent),
       },
