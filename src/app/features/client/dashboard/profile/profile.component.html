@@ -1,0 +1,135 @@
+<div class="mx-auto max-w-2xl px-4 py-6 lg:px-0 lg:py-0">
+  <h1 class="text-2xl font-semibold text-fonts">Mon profil</h1>
+
+  @if (me(); as user) {
+    <div
+      class="mt-4 inline-flex items-center gap-3 rounded-xl border border-grey-200 bg-white px-4 py-3"
+    >
+      <span
+        class="flex h-10 w-10 items-center justify-center rounded-full bg-badge-bg font-semibold text-agri"
+        aria-hidden="true"
+      >
+        {{ initial() }}
+      </span>
+      <div>
+        <p class="text-sm font-semibold">{{ displayName() }}</p>
+        <p class="text-xs text-grey-500">{{ user.email }}</p>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <p role="alert" class="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-danger">
+      {{ error() }}
+    </p>
+  }
+
+  <div class="mt-6 space-y-1">
+    <app-accordion-item
+      sectionId="addresses"
+      title="Mes adresses"
+      subtitle="Adresses de livraison/retrait"
+      [icon]="icons.pin"
+      [open]="openSection() === 'addresses'"
+      (toggled)="toggle('addresses')"
+    >
+      <app-addresses-section />
+    </app-accordion-item>
+
+    <app-accordion-item
+      sectionId="security"
+      title="Sécurité"
+      subtitle="Mot de passe, connexions"
+      [icon]="icons.lock"
+      [open]="openSection() === 'security'"
+      (toggled)="toggle('security')"
+    >
+      <app-security-section />
+    </app-accordion-item>
+
+    <app-accordion-item
+      sectionId="support"
+      title="Aide et support"
+      subtitle="FAQ, contact"
+      [icon]="icons.help"
+      [open]="openSection() === 'support'"
+      (toggled)="toggle('support')"
+    >
+      <div class="space-y-2 rounded-xl border border-grey-200 bg-white p-4 text-xs">
+        <a routerLink="/faq" class="block font-medium text-agri">Consulter la FAQ</a>
+        <a
+          href="mailto:support@trouvemoi.com"
+          class="inline-block rounded-lg border border-agri bg-badge-bg px-3 py-1.5 font-medium text-agri"
+        >
+          Contacter le support
+        </a>
+        <p class="text-grey-700">support&#64;trouvemoi.com</p>
+      </div>
+    </app-accordion-item>
+
+    <app-accordion-item
+      sectionId="currency"
+      title="Devise"
+      [subtitle]="currencyLabel()"
+      [icon]="icons.coin"
+      [open]="openSection() === 'currency'"
+      (toggled)="toggle('currency')"
+    >
+      @if (preferences(); as prefs) {
+        <app-choice-section
+          name="currency"
+          legend="Devise"
+          [options]="currencyOptions"
+          [selected]="prefs.currency"
+          (selectedChange)="setCurrency($event)"
+        />
+      }
+    </app-accordion-item>
+
+    <app-accordion-item
+      sectionId="notifications"
+      title="Notifications"
+      subtitle="Email et in-app"
+      [icon]="icons.bell"
+      [open]="openSection() === 'notifications'"
+      (toggled)="toggle('notifications')"
+    >
+      @if (preferences(); as prefs) {
+        <app-notifications-section
+          [settings]="prefs.notificationSettings"
+          (changed)="setNotifications($event)"
+        />
+      }
+    </app-accordion-item>
+
+    <app-accordion-item
+      sectionId="personal-data"
+      title="Données personnelles"
+      subtitle="Export, suppression du compte"
+      [icon]="icons.shield"
+      [open]="openSection() === 'personal-data'"
+      (toggled)="toggle('personal-data')"
+    >
+      <app-personal-data-section (deleted)="onAccountDeleted()" />
+    </app-accordion-item>
+
+    <app-accordion-item
+      sectionId="language"
+      title="Langue"
+      [subtitle]="localeLabel()"
+      [icon]="icons.globe"
+      [open]="openSection() === 'language'"
+      (toggled)="toggle('language')"
+    >
+      @if (preferences(); as prefs) {
+        <app-choice-section
+          name="locale"
+          legend="Langue"
+          [options]="localeOptions"
+          [selected]="prefs.locale"
+          (selectedChange)="setLocale($event)"
+        />
+      }
+    </app-accordion-item>
+  </div>
+</div>

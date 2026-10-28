@@ -81,6 +81,13 @@ export const routes: Routes = [
             (m) => m.FavoritesComponent,
           ),
       },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/client/dashboard/profile/profile.component').then(
+            (m) => m.ProfileComponent,
+          ),
+      },
     ],
   },
   {
