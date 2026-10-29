@@ -14,7 +14,7 @@ export class ClientLayoutComponent {
       link: '/client',
       icon: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
     },
-    { label: 'Demandes', link: undefined, icon: 'M4 6h16 M4 12h16 M4 18h10' },
+    { label: 'Demandes', link: '/client/requests', icon: 'M4 6h16 M4 12h16 M4 18h10' },
     {
       label: 'Messages',
       link: undefined,

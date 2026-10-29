@@ -75,6 +75,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'requests',
+        loadComponent: () =>
+          import('./features/client/dashboard/requests/client-requests.component').then(
+            (m) => m.ClientRequestsComponent,
+          ),
+      },
+      {
         path: 'favorites',
         loadComponent: () =>
           import('./features/client/dashboard/favorites/favorites.component').then(
