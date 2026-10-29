@@ -145,6 +145,13 @@ describe('ProfileComponent', () => {
     expect(settings?.getAttribute('href')).toBe('/producer/profile/settings');
   });
 
+  it('mène aux statistiques avec « Statistiques »', async () => {
+    await create();
+
+    const statistics = [...compiled.querySelectorAll('.flex-col > a')].find((a) => a.textContent?.trim() === 'Statistiques');
+    expect(statistics?.getAttribute('href')).toBe('/producer/profile/statistics');
+  });
+
   it('propose les quatre boutons du figma', async () => {
     await create();
 
