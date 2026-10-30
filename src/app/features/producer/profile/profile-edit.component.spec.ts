@@ -293,13 +293,14 @@ describe('ProfileEditComponent', () => {
     expect(service['uploadCover'].mock.invocationCallOrder[0]).toBeLessThan(service['syncLabels'].mock.invocationCallOrder[0]);
   });
 
-  it('ramene au profil avec Annuler et le retour, et mene aux justificatifs des labels', async () => {
+  it('ramene au profil avec Annuler et le retour, et mene aux justificatifs des labels et aux zones de vente', async () => {
     await create();
 
     const links = [...compiled.querySelectorAll('a')].map((a) => [a.textContent?.trim(), a.getAttribute('href')]);
     expect(links).toEqual([
       ['Retour au profil', '/producer/profile'],
       ['Ajouter un justificatif ou suivre la vérification', '/producer/profile/labels'],
+      ['Gérer toutes mes zones et leurs conditions', '/producer/profile/zones'],
       ['Annuler', '/producer/profile'],
     ]);
   });
