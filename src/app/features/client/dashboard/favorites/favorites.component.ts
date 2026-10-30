@@ -3,12 +3,14 @@ import { RouterLink } from '@angular/router';
 import { FavoriteService } from './favorite.service';
 import { Favorite, FavoriteType } from './favorite.model';
 import { initials } from '../../utils/initials';
+import { PageHeaderComponent } from '../../ui/page-header.component';
+import { FilterTabsComponent } from '../../ui/filter-tabs.component';
 
-type Tab = { type: FavoriteType; label: string; route: string };
+type Tab = { key: FavoriteType; label: string; route: string };
 
 @Component({
   selector: 'app-favorites',
-  imports: [RouterLink],
+  imports: [RouterLink, PageHeaderComponent, FilterTabsComponent],
   templateUrl: './favorites.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -16,9 +18,9 @@ export class FavoritesComponent {
   private readonly service = inject(FavoriteService);
 
   readonly tabs: Tab[] = [
-    { type: 'producer_profile', label: 'Producteurs', route: '/producers' },
-    { type: 'product', label: 'Produits', route: '/categories' },
-    { type: 'category', label: 'Catégories', route: '/categories' },
+    { key: 'producer_profile', label: 'Producteurs', route: '/producers' },
+    { key: 'product', label: 'Produits', route: '/categories' },
+    { key: 'category', label: 'Catégories', route: '/categories' },
   ];
 
   readonly favorites = this.service.favorites;
@@ -54,7 +56,7 @@ export class FavoritesComponent {
   }
 
   link(f: Favorite): string[] {
-    const slug = f.target!.slug;
+    const slug = f.target!.slug ?? f.target!.id;
     switch (f.targetType) {
       case 'producer_profile':
         return ['/producers', slug];

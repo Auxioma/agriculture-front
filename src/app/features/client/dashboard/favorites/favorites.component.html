@@ -1,65 +1,51 @@
-<section class="mx-auto w-full max-w-5xl px-4 py-6 lg:px-8">
-  <h1 class="mb-4 text-2xl font-bold text-fonts lg:text-3xl">Mes favoris</h1>
+<app-page-header title="Mes favoris" />
 
-  <!-- Onglets -->
-  <div class="no-scrollbar mb-5 flex gap-2 overflow-x-auto" role="tablist">
-    @for (tab of tabs; track tab.type) {
-      <button
-        type="button"
-        role="tab"
-        [attr.aria-selected]="activeType() === tab.type"
-        (click)="activeType.set(tab.type)"
-        class="whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors"
-        [class]="
-          activeType() === tab.type
-            ? 'border-agri bg-agri text-white'
-            : 'border-grey-400 bg-white text-grey-700 hover:bg-grey-200'
-        "
-      >
-        {{ tab.label }}
-      </button>
-    }
-  </div>
+<section class="space-y-4 px-4 py-6 lg:px-0 lg:py-8">
+  <app-filter-tabs ariaLabel="Type de favoris" [tabs]="tabs" [(active)]="activeType" />
 
   @if (loading()) {
-    <p class="text-grey-500">Chargement…</p>
+    <p class="text-sm text-grey-700">Chargement…</p>
   } @else if (error()) {
-    <p class="text-danger">Impossible de charger vos favoris. Réessayez plus tard.</p>
+    <p class="text-sm text-danger">Impossible de charger vos favoris. Réessayez plus tard.</p>
   } @else if (visible().length === 0) {
-    <div class="rounded-xl border border-grey-200 bg-white p-8 text-center">
-      <p class="mb-3 text-grey-700">Aucun favori dans cette catégorie.</p>
-      <a routerLink="/producers" class="font-medium text-agri underline"
+    <div class="rounded-lg border border-grey-200 bg-white p-6 text-center">
+      <p class="mb-3 text-sm text-grey-700">Aucun favori dans cette catégorie.</p>
+      <a routerLink="/producers" class="text-sm font-medium text-agri underline"
         >Découvrir les producteurs</a
       >
     </div>
   } @else {
     <ul class="grid gap-3 lg:grid-cols-2">
       @for (fav of visible(); track fav.id) {
-        <li class="flex items-center gap-3 rounded-xl border border-grey-200 bg-white p-3">
+        <li class="flex items-center gap-3 rounded-lg border border-grey-200 bg-white p-3">
           <a [routerLink]="link(fav)" class="flex min-w-0 flex-1 items-center gap-3">
             <span
-              class="flex size-12 shrink-0 items-center justify-center rounded-full bg-badge-bg font-semibold text-agri"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-badge-bg text-xs font-semibold text-agri"
             >
               {{ initials(fav) }}
             </span>
             <span class="min-w-0">
-              <span class="flex items-center gap-1 font-semibold text-fonts">
+              <span class="flex items-center gap-1 text-sm font-medium">
                 <span class="truncate">{{ label(fav) }}</span>
                 @if (fav.target?.verified) {
                   <span class="text-agri" aria-label="Producteur vérifié">✔</span>
                 }
               </span>
-              <span class="block truncate text-sm text-grey-500">{{ subtitle(fav) }}</span>
+              <span class="block truncate text-xs text-grey-500">{{ subtitle(fav) }}</span>
             </span>
           </a>
 
           <button
             type="button"
             (click)="remove(fav)"
-            class="p-2 text-agri"
+            class="flex size-11 shrink-0 items-center justify-center rounded-full text-agri hover:bg-badge-bg"
             [attr.aria-label]="'Retirer ' + label(fav) + ' des favoris'"
           >
-            ♥
+            <svg viewBox="0 0 24 24" class="size-5" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              />
+            </svg>
           </button>
         </li>
       }

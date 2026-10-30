@@ -1,7 +1,16 @@
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ClientRequestItem, RequestStatus } from './client-request.model';
 import { ClientRequestsService } from './client-requests.service';
+import { PageHeaderComponent } from '../../ui/page-header.component';
+import { FilterTabsComponent } from '../../ui/filter-tabs.component';
 
 type Filter = 'all' | 'pending' | 'replied' | 'archived';
 
@@ -24,8 +33,9 @@ const STATUS_UI: Record<RequestStatus, { label: string; filter: Filter; badge: s
 
 @Component({
   selector: 'app-client-requests',
-  imports: [RouterLink],
+  imports: [RouterLink, PageHeaderComponent, FilterTabsComponent],
   templateUrl: './client-requests.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClientRequestsComponent {
   private readonly api = inject(ClientRequestsService);

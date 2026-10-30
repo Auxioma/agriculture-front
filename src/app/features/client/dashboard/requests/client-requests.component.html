@@ -1,44 +1,23 @@
-<header class="flex items-center justify-between bg-badge-bg px-4 py-4 md:hidden">
-  <h1 class="text-2xl font-bold">Mes demandes</h1>
-</header>
+<app-page-header title="Mes demandes" />
 
-<section class="px-4 py-4 md:px-10 md:py-10">
-  <h1 class="mb-6 hidden text-3xl font-bold text-fonts md:block">Mes demandes</h1>
-
-  <div class="no-scrollbar mb-6 flex gap-2 overflow-x-auto" role="tablist">
-    @for (f of filters; track f.key) {
-      <button
-        type="button"
-        role="tab"
-        [attr.aria-selected]="activeFilter() === f.key"
-        (click)="activeFilter.set(f.key)"
-        class="shrink-0 rounded-full border px-4 py-1.5 text-sm transition-colors"
-        [class]="
-          activeFilter() === f.key
-            ? 'border-agri bg-agri text-white'
-            : 'border-grey-200 bg-white text-fonts hover:bg-badge-bg'
-        "
-      >
-        {{ f.label }}
-      </button>
-    }
-  </div>
+<section class="space-y-4 px-4 py-6 lg:px-0 lg:py-8">
+  <app-filter-tabs ariaLabel="Filtrer les demandes" [tabs]="filters" [(active)]="activeFilter" />
 
   @if (loading()) {
-    <p class="text-grey-500">Chargement…</p>
+    <p class="text-sm text-grey-700">Chargement…</p>
   } @else if (error()) {
-    <p class="text-danger">Impossible de charger vos demandes.</p>
+    <p class="text-sm text-danger">Impossible de charger vos demandes.</p>
   } @else if (visible().length === 0) {
-    <p class="text-grey-500">Aucune demande dans cette catégorie.</p>
+    <p class="text-sm text-grey-700">Aucune demande dans cette catégorie.</p>
   } @else {
-    <ul class="grid items-start gap-3 md:grid-cols-2">
+    <ul class="grid items-start gap-3 lg:grid-cols-2">
       @for (r of visible(); track r.id) {
         <li
-          class="relative flex items-center justify-between gap-3 rounded-lg border border-grey-200 bg-white p-4"
+          class="relative flex items-center justify-between gap-3 rounded-lg border border-grey-200 bg-white p-3"
         >
           <div class="min-w-0">
-            <p class="truncate font-medium text-fonts">{{ r.title }}</p>
-            <p class="text-sm text-grey-500">Envoyée le {{ formatDate(r.sentAt) }}</p>
+            <p class="truncate text-sm font-medium">{{ r.title }}</p>
+            <p class="text-xs text-grey-500">Envoyée le {{ formatDate(r.sentAt) }}</p>
           </div>
 
           <div class="flex shrink-0 items-center gap-2">
@@ -58,7 +37,7 @@
 
           @if (openMenuId() === r.id) {
             <ul
-              class="absolute right-2 top-14 z-10 w-44 rounded-lg border border-grey-200 bg-white py-1 shadow-md"
+              class="absolute right-2 top-full z-10 mt-1 w-44 rounded-lg border border-grey-200 bg-white py-1 shadow-md"
             >
               <li>
                 <button

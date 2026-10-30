@@ -1,6 +1,7 @@
 export type FavoriteType = 'producer_profile' | 'product' | 'category';
 
 export interface FavoriteTarget {
+  id: string;
   name?: string;
   farmName?: string;
   slug: string;

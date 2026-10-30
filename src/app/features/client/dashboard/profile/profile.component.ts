@@ -26,6 +26,7 @@ import { NotificationsSectionComponent } from './sections/notifications-section.
 import { PersonalDataSectionComponent } from './sections/personal-data-section.component';
 import { SecuritySectionComponent } from './sections/security-section.component';
 import { AccordionItemComponent } from './ui/accordion-item.component';
+import { PageHeaderComponent } from '../../ui/page-header.component';
 
 @Component({
   selector: 'app-profile',
@@ -38,6 +39,7 @@ import { AccordionItemComponent } from './ui/accordion-item.component';
     NotificationsSectionComponent,
     ChoiceSectionComponent,
     PersonalDataSectionComponent,
+    PageHeaderComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './profile.component.html',
