@@ -1,0 +1,116 @@
+<!-- mobile : fleche de retour a gauche du titre ; desktop : lien avec son texte en haut, titre dans la colonne centree -->
+<header class="flex items-center gap-3 px-4 pt-4 lg:block lg:p-0">
+  <a routerLink="/producer/profile" class="flex items-center gap-2 text-sm font-semibold lg:text-base">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="h-6 w-6 shrink-0 lg:h-4 lg:w-4">
+      <path d="M15 18l-6-6 6-6"></path>
+    </svg>
+    <span class="sr-only lg:not-sr-only">Retour au profil</span>
+  </a>
+  <h1 class="text-xl font-bold lg:mx-auto lg:mt-6 lg:max-w-md lg:text-3xl">Zones de vente</h1>
+</header>
+<p class="mt-1 px-4 text-sm text-secondary lg:mx-auto lg:max-w-md lg:px-0">
+  Les distances dans lesquelles vous livrez, avec vos conditions. Votre fiche publique affiche la plus grande.
+</p>
+
+@if (zones() === null) {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:mx-auto lg:max-w-md lg:px-0">Impossible de charger vos zones pour le moment.</p>
+} @else if (zones()) {
+  <div class="mt-4 space-y-3 px-4 pb-6 lg:mx-auto lg:max-w-md lg:px-0">
+    @if (notice()) {
+      <p role="status" class="rounded-lg bg-badge-bg px-4 py-3 text-sm font-medium text-agri">{{ notice() }}</p>
+    }
+
+    @if (!sorted().length && editing() !== 'new') {
+      <p class="rounded-xl border border-grey-200 bg-white p-4 text-sm text-grey-700">Aucune zone pour le moment. Ajoutez la distance dans laquelle vous livrez.</p>
+    }
+
+    @for (zone of sorted(); track zone.id) {
+      <section class="rounded-xl border border-grey-200 bg-white p-4">
+        @if (editing() === zone.id) {
+          <ng-container *ngTemplateOutlet="zoneForm; context: { heading: 'Modifier la zone' }"></ng-container>
+        } @else {
+          <h2 class="font-semibold">{{ title(zone) }}</h2>
+          @for (line of conditions(zone); track line) {
+            <p class="text-sm text-grey-700">{{ line }}</p>
+          } @empty {
+            <p class="text-sm text-secondary">Aucune condition indiquée.</p>
+          }
+
+          @if (confirmingDelete() === zone.id) {
+            <div class="mt-3 space-y-2 text-sm">
+              <p>Supprimer cette zone ?</p>
+              @if (error()) {
+                <p role="alert" class="text-danger">{{ error() }}</p>
+              }
+              <div class="flex gap-3">
+                <button type="button" (click)="remove(zone)" [disabled]="busy()" class="cursor-pointer rounded-lg bg-danger px-4 py-2 font-semibold text-white disabled:opacity-60">
+                  Confirmer la suppression
+                </button>
+                <button type="button" (click)="confirmingDelete.set(null)" [disabled]="busy()" class="cursor-pointer rounded-lg border border-grey-400 px-4 py-2 font-medium text-grey-700">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="mt-3 flex gap-4 text-sm font-semibold">
+              @if (zone.radiusKm !== null) {
+                <button type="button" (click)="edit(zone)" class="cursor-pointer text-agri">Modifier</button>
+              }
+              <button type="button" (click)="askDelete(zone)" class="cursor-pointer text-danger">Supprimer</button>
+            </div>
+          }
+        }
+      </section>
+    }
+
+    @if (editing() === 'new') {
+      <section class="rounded-xl border border-grey-200 bg-white p-4">
+        <ng-container *ngTemplateOutlet="zoneForm; context: { heading: 'Nouvelle zone' }"></ng-container>
+      </section>
+    } @else {
+      <button type="button" (click)="add()" class="w-full cursor-pointer rounded-xl border-2 border-agri bg-white py-3 text-sm font-bold text-agri">Ajouter une zone</button>
+    }
+  </div>
+}
+
+<!-- le meme formulaire pour une nouvelle zone et pour une zone qui existe -->
+<ng-template #zoneForm let-heading="heading">
+  <form (submit)="$event.preventDefault(); save()" class="space-y-3">
+    <h2 class="font-semibold">{{ heading }}</h2>
+
+    <div>
+      <label for="zone-radius" class="mb-1 block text-sm font-medium">Rayon</label>
+      <div class="relative">
+        <input id="zone-radius" #radiusBox inputmode="decimal" placeholder="20" [value]="radius()" (input)="radius.set(radiusBox.value)" class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2 pr-10 text-sm" />
+        <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-secondary">km</span>
+      </div>
+    </div>
+
+    <div>
+      <label for="zone-fee" class="mb-1 block text-sm font-medium">Frais de livraison <span class="font-normal text-secondary">(facultatif)</span></label>
+      <div class="relative">
+        <input id="zone-fee" #feeBox inputmode="decimal" placeholder="3,50" [value]="fee()" (input)="fee.set(feeBox.value)" class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2 pr-10 text-sm" />
+        <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-secondary">€</span>
+      </div>
+    </div>
+
+    <div>
+      <label for="zone-minimum" class="mb-1 block text-sm font-medium">Commande minimum <span class="font-normal text-secondary">(facultatif)</span></label>
+      <div class="relative">
+        <input id="zone-minimum" #minimumBox inputmode="decimal" placeholder="20" [value]="minimum()" (input)="minimum.set(minimumBox.value)" class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2 pr-10 text-sm" />
+        <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-secondary">€</span>
+      </div>
+    </div>
+
+    @if (error()) {
+      <p role="alert" class="text-sm text-danger">{{ error() }}</p>
+    }
+
+    <div class="flex gap-3">
+      <button type="submit" [disabled]="busy()" class="cursor-pointer rounded-lg bg-agri px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+        {{ editing() === 'new' ? 'Ajouter la zone' : 'Enregistrer' }}
+      </button>
+      <button type="button" (click)="cancel()" [disabled]="busy()" class="cursor-pointer rounded-lg border border-grey-400 px-4 py-2 text-sm font-medium text-grey-700">Annuler</button>
+    </div>
+  </form>
+</ng-template>
