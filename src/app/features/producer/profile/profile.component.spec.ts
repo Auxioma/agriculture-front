@@ -145,6 +145,13 @@ describe('ProfileComponent', () => {
     expect(settings?.getAttribute('href')).toBe('/producer/profile/settings');
   });
 
+  it('mène aux avis avec « Avis clients »', async () => {
+    await create();
+
+    const reviews = [...compiled.querySelectorAll('.flex-col > a')].find((a) => a.textContent?.trim() === 'Avis clients');
+    expect(reviews?.getAttribute('href')).toBe('/producer/profile/reviews');
+  });
+
   it('mène aux statistiques avec « Statistiques »', async () => {
     await create();
 

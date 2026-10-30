@@ -24,7 +24,7 @@ export class ProfileComponent {
 
   readonly actions: { label: string; link?: string; style: string }[] = [
     { label: 'Modifier mon profil', link: '/producer/profile/edit', style: 'bg-agri text-white' },
-    { label: 'Avis clients', style: 'bg-gold-wheat text-fonts' },
+    { label: 'Avis clients', link: '/producer/profile/reviews', style: 'bg-gold-wheat text-fonts' },
     { label: 'Statistiques', link: '/producer/profile/statistics', style: 'border border-agri bg-badge-bg text-agri' },
     { label: 'Paramètres', link: '/producer/profile/settings', style: 'border border-grey-400 bg-grey-200 text-grey-700' },
   ];

@@ -121,6 +121,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/producer/settings/settings.component').then((m) => m.SettingsComponent),
       },
       {
+        path: 'profile/reviews',
+        loadComponent: () => import('./features/producer/reviews/reviews.component').then((m) => m.ReviewsComponent),
+      },
+      {
         path: 'profile/statistics',
         loadComponent: () => import('./features/producer/statistics/statistics.component').then((m) => m.StatisticsComponent),
       },
