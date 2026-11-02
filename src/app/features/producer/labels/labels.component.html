@@ -74,7 +74,7 @@
                 <button type="button" (click)="removeFile(row.label.id)" class="ml-1 cursor-pointer font-semibold text-agri">Retirer</button>
               </p>
             } @else if (row.canAdd) {
-              <button type="button" (click)="picker.click()" class="cursor-pointer text-xs font-semibold text-agri">Ajouter un justificatif</button>
+              <button type="button" (click)="picker.click()" class="cursor-pointer py-1.5 text-xs font-semibold text-agri">Ajouter un justificatif</button>
             }
             <input #picker type="file" class="sr-only" tabindex="-1" aria-hidden="true" [accept]="accept" (change)="chooseFile(row.label.id, picker)" />
           </div>

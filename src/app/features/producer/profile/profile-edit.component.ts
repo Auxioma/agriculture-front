@@ -14,7 +14,7 @@ import { hoursError, slotsFromApi } from './hours-format';
 import { initials, kmText, labelStatus, largestRadius, parseKm, sameCity } from './profile-format';
 import { Exploitation, HourSlot, ProfileInfo, ProfileLabel, ProfileService } from './profile.service';
 
-const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-grey-500';
+const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-secondary';
 
 // apercu de la photo choisie (pas disponible partout : sans lui on garde l'image d'avant)
 const previewOf = (file: File): string => (typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '');

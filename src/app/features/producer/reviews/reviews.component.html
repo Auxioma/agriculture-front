@@ -81,7 +81,7 @@
             <div class="mt-3 flex items-center justify-between gap-3">
               <time [attr.datetime]="r.createdAt" class="text-xs text-grey-700">{{ date(r.createdAt) }}</time>
               @if (!responseOf(r) && replying() !== r.id) {
-                <button type="button" (click)="reply(r)" class="cursor-pointer text-sm font-semibold text-agri">Répondre</button>
+                <button type="button" (click)="reply(r)" class="cursor-pointer py-1.5 text-sm font-semibold text-agri">Répondre</button>
               }
             </div>
           </li>

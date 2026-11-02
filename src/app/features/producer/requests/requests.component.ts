@@ -72,7 +72,7 @@ export class RequestsComponent {
   // un seul badge par carte, comme sur la maquette : urgent d'abord, puis volume, puis nouveau
   badge(request: AvailableRequest): { label: string; style: string } | null {
     if (request.urgent) return { label: 'Urgent', style: 'bg-warning text-fonts' };
-    if (request.highVolume) return { label: 'Volume élevé', style: 'border border-grey-400 text-grey-500' };
+    if (request.highVolume) return { label: 'Volume élevé', style: 'border border-grey-400 text-secondary' };
     if (request.isNew) return { label: 'Nouveau', style: 'bg-agri text-white' };
     return null;
   }

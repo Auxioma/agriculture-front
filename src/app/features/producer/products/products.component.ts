@@ -11,7 +11,7 @@ import { AvailabilityPayload, ProducerProduct, ProductPhoto, ProductUnit, Produc
 // categorie fictive des produits dont la categorie n'est pas dans la liste (desactivee par exemple)
 const OTHERS = 'others';
 
-const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-grey-500';
+const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-secondary';
 
 const PHOTO_MAX = 5;
 

@@ -52,7 +52,7 @@
           } @else {
             <div class="mt-3 flex gap-4 text-sm">
               <button type="button" (click)="makeDefault(card)" [disabled]="busy()" class="cursor-pointer font-semibold text-agri disabled:opacity-60">Définir par défaut</button>
-              <button type="button" (click)="confirmingId.set(card.id)" [disabled]="busy()" class="cursor-pointer text-grey-500 disabled:opacity-60">Supprimer</button>
+              <button type="button" (click)="confirmingId.set(card.id)" [disabled]="busy()" class="cursor-pointer py-1.5 text-secondary disabled:opacity-60">Supprimer</button>
             </div>
           }
         }

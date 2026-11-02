@@ -87,7 +87,7 @@
                 formControlName="categoryId"
                 (change)="changeCategory()"
                 [class]="input"
-                [class.text-grey-500]="!form.controls.categoryId.value"
+                [class.text-secondary]="!form.controls.categoryId.value"
               >
                 <option value="">Choisir une catégorie</option>
                 @for (group of groups(); track group.id) {
@@ -102,7 +102,7 @@
                 formControlName="productId"
                 (change)="changeProduct()"
                 [class]="input"
-                [class.text-grey-500]="!form.controls.productId.value"
+                [class.text-secondary]="!form.controls.productId.value"
               >
                 <option value="">Choisir un produit</option>
                 @for (p of choices(); track p.id) {
@@ -132,7 +132,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label for="start-month" class="mb-1 block text-xs text-secondary">Début</label>
-              <select id="start-month" formControlName="startMonth" [class]="input" [class.text-grey-500]="!form.controls.startMonth.value">
+              <select id="start-month" formControlName="startMonth" [class]="input" [class.text-secondary]="!form.controls.startMonth.value">
                 <option value="">Mois</option>
                 @for (month of months; track month.value) {
                   <option [value]="month.value">{{ month.label }}</option>
@@ -141,7 +141,7 @@
             </div>
             <div>
               <label for="end-month" class="mb-1 block text-xs text-secondary">Fin</label>
-              <select id="end-month" formControlName="endMonth" [class]="input" [class.text-grey-500]="!form.controls.endMonth.value">
+              <select id="end-month" formControlName="endMonth" [class]="input" [class.text-secondary]="!form.controls.endMonth.value">
                 <option value="">Mois</option>
                 @for (month of months; track month.value) {
                   <option [value]="month.value">{{ month.label }}</option>
@@ -158,7 +158,7 @@
           </div>
           <div>
             <label for="unit" class="mb-1 block font-medium">Unité</label>
-            <select id="unit" formControlName="unitId" [class]="input" [class.text-grey-500]="!form.controls.unitId.value">
+            <select id="unit" formControlName="unitId" [class]="input" [class.text-secondary]="!form.controls.unitId.value">
               <option value="">Choisir</option>
               @for (unit of units(); track unit.id) {
                 <option [value]="unit.id">{{ unit.label }}</option>
