@@ -151,7 +151,14 @@ export class HomeComponent {
         afterNextRender(() => this.updateScrollState(), { injector: this.injector });
       });
     
-    this.faqService.getAll().subscribe((articles) => this.faqArticles.set(articles));
+    // comme les deux autres : une FAQ qui ne se charge pas laisse la section vide, sans erreur
+    this.faqService
+      .getAll()
+      .pipe(
+        catchError(() => of([] as FaqArticle[])),
+        takeUntilDestroyed(),
+      )
+      .subscribe((articles) => this.faqArticles.set(articles));
   }
 
   updateScrollState(): void {
