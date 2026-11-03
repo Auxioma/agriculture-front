@@ -86,7 +86,7 @@
       </div>
     }
     @if (q.status !== 'archived') {
-      <button type="button" (click)="archive(q)" class="block w-full cursor-pointer text-center text-sm text-danger">Archiver ce devis</button>
+      <button type="button" (click)="archive(q)" class="block w-full cursor-pointer py-1.5 text-center text-sm text-danger">Archiver ce devis</button>
     }
     @if (error()) {
       <p role="alert" class="text-center text-sm text-danger">{{ error() }}</p>

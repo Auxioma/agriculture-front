@@ -1,4 +1,10 @@
-<div class="min-h-screen bg-background lg:flex [--color-danger:#c82333] [--color-secondary:#5c636a]">
+<div class="relative min-h-screen bg-background lg:flex [--color-danger:#c82333] [--color-secondary:#5c636a]">
+  <!-- cloche de notifications : une seule. Desktop : dans la barre laterale, a droite du nom (fixe comme elle). Mobile : en haut a droite,
+       les en-tetes qui ont du texte a droite lui laissent la place -->
+  <div class="absolute right-3 top-2.5 z-20 lg:fixed lg:left-[11.75rem] lg:right-auto lg:top-5">
+    <app-notification-bell anchor="left" [showAll]="false" />
+  </div>
+
   <!-- barre laterale (desktop) -->
   <aside class="hidden w-60 shrink-0 border-r border-grey-200 bg-white px-4 py-6 lg:sticky lg:top-0 lg:block lg:h-screen lg:self-start">
     <a routerLink="/" class="mb-8 block px-3 text-lg font-semibold text-agri">TrouveMoi Agri</a>

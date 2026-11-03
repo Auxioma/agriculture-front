@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NotificationBellComponent } from '../../../core/layout/notification-bell/notification-bell.component';
 
 // espace producteur (semblable au figma) : barre laterale en desktop, barre d'onglets en bas en mobile. Pas de
 // navbar ni de footer du site public ici (voir App)
@@ -7,7 +8,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 @Component({
   selector: 'app-producer-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent],
   templateUrl: './producer-layout.component.html',
 })
 export class ProducerLayoutComponent {

@@ -249,6 +249,27 @@ describe('NotificationBellComponent', () => {
     expect(card()).toBeNull();
   });
 
+  it('ne propose pas « Voir toutes » quand la page n existe pas (espace producteur)', async () => {
+    await create();
+    fixture.componentRef.setInput('showAll', false);
+    openCard();
+
+    expect(card()!.querySelector('a[href="/notifications"]')).toBeNull();
+    expect(rows().length).toBe(4);
+  });
+
+  it('aligne la card sur le bord droit de la cloche par défaut, sur son bord gauche dans une barre latérale', async () => {
+    await create();
+    openCard();
+    expect(card()!.classList.contains('lg:right-0')).toBe(true);
+    expect(card()!.classList.contains('lg:left-0')).toBe(false);
+
+    fixture.componentRef.setInput('anchor', 'left');
+    fixture.detectChanges();
+    expect(card()!.classList.contains('lg:left-0')).toBe(true);
+    expect(card()!.classList.contains('lg:right-0')).toBe(false);
+  });
+
   it('dit qu il n y a rien, sans lien, quand la liste est vide', async () => {
     await create(of([]));
     openCard();

@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -31,6 +31,12 @@ type State = 'loading' | 'ready' | 'error';
 export class NotificationBellComponent {
   private service = inject(NotificationsService);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  // desktop : le bord de la cloche sur lequel la card s'aligne. "right" sous la navbar du site (la cloche est a droite de la page),
+  // "left" pour une cloche dans une barre laterale, a gauche de la page : la card s'ouvre alors vers la droite
+  readonly anchor = input<'right' | 'left'>('right');
+  // "Voir toutes les notifications" mene a une page qui n'existe pas : l'espace producteur ne le propose pas
+  readonly showAll = input(true);
 
   open = signal(false);
   state = signal<State>('loading');
