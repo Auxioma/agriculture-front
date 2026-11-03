@@ -1,14 +1,18 @@
 import { Component, ElementRef, HostListener, computed, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgTemplateOutlet } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { messageOf } from '../../../features/producer/message-of';
+import { hasProducerRole } from '../../../features/producer/producer-role';
+import { AuthService } from '../../auth/auth.service';
 import { AppNotification, NotificationsService } from '../../notifications/notifications.service';
-import { iconOf, timeAgo } from '../../notifications/notification-format';
+import { NotificationItemComponent, NotificationRow } from '../../notifications/notification-item.component';
+import { iconOf, producerDestination, timeAgo } from '../../notifications/notification-format';
 
 // card sous la cloche (semblable au figma) : les plus recentes, les non lues sur fond vert avec un point.
-// "Voir toutes les notifications" mene a /notifications, page qui n'existe pas encore (pas de maquette).
-// Cliquer une notification la marque lue, sans aller nulle part : le back ne donne pas de destination (pas de requestId, etc.)
+// "Voir toutes les notifications" mene a la page des notifications (/notifications, ou /producer/notifications dans l'espace producteur).
+// Cliquer une notification la marque lue ; pour un producteur elle mene en plus a la section de son espace qui la concerne, d'apres son
+// type (le back ne donne pas d'identifiant, pas de requestId, etc.). Pour un client elle ne mene nulle part : a son cote de le dire.
 //
 // Seulement pour un utilisateur connecte : la navbar ne l'affiche pas autrement, donc rien n'est demande au back pour un invite
 // ni cote serveur (SSR : pas de connexion la-bas).
@@ -25,18 +29,19 @@ type State = 'loading' | 'ready' | 'error';
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
-  imports: [RouterLink, NgTemplateOutlet],
+  imports: [RouterLink, NotificationItemComponent],
   templateUrl: './notification-bell.component.html',
 })
 export class NotificationBellComponent {
   private service = inject(NotificationsService);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private user = inject(AuthService).currentUser;
 
   // desktop : le bord de la cloche sur lequel la card s'aligne. "right" sous la navbar du site (la cloche est a droite de la page),
   // "left" pour une cloche dans une barre laterale, a gauche de la page : la card s'ouvre alors vers la droite
   readonly anchor = input<'right' | 'left'>('right');
-  // "Voir toutes les notifications" mene a une page qui n'existe pas : l'espace producteur ne le propose pas
-  readonly showAll = input(true);
+  // l'adresse de la page "Voir toutes les notifications" ; null pour ne pas proposer le lien
+  readonly allLink = input<string | null>('/notifications');
 
   open = signal(false);
   state = signal<State>('loading');
@@ -47,15 +52,22 @@ export class NotificationBellComponent {
 
   unread = computed(() => this.items().filter((n) => !n.readAt).length);
   badge = computed(() => (this.unread() > BADGE_MAX ? `${BADGE_MAX}+` : String(this.unread())));
-  rows = computed(() =>
+  // seul un producteur a des destinations (voir producerDestination)
+  private destination = computed(() => {
+    const user = this.user();
+    return user && hasProducerRole(user.roles) ? producerDestination : () => null;
+  });
+  rows = computed<NotificationRow[]>(() =>
     this.items()
       .slice(0, CARD_SIZE)
-      .map((n) => ({ n, unread: !n.readAt, icon: iconOf(n.type), time: timeAgo(n.createdAt, this.now()) })),
+      .map((n) => ({ n, unread: !n.readAt, icon: iconOf(n.type), time: timeAgo(n.createdAt, this.now()), link: this.destination()(n.type) })),
   );
   hasAny = computed(() => this.items().length > 0);
 
   constructor() {
     this.refresh();
+    // la page des notifications a marque des notifications lues : on relit la liste
+    this.service.changes$.pipe(takeUntilDestroyed()).subscribe(() => this.refresh());
   }
 
   toggle(): void {
@@ -75,6 +87,12 @@ export class NotificationBellComponent {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    this.close();
+  }
+
+  // un clic sur une notification qui mene quelque part : elle est lue et la card se referme (la navigation se fait par le lien)
+  follow(row: NotificationRow): void {
+    this.read(row.n);
     this.close();
   }
 

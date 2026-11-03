@@ -18,6 +18,16 @@ describe('NotificationsService', () => {
 
   afterEach(() => http.verify());
 
+  it('annonce un changement a ceux qui l ecoutent (la cloche), sans appeler le back', () => {
+    let announced = 0;
+    service.changes$.subscribe(() => announced++);
+
+    service.announceChange();
+    service.announceChange();
+
+    expect(announced).toBe(2);
+  });
+
   it('lit les plus recentes avec la limite demandee', () => {
     let result: unknown;
     service.latest(20).subscribe((list) => (result = list));

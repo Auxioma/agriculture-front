@@ -1,7 +1,9 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthService } from '../../../core/auth/auth.service';
 import { AppNotification, NotificationsService } from '../../../core/notifications/notifications.service';
 import { ProducerLayoutComponent } from './producer-layout.component';
 
@@ -19,10 +21,14 @@ describe('ProducerLayoutComponent', () => {
   let compiled: HTMLElement;
 
   async function create(list: AppNotification[] = [note('n1'), note('n2'), note('n3', '2026-10-26T10:00:00Z')]): Promise<void> {
-    const service = { latest: vi.fn(() => of(list)), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)) };
+    const service = { latest: vi.fn(() => of(list)), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)), changes$: NEVER };
     await TestBed.configureTestingModule({
       imports: [ProducerLayoutComponent],
-      providers: [provideRouter([]), { provide: NotificationsService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: NotificationsService, useValue: service },
+        { provide: AuthService, useValue: { currentUser: signal({ roles: ['ROLE_PRODUCER'] }) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProducerLayoutComponent);
@@ -47,7 +53,7 @@ describe('ProducerLayoutComponent', () => {
     expect(bell().getAttribute('aria-label')).toBe('Notifications, 2 non lues');
   });
 
-  it('ouvre la card vers la droite de la barre latérale, sans lien vers une page « toutes les notifications » qui n’existe pas', async () => {
+  it('ouvre la card vers la droite de la barre latérale, avec un lien vers la page des notifications de l’espace', async () => {
     await create();
 
     bell().click();
@@ -58,6 +64,16 @@ describe('ProducerLayoutComponent', () => {
     expect(card.classList.contains('lg:right-0')).toBe(false);
     expect(card.textContent).toContain('Titre n1');
     expect(card.querySelector('a[href="/notifications"]')).toBeNull();
+    expect(card.querySelector('a[href="/producer/notifications"]')?.textContent?.trim()).toBe('Voir toutes les notifications');
+  });
+
+  it('une notification du producteur mène à la section de son espace qui la concerne', async () => {
+    await create();
+
+    bell().click();
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('#notification-card li a')?.getAttribute('href')).toBe('/producer/messages');
   });
 
   it('propose les cinq entrées de l’espace dans les deux barres, la messagerie comprise', async () => {

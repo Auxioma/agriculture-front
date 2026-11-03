@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
+import { authGuard } from './core/auth/auth.guard';
 import { producerGuard } from './features/producer/producer.guard';
 
 export const routes: Routes = [
@@ -140,7 +141,16 @@ export const routes: Routes = [
         path: 'support',
         loadComponent: () => import('./features/producer/support/support.component').then((m) => m.SupportComponent),
       },
+      {
+        path: 'notifications',
+        loadComponent: () => import('./features/notifications/notifications-page.component').then((m) => m.NotificationsPageComponent),
+      },
     ],
+  },
+  {
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/notifications/notifications-page.component').then((m) => m.NotificationsPageComponent),
   },
   { path: 'auth', children: AUTH_ROUTES },
   {

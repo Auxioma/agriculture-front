@@ -26,6 +26,25 @@ const ICON_OF_TYPE: Record<string, keyof typeof ICONS> = {
 
 export const iconOf = (type: string | null): string => ICONS[(type && ICON_OF_TYPE[type]) || 'bell'];
 
+// la page de l'espace producteur ou mene une notification, d'apres son type : le back ne donne pas d'identifiant (pas de requestId...),
+// on va donc a la section et non a l'element. Les types du client (devis recu, producteur ayant repondu...) ne menent nulle part ici :
+// c'est au cote client de dire ou ils vont
+const PRODUCER_DESTINATION: Record<string, string> = {
+  new_relevant_request: '/producer/requests',
+  request_expiring_soon: '/producer/requests',
+  new_message: '/producer/messages',
+  new_review: '/producer/profile/reviews',
+  payment_failed: '/producer/subscription',
+  subscription_renewing_soon: '/producer/subscription',
+  subscription_duplicate_cancelled: '/producer/subscription',
+  profile_validated: '/producer/profile',
+  profile_rejected: '/producer/profile',
+  profile_more_info_needed: '/producer/profile',
+  support_reply: '/producer/support',
+};
+
+export const producerDestination = (type: string | null): string | null => (type && PRODUCER_DESTINATION[type]) || null;
+
 const DAY = 24 * 60 * 60 * 1000;
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 

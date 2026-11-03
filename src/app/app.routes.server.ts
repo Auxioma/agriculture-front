@@ -32,6 +32,11 @@ export const serverRoutes: ServerRoute[] = [
     path: 'producer/**',
     renderMode: RenderMode.Client,
   },
+  // notifications : derriere une connexion et la garde a besoin du jeton, que le serveur n'a pas (sinon elle renvoie vers la connexion)
+  {
+    path: 'notifications',
+    renderMode: RenderMode.Client,
+  },
   {
     path: '**',
     renderMode: RenderMode.Prerender,

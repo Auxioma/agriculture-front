@@ -54,22 +54,27 @@
             <ul class="space-y-1">
               @for (row of rows(); track row.n.id) {
                 <li>
-                  <!-- non lue : un bouton qui la marque lue ; lue : rien a faire, donc pas de bouton -->
-                  @if (row.unread) {
+                  <!-- avec une destination : un lien qui la marque lue en passant ; sans : une non lue est un bouton qui la marque lue, une lue
+                       n'a rien a faire, donc pas de bouton -->
+                  @if (row.link) {
+                    <a [routerLink]="row.link" (click)="follow(row)" class="flex w-full cursor-pointer items-start gap-3 rounded-xl p-3 text-left" [class.bg-badge-bg]="row.unread">
+                      <app-notification-item [row]="row" />
+                    </a>
+                  } @else if (row.unread) {
                     <button type="button" (click)="read(row.n)" class="flex w-full cursor-pointer items-start gap-3 rounded-xl bg-badge-bg p-3 text-left">
-                      <ng-container *ngTemplateOutlet="content; context: { $implicit: row }"></ng-container>
+                      <app-notification-item [row]="row" />
                     </button>
                   } @else {
                     <div class="flex w-full items-start gap-3 rounded-xl p-3">
-                      <ng-container *ngTemplateOutlet="content; context: { $implicit: row }"></ng-container>
+                      <app-notification-item [row]="row" />
                     </div>
                   }
                 </li>
               }
             </ul>
-            @if (showAll()) {
+            @if (allLink(); as href) {
               <a
-                routerLink="/notifications"
+                [routerLink]="href"
                 (click)="close()"
                 class="mt-3 block border-t border-grey-200 pt-3 text-center text-sm font-bold text-agri"
               >
@@ -84,29 +89,3 @@
     </section>
   }
 </div>
-
-<ng-template #content let-row>
-  <span
-    class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-    [class]="row.unread ? 'bg-agri text-white' : 'bg-badge-bg text-agri'"
-  >
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-      <path [attr.d]="row.icon"></path>
-    </svg>
-  </span>
-  <span class="min-w-0 flex-1">
-    <span class="block text-sm font-bold text-fonts">
-      @if (row.unread) {
-        <span class="sr-only">Non lue : </span>
-      }
-      {{ row.n.title }}
-    </span>
-    @if (row.n.body) {
-      <span class="mt-0.5 block text-xs text-grey-700">{{ row.n.body }}</span>
-    }
-    <span class="mt-1 block text-xs text-grey-700">{{ row.time }}</span>
-  </span>
-  @if (row.unread) {
-    <span aria-hidden="true" class="mt-2 h-2 w-2 shrink-0 rounded-full bg-agri"></span>
-  }
-</ng-template>

@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthService } from '../../auth/auth.service';
 import { AppNotification, NotificationsService } from '../../notifications/notifications.service';
 import { NotificationBellComponent } from './notification-bell.component';
 
@@ -32,6 +34,8 @@ describe('NotificationBellComponent', () => {
   let fixture: ComponentFixture<NotificationBellComponent>;
   let compiled: HTMLElement;
   let service: { latest: ReturnType<typeof vi.fn>; markAsRead: ReturnType<typeof vi.fn>; markAllAsRead: ReturnType<typeof vi.fn> };
+  // la page des notifications annonce ses changements par ici
+  let changes: Subject<void>;
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -40,12 +44,18 @@ describe('NotificationBellComponent', () => {
 
   afterEach(() => vi.useRealTimers());
 
-  async function create(list$: Observable<AppNotification[]> = of(LIST)): Promise<void> {
-    service = { latest: vi.fn(() => list$), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)) };
+  // roles : ceux de l'utilisateur connecte ; null = personne (la destination par type ne vaut que pour un producteur)
+  async function create(list$: Observable<AppNotification[]> = of(LIST), roles: string[] | null = null): Promise<void> {
+    changes = new Subject<void>();
+    service = { latest: vi.fn(() => list$), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)), changes$: changes.asObservable() } as typeof service;
     await TestBed.configureTestingModule({
       imports: [NotificationBellComponent],
       // * la route existe pour que le clic sur « Voir toutes » aboutisse, sinon la navigation échoue après la fin du test
-      providers: [provideRouter([{ path: 'notifications', children: [] }]), { provide: NotificationsService, useValue: service }],
+      providers: [
+        provideRouter([{ path: 'notifications', children: [] }, { path: 'producer', children: [{ path: '**', children: [] }] }]),
+        { provide: NotificationsService, useValue: service },
+        { provide: AuthService, useValue: { currentUser: signal(roles ? { roles } : null) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(NotificationBellComponent);
@@ -249,13 +259,106 @@ describe('NotificationBellComponent', () => {
     expect(card()).toBeNull();
   });
 
-  it('ne propose pas « Voir toutes » quand la page n existe pas (espace producteur)', async () => {
+  it('mène à l adresse donnée pour « Voir toutes », /producer/notifications dans l espace producteur', async () => {
     await create();
-    fixture.componentRef.setInput('showAll', false);
+    fixture.componentRef.setInput('allLink', '/producer/notifications');
     openCard();
 
     expect(card()!.querySelector('a[href="/notifications"]')).toBeNull();
+    expect(text(card()!.querySelector('a[href="/producer/notifications"]'))).toBe('Voir toutes les notifications');
+  });
+
+  it('ne propose pas « Voir toutes » sans adresse', async () => {
+    await create();
+    fixture.componentRef.setInput('allLink', null);
+    openCard();
+
+    expect(card()!.querySelector('a[href$="notifications"]')).toBeNull();
     expect(rows().length).toBe(4);
+  });
+
+  describe('destination par type', () => {
+    const linkOf = (title: string) => rowOf(title).querySelector('a')?.getAttribute('href') ?? null;
+
+    it('pour un producteur, une notification mène à la section de son espace qui la concerne', async () => {
+      await create(of(LIST), ['ROLE_PRODUCER']);
+      openCard();
+
+      expect(linkOf('Nouveau message')).toBe('/producer/messages');
+      expect(linkOf('Demande expirant bientôt')).toBe('/producer/requests');
+      expect(linkOf('Profil validé')).toBe('/producer/profile');
+    });
+
+    it('un membre de l équipe d un producteur a les mêmes destinations', async () => {
+      await create(of(LIST), ['ROLE_PRODUCER_TEAM']);
+      openCard();
+
+      expect(linkOf('Nouveau message')).toBe('/producer/messages');
+    });
+
+    it('un type du client (producteur ayant répondu, devis reçu) ne mène nulle part, même pour un producteur', async () => {
+      await create(of(LIST), ['ROLE_PRODUCER']);
+      openCard();
+
+      expect(linkOf('Un producteur a répondu')).toBeNull();
+    });
+
+    it('un client n a aucune destination : bouton pour une non lue, rien pour une lue', async () => {
+      await create(of(LIST), ['ROLE_CLIENT']);
+      openCard();
+
+      expect(card()!.querySelectorAll('li a').length).toBe(0);
+      expect(rowOf('Nouveau message').querySelector('button')).toBeTruthy();
+      expect(rowOf('Profil validé').querySelector('button')).toBeNull();
+    });
+
+    it('un visiteur sans compte n a pas de destination non plus', async () => {
+      await create(of(LIST), null);
+      openCard();
+
+      expect(card()!.querySelectorAll('li a').length).toBe(0);
+    });
+
+    it('suivre le lien d une non lue la marque lue et referme la card', async () => {
+      await create(of(LIST), ['ROLE_PRODUCER']);
+      openCard();
+
+      click(rowOf('Nouveau message').querySelector('a')!);
+
+      expect(service.markAsRead).toHaveBeenCalledWith('n2');
+      expect(card()).toBeNull();
+      expect(badge()).toBe('1');
+    });
+
+    it('suivre le lien d une notification déjà lue ne rappelle pas le back, mais referme la card', async () => {
+      await create(of(LIST), ['ROLE_PRODUCER']);
+      openCard();
+
+      click(rowOf('Demande expirant bientôt').querySelector('a')!);
+
+      expect(service.markAsRead).not.toHaveBeenCalled();
+      expect(card()).toBeNull();
+    });
+
+    it('garde le fond vert et le point des non lues sur une ligne qui est un lien', async () => {
+      await create(of(LIST), ['ROLE_PRODUCER']);
+      openCard();
+
+      expect(rowOf('Nouveau message').querySelector('a')!.classList.contains('bg-badge-bg')).toBe(true);
+      expect(rowOf('Demande expirant bientôt').querySelector('a')!.classList.contains('bg-badge-bg')).toBe(false);
+    });
+  });
+
+  it('relit la liste quand la page des notifications annonce qu elle a marqué des notifications lues', async () => {
+    await create();
+    expect(badge()).toBe('2');
+    service.latest.mockReturnValue(of([note('n1', { readAt: minutesAgo(1) }), note('n2', { readAt: minutesAgo(1) })]));
+
+    changes.next();
+    fixture.detectChanges();
+
+    expect(service.latest).toHaveBeenCalledTimes(2);
+    expect(badge()).toBeUndefined();
   });
 
   it('aligne la card sur le bord droit de la cloche par défaut, sur son bord gauche dans une barre latérale', async () => {

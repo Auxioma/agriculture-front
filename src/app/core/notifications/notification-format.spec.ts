@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { iconOf, timeAgo } from './notification-format';
+import { iconOf, producerDestination, timeAgo } from './notification-format';
 
 describe('timeAgo', () => {
   // dates locales (pas d'ISO fixe) : "hier" se compte dans le fuseau du navigateur, le test doit tenir dans n'importe lequel
@@ -44,6 +44,30 @@ describe('timeAgo', () => {
 
   it('reste sur « à l instant » pour une date legerement dans le futur (horloges decalees)', () => {
     expect(timeAgo(iso(at(26, 14, 3)), NOW)).toBe("À l'instant");
+  });
+});
+
+describe('producerDestination', () => {
+  it('mene chaque notification du producteur a la section de son espace qui la concerne', () => {
+    expect(producerDestination('new_message')).toBe('/producer/messages');
+    expect(producerDestination('new_relevant_request')).toBe('/producer/requests');
+    expect(producerDestination('request_expiring_soon')).toBe('/producer/requests');
+    expect(producerDestination('new_review')).toBe('/producer/profile/reviews');
+    expect(producerDestination('payment_failed')).toBe('/producer/subscription');
+    expect(producerDestination('subscription_renewing_soon')).toBe('/producer/subscription');
+    expect(producerDestination('profile_validated')).toBe('/producer/profile');
+    expect(producerDestination('profile_rejected')).toBe('/producer/profile');
+    expect(producerDestination('support_reply')).toBe('/producer/support');
+    expect(producerDestination('profile_more_info_needed')).toBe('/producer/profile');
+    expect(producerDestination('subscription_duplicate_cancelled')).toBe('/producer/subscription');
+  });
+
+  it('ne mene nulle part pour un type du client, un type inconnu ou sans type', () => {
+    expect(producerDestination('quote_received')).toBeNull();
+    expect(producerDestination('producer_replied')).toBeNull();
+    expect(producerDestination('request_sent')).toBeNull();
+    expect(producerDestination('un_type_futur')).toBeNull();
+    expect(producerDestination(null)).toBeNull();
   });
 });
 

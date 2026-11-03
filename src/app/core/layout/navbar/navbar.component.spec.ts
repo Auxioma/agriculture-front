@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NavbarComponent } from './navbar.component';
 import { AuthService } from '../../auth/auth.service';
@@ -40,7 +40,7 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let authServiceMock: NavbarAuthServiceMock;
   let catalogServiceMock: { getPopularCategories: ReturnType<typeof vi.fn> };
-  let notificationsMock: { latest: ReturnType<typeof vi.fn> };
+  let notificationsMock: { latest: ReturnType<typeof vi.fn>; changes$: typeof NEVER };
 
   function linkTexts(): string[] {
     const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('a');
@@ -58,7 +58,7 @@ describe('NavbarComponent', () => {
   beforeEach(async () => {
     authServiceMock = createNavbarAuthServiceMock();
     catalogServiceMock = { getPopularCategories: vi.fn(() => of(POPULAR_CATEGORIES)) };
-    notificationsMock = { latest: vi.fn(() => of([])) };
+    notificationsMock = { latest: vi.fn(() => of([])), changes$: NEVER };
 
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
