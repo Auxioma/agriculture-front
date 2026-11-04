@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
 import { ProfileComponent } from './profile.component';
 import { Exploitation, ProfileService } from './profile.service';
@@ -35,6 +35,7 @@ const EXPLOITATION: Exploitation = {
 };
 
 describe('ProfileComponent', () => {
+  let fixture: ComponentFixture<ProfileComponent>;
   let compiled: HTMLElement;
 
   async function create(data$: Observable<Exploitation> = of(EXPLOITATION)): Promise<void> {
@@ -43,7 +44,7 @@ describe('ProfileComponent', () => {
       providers: [provideRouter([]), { provide: ProfileService, useValue: { getExploitation: vi.fn(() => data$) } }],
     }).compileComponents();
 
-    const fixture: ComponentFixture<ProfileComponent> = TestBed.createComponent(ProfileComponent);
+    fixture = TestBed.createComponent(ProfileComponent);
     fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
   }
@@ -175,5 +176,19 @@ describe('ProfileComponent', () => {
 
     expect(compiled.textContent).toContain('Impossible de charger votre profil');
     expect(compiled.querySelector('dl')).toBeNull();
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof EXPLOITATION>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(EXPLOITATION);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

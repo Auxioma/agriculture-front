@@ -13,6 +13,7 @@ import { HoursFieldComponent } from './hours-field.component';
 import { hoursError, slotsFromApi } from './hours-format';
 import { initials, kmText, labelStatus, largestRadius, parseKm, sameCity } from './profile-format';
 import { Exploitation, HourSlot, ProfileInfo, ProfileLabel, ProfileService } from './profile.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-secondary';
 
@@ -29,7 +30,7 @@ const previewOf = (file: File): string => (typeof URL.createObjectURL === 'funct
 @Component({
   selector: 'app-profile-edit',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, HoursFieldComponent],
+  imports: [ReactiveFormsModule, RouterLink, HoursFieldComponent, PageSkeletonComponent],
   templateUrl: './profile-edit.component.html',
 })
 export class ProfileEditComponent {

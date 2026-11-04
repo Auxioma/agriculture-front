@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { barPercent, money, monthLabel, percent } from './statistics-format';
 import { Statistics, StatisticsService } from './statistics.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 // page "Statistiques", branchee sur GET /api/producer/statistics (page Profil, bouton "Statistiques").
 // La maquette montre quatre chiffres et le graphique des demandes recues --> on y ajoute "Reponses envoyees" et le cout par
@@ -15,7 +16,7 @@ import { Statistics, StatisticsService } from './statistics.service';
 @Component({
   selector: 'app-producer-statistics',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './statistics.component.html',
 })
 export class StatisticsComponent {

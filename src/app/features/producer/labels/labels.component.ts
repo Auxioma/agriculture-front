@@ -6,6 +6,7 @@ import { messageOf } from '../message-of';
 import { longDate } from '../request-format';
 import { BADGES, DOCUMENT_TYPES, canAddDocument, documentError, labelDetail, labelKind } from './labels-format';
 import { LabelsPage, LabelsService } from './labels.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 interface Draft {
   on: boolean;
@@ -20,7 +21,7 @@ interface Draft {
 @Component({
   selector: 'app-producer-labels',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './labels.component.html',
 })
 export class LabelsComponent {

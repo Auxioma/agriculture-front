@@ -3,7 +3,8 @@
 
   @switch (state()) {
     @case ('loading') {
-      <p class="py-8 text-sm text-grey-700">Chargement…</p>
+      <!-- la section a deja ses marges : le squelette reprend les siennes -->
+      <app-page-skeleton class="-mx-4 lg:mx-0" />
     }
     @case ('error') {
       <p role="alert" class="py-8 text-sm text-grey-700">Impossible de charger vos notifications pour le moment.</p>

@@ -9,6 +9,7 @@ import { kmText, parseKm } from '../profile/profile-format';
 import { ProfileZone } from '../profile/profile.service';
 import { amountField, buildRules, byRadius, conditions, parseAmount, zoneTitle } from './zones-format';
 import { ZonesService } from './zones.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 // page "Zones de vente" (cahier fonctionnel, dashboard producteur), branchee sur /api/producer/delivery-zones. Pas de maquette :
 // elle suit les autres pages du producteur. Une zone = un rayon en km autour de la ferme, avec ses conditions facultatives (frais de
@@ -17,7 +18,7 @@ import { ZonesService } from './zones.service';
 @Component({
   selector: 'app-producer-zones',
   standalone: true,
-  imports: [RouterLink, NgTemplateOutlet],
+  imports: [RouterLink, NgTemplateOutlet, PageSkeletonComponent],
   templateUrl: './zones.component.html',
 })
 export class ZonesComponent {

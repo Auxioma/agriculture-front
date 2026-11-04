@@ -45,7 +45,8 @@ describe('NotificationBellComponent', () => {
   afterEach(() => vi.useRealTimers());
 
   // roles : ceux de l'utilisateur connecte ; null = personne (la destination par type ne vaut que pour un producteur)
-  async function create(list$: Observable<AppNotification[]> = of(LIST), roles: string[] | null = null): Promise<void> {
+  // render = false : le composant est cree mais pas encore affiche
+  async function create(list$: Observable<AppNotification[]> = of(LIST), roles: string[] | null = null, render = true): Promise<void> {
     changes = new Subject<void>();
     service = { latest: vi.fn(() => list$), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)), changes$: changes.asObservable() } as typeof service;
     await TestBed.configureTestingModule({
@@ -59,7 +60,7 @@ describe('NotificationBellComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(NotificationBellComponent);
-    fixture.detectChanges();
+    if (render) fixture.detectChanges();
     compiled = fixture.nativeElement as HTMLElement;
   }
 
@@ -78,11 +79,22 @@ describe('NotificationBellComponent', () => {
   const openCard = () => click(bell());
   const button = (label: string) => [...compiled.querySelectorAll('button')].find((b) => b.textContent?.trim() === label);
 
-  it('lit les notifications des la creation, sans ouvrir la card', async () => {
+  it('lit les notifications des le premier affichage, sans ouvrir la card', async () => {
     await create();
 
     expect(service.latest).toHaveBeenCalledTimes(1);
     expect(card()).toBeNull();
+  });
+
+  // la cloche est creee avant la page qu'elle accompagne : sa lecture attend la fin du rendu, la page passe devant
+  it('ne lit rien tant que le premier affichage n a pas eu lieu', async () => {
+    await create(of(LIST), null, false);
+
+    expect(service.latest).not.toHaveBeenCalled();
+
+    fixture.detectChanges();
+
+    expect(service.latest).toHaveBeenCalledTimes(1);
   });
 
   it('compte les non lues sur la cloche et le dit aux lecteurs d ecran', async () => {

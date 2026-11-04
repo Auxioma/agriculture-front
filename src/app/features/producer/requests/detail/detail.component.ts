@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, combineLatest, of, switchMap } from 'rxjs';
 import { longDate, requestQuantity, shortDate, unitLabel } from '../../request-format';
 import { RequestDetail, RequestsService } from '../requests.service';
+import { PageSkeletonComponent } from '../../../../core/layout/page-skeleton/page-skeleton.component';
 
 const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client professionnel' };
 
@@ -18,7 +19,7 @@ const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client p
 @Component({
   selector: 'app-producer-request-detail',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './detail.component.html',
 })
 export class DetailComponent {

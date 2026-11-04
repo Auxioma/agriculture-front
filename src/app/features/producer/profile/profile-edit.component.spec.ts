@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GeocodingService } from '../../catalog/services/geocoding.service';
 import { ProfileEditComponent } from './profile-edit.component';
@@ -310,5 +310,21 @@ describe('ProfileEditComponent', () => {
 
     expect(compiled.textContent).toContain('Impossible de charger votre profil');
     expect(compiled.querySelector('form')).toBeNull();
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof EXPLOITATION>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(EXPLOITATION);
+    // la page attend la fin des lectures (forkJoin), comme une vraie reponse HTTP
+    data.complete();
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

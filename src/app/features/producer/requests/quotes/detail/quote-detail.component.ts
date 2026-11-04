@@ -6,6 +6,7 @@ import { catchError, of, switchMap } from 'rxjs';
 import { longDate, requestQuantity, requestTitle, shortDate } from '../../../request-format';
 import { QuoteDetail, RequestsService } from '../../requests.service';
 import { formatPrice, quoteBadge, validityDays } from '../quote-format';
+import { PageSkeletonComponent } from '../../../../../core/layout/page-skeleton/page-skeleton.component';
 
 const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client professionnel' };
 
@@ -21,7 +22,7 @@ const CLIENT_TYPES = { individual: 'Client particulier', professional: 'Client p
 @Component({
   selector: 'app-producer-quote-detail',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './quote-detail.component.html',
 })
 export class QuoteDetailComponent {

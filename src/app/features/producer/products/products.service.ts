@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ReferenceDataService } from '../reference-data.service';
 
 export interface ProductUnit {
   id: string;
@@ -101,25 +102,27 @@ export const payloadOf = (product: ProducerProduct, changes: Partial<ProductPayl
 export class ProductsService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiURL;
+  private reference = inject(ReferenceDataService);
 
   getProducts() {
     return this.http.get<ProducerProduct[]>(`${this.apiUrl}/producer/products`);
   }
 
+  // les 4 listes du catalogue viennent du cache partage (voir ReferenceDataService)
   getCatalog() {
-    return this.http.get<CatalogProduct[]>(`${this.apiUrl}/products`);
+    return this.reference.products();
   }
 
   getCategories() {
-    return this.http.get<CatalogCategory[]>(`${this.apiUrl}/categories`);
+    return this.reference.categories();
   }
 
   getUnits() {
-    return this.http.get<ProductUnit[]>(`${this.apiUrl}/units`);
+    return this.reference.units();
   }
 
   getLabels() {
-    return this.http.get<CatalogLabel[]>(`${this.apiUrl}/labels`);
+    return this.reference.labels();
   }
 
   create(productId: string, payload: ProductPayload) {

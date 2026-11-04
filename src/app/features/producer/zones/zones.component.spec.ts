@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProfileZone } from '../profile/profile.service';
 import { ZonesComponent } from './zones.component';
@@ -286,5 +286,19 @@ describe('ZonesComponent', () => {
       expect(compiled.querySelector('form')).toBeNull();
       expect(text()).toContain('Supprimer cette zone ?');
     });
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof ZONES>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(ZONES);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

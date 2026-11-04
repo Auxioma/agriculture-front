@@ -134,4 +134,6 @@
   </div>
 } @else if (dashboard() === null) {
   <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Impossible de charger votre tableau de bord pour le moment.</p>
+} @else {
+  <app-page-skeleton />
 }

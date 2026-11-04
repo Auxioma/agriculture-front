@@ -5,6 +5,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { iconOf, producerDestination, timeAgo } from '../../core/notifications/notification-format';
 import { NotificationItemComponent, NotificationRow } from '../../core/notifications/notification-item.component';
 import { AppNotification, NotificationsService } from '../../core/notifications/notifications.service';
+import { PageSkeletonComponent } from '../../core/layout/page-skeleton/page-skeleton.component';
 import { messageOf } from '../producer/message-of';
 import { hasProducerRole } from '../producer/producer-role';
 
@@ -25,7 +26,7 @@ const CHIP = 'shrink-0 cursor-pointer rounded-full border px-3 py-1.5 text-xs fo
 @Component({
   selector: 'app-notifications-page',
   standalone: true,
-  imports: [RouterLink, NotificationItemComponent],
+  imports: [RouterLink, NotificationItemComponent, PageSkeletonComponent],
   templateUrl: './notifications-page.component.html',
 })
 export class NotificationsPageComponent {

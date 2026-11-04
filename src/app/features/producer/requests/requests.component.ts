@@ -5,6 +5,7 @@ import { catchError, of } from 'rxjs';
 import { AvailableRequest } from '../dashboard/dashboard.model';
 import { requestDetails, requestTitle } from '../request-format';
 import { RequestsService } from './requests.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 type Toggle = 'urgent' | 'near' | 'volume' | 'budget';
 
@@ -23,7 +24,7 @@ const CHIP = 'shrink-0 cursor-pointer appearance-none field-sizing-content round
 @Component({
   selector: 'app-producer-requests',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './requests.component.html',
 })
 export class RequestsComponent {

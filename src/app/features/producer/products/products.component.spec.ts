@@ -821,4 +821,18 @@ describe('ProductsComponent', () => {
       expect(document.activeElement).toBe(dialog());
     });
   });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<ProducerProduct[]>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next([TOMATES, POMMES_DE_TERRE, MIEL]);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
+  });
 });

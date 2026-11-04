@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Quote, RequestsService } from '../requests.service';
 import { QuotesComponent } from './quotes.component';
@@ -176,5 +176,19 @@ describe('QuotesComponent', () => {
     await create(throwError(() => new Error('API down')));
 
     expect(compiled.textContent).toContain('Impossible de charger vos devis');
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof QUOTES>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(QUOTES);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

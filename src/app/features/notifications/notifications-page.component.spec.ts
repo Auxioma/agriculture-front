@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppNotification, NotificationsService } from '../../core/notifications/notifications.service';
@@ -237,5 +237,19 @@ describe('NotificationsPageComponent', () => {
       expect(linkOf('Devis reçu')).toBeNull();
       expect(rowOf('Devis reçu').querySelector('button')).toBeTruthy();
     });
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof LIST>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(LIST);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

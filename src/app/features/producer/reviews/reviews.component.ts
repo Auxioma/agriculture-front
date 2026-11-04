@@ -7,6 +7,7 @@ import { messageOf } from '../message-of';
 import { averageLabel, basedOn, reviewDate } from './reviews-format';
 import { Review, ReviewsService } from './reviews.service';
 import { StarsComponent } from './stars.component';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 // page "Avis clients" semblable au figma, branchee sur GET /api/producer/reviews (page Profil, bouton "Avis clients"). Seuls les
 // avis publies par la moderation s'y trouvent, ce sont les memes que sur la fiche publique. "Repondre" ouvre un champ dans la
@@ -16,7 +17,7 @@ import { StarsComponent } from './stars.component';
 @Component({
   selector: 'app-producer-reviews',
   standalone: true,
-  imports: [RouterLink, StarsComponent],
+  imports: [RouterLink, StarsComponent, PageSkeletonComponent],
   templateUrl: './reviews.component.html',
 })
 export class ReviewsComponent {

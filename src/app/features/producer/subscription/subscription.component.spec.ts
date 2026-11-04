@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { NEVER, Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, Subject, isObservable, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { CurrentSubscription, Invoice, PaymentCard, Plan, ScheduledChange, SubscriptionService } from './subscription.service';
 import { SubscriptionComponent } from './subscription.component';
@@ -63,18 +63,25 @@ describe('SubscriptionComponent', () => {
 
   async function create(
     sub: Observable<CurrentSubscription | null> = of(current()),
-    options: { invoices?: Invoice[]; cards?: Observable<PaymentCard[]>; scheduled?: ScheduledChange | null; query?: Record<string, string>; now?: Date } = {},
+    options: {
+      invoices?: Invoice[] | Observable<Invoice[]>;
+      plans?: Observable<Plan[]>;
+      cards?: Observable<PaymentCard[]>;
+      scheduled?: ScheduledChange | null | Observable<ScheduledChange | null>;
+      query?: Record<string, string>;
+      now?: Date;
+    } = {},
   ): Promise<void> {
     // temps simule : la relecture apres paiement se fait toutes les 2 s, les tests la font avancer a la main
     vi.useFakeTimers();
     // * date figée, le quota se remet à zéro le 1er du mois suivant (donc ça change selon le jour où on lance les tests)
     vi.setSystemTime(options.now ?? new Date(2026, 7, 18, 10));
     serviceMock = {
-      getPlans: vi.fn(() => of(PLANS)),
+      getPlans: vi.fn(() => options.plans ?? of(PLANS)),
       getCurrent: vi.fn(() => sub),
-      getInvoices: vi.fn(() => of(options.invoices ?? INVOICES)),
+      getInvoices: vi.fn(() => (isObservable(options.invoices) ? options.invoices : of(options.invoices ?? INVOICES))),
       getCards: vi.fn(() => options.cards ?? of([CARD])),
-      getScheduledChange: vi.fn(() => of(options.scheduled ?? null)),
+      getScheduledChange: vi.fn(() => (isObservable(options.scheduled) ? options.scheduled : of(options.scheduled ?? null))),
       checkout: vi.fn(() => of({ checkoutUrl: 'https://pay.test/session' })),
       changePlan: vi.fn(() => of({ effect: 'immediate', effectiveAt: null })),
       cancel: vi.fn(() => of(undefined)),
@@ -799,5 +806,70 @@ describe('SubscriptionComponent', () => {
     await create(throwError(() => new Error('API down')));
 
     expect(text()).toContain('Impossible de charger votre abonnement');
+    expect(compiled.querySelector('app-page-skeleton')).toBeNull();
+  });
+
+  describe('chargement', () => {
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+
+    // la page s'affiche d'un bloc : sinon le plan venait seul, puis les offres et les factures poussaient le reste
+    it.each([
+      ['l\'abonnement n\'est pas revenu', { sub: NEVER, options: {} }],
+      ['les offres ne sont pas revenues', { sub: of(current()), options: { plans: NEVER } }],
+      ['les factures ne sont pas revenues', { sub: of(current()), options: { invoices: NEVER } }],
+    ])('montre un squelette tant que %s', async (_label, { sub, options }) => {
+      await create(sub as Observable<CurrentSubscription | null>, options);
+
+      expect(skeleton()).toBeTruthy();
+      expect(skeleton()!.textContent).toContain('Chargement');
+      expect(text()).not.toContain('Plan Pro');
+      expect(compiled.querySelectorAll('button[aria-pressed]').length).toBe(0);
+    });
+
+    it('affiche le plan avec ses offres et ses factures en même temps, quand tout est revenu', async () => {
+      const plans = new Subject<Plan[]>();
+      await create(of(current()), { plans });
+      expect(text()).not.toContain('Plan Pro');
+
+      plans.next(PLANS);
+      fixture.detectChanges();
+
+      expect(skeleton()).toBeNull();
+      expect(text()).toContain('Plan Pro');
+      expect(compiled.querySelectorAll('button[aria-pressed]').length).toBe(2 + PLANS.length);
+      expect(text()).toContain('Facturation');
+    });
+
+    // la carte et le changement programmé viennent de Stripe, plus lents : on ne retient pas la page pour eux
+    it('n\'attend ni la carte ni le changement programmé', async () => {
+      await create(of(current()), { cards: NEVER, scheduled: NEVER });
+
+      expect(skeleton()).toBeNull();
+      expect(text()).toContain('Plan Pro');
+      expect(text()).toContain('Moyen de paiement');
+    });
+
+    it('le changement programmé s\'ajoute au plan quand il arrive', async () => {
+      const scheduled = new Subject<ScheduledChange | null>();
+      await create(of(current()), { scheduled });
+      expect(text()).not.toContain('Passage au plan Essentiel');
+
+      scheduled.next(CHANGE);
+      fixture.detectChanges();
+
+      expect(text()).toContain('Passage au plan Essentiel');
+    });
+
+    it('une relecture après une action garde la page affichée, sans repasser par le squelette', async () => {
+      await create();
+      serviceMock.getCurrent.mockReturnValue(NEVER);
+
+      click(button('Annuler mon abonnement'));
+      click(button('Annuler mon abonnement'));
+
+      expect(serviceMock.getCurrent).toHaveBeenCalledTimes(2);
+      expect(skeleton()).toBeNull();
+      expect(text()).toContain('Plan Pro');
+    });
   });
 });

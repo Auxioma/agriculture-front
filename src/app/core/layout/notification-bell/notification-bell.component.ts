@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, computed, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, afterNextRender, computed, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -65,7 +65,9 @@ export class NotificationBellComponent {
   hasAny = computed(() => this.items().length > 0);
 
   constructor() {
-    this.refresh();
+    // * apres le 1er rendu : dans l'espace producteur la cloche est creee avant la page, sa lecture partait devant celle de la page
+    // (et un serveur qui traite les requetes une par une la faisait attendre derriere)
+    afterNextRender(() => this.refresh());
     // la page des notifications a marque des notifications lues : on relit la liste
     this.service.changes$.pipe(takeUntilDestroyed()).subscribe(() => this.refresh());
   }

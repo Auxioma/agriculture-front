@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, vi } from 'vitest';
 import { LabelsComponent } from './labels.component';
 import { ClaimedLabel, LabelInfo, LabelsPage, LabelsService } from './labels.service';
@@ -212,5 +212,19 @@ describe('LabelsComponent', () => {
     const back = compiled.querySelector('header a');
     expect(text(back)).toBe('Retour à mon profil');
     expect(back?.getAttribute('href')).toBe('/producer/profile');
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof PAGE>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(PAGE);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

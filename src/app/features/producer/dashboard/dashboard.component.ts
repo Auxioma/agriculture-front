@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { requestDetails, requestTitle } from '../request-format';
 import { DashboardService } from './dashboard.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 type RequestFilter = 'urgent' | 'all' | 'near';
 
@@ -35,7 +36,7 @@ const MISSING_PROFILE_PARTS: Record<string, string> = {
 @Component({
   selector: 'app-producer-dashboard',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent {

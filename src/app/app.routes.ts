@@ -3,6 +3,9 @@ import { AUTH_ROUTES } from './features/auth/auth.routes';
 import { authGuard } from './core/auth/auth.guard';
 import { producerGuard } from './features/producer/producer.guard';
 
+// pages de l'espace producteur chargees d'avance pour un producteur connecte, les plus ouvertes (voir ProducerPreloading)
+const PRELOAD = { preload: true };
+
 export const routes: Routes = [
   {
     path: '',
@@ -45,17 +48,20 @@ export const routes: Routes = [
   },
   {
     path: 'producer',
+    data: PRELOAD,
     canActivate: [producerGuard],
     loadComponent: () =>
       import('./features/producer/producer-layout/producer-layout.component').then((m) => m.ProducerLayoutComponent),
     children: [
       {
         path: '',
+        data: PRELOAD,
         loadComponent: () =>
           import('./features/producer/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
         path: 'requests',
+        data: PRELOAD,
         loadComponent: () =>
           import('./features/producer/requests/requests.component').then((m) => m.RequestsComponent),
       },
@@ -76,6 +82,7 @@ export const routes: Routes = [
       // apres requests/received et requests/quotes : sinon "received" ou "quotes" serait pris pour un identifiant de demande
       {
         path: 'requests/:id',
+        data: PRELOAD,
         loadComponent: () => import('./features/producer/requests/detail/detail.component').then((m) => m.DetailComponent),
       },
       {
@@ -88,16 +95,19 @@ export const routes: Routes = [
       },
       {
         path: 'messages',
+        data: PRELOAD,
         loadComponent: () => import('./features/producer/messages/messages.component').then((m) => m.MessagesComponent),
         children: [
           {
             path: ':id',
+            data: PRELOAD,
             loadComponent: () => import('./features/producer/messages/thread/thread.component').then((m) => m.ThreadComponent),
           },
         ],
       },
       {
         path: 'subscription',
+        data: PRELOAD,
         loadComponent: () => import('./features/producer/subscription/subscription.component').then((m) => m.SubscriptionComponent),
       },
       {
@@ -107,10 +117,12 @@ export const routes: Routes = [
       },
       {
         path: 'products',
+        data: PRELOAD,
         loadComponent: () => import('./features/producer/products/products.component').then((m) => m.ProductsComponent),
       },
       {
         path: 'profile',
+        data: PRELOAD,
         loadComponent: () => import('./features/producer/profile/profile.component').then((m) => m.ProfileComponent),
       },
       {

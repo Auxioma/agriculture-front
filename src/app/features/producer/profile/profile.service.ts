@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { OpeningHour } from '../../catalog/models/producer-detail.model';
-import { CatalogLabel } from '../products/products.service';
+import { ReferenceDataService } from '../reference-data.service';
 
 // GET /api/producer/profile : retrait et livraison valent null tant que le producteur n'a rien configure ;
 // photoUrl est la couverture (la 1re photo publique)
@@ -70,6 +70,7 @@ export interface ProfilePayload {
 export class ProfileService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiURL;
+  private reference = inject(ReferenceDataService);
 
   // les 4 lectures partent ensemble, la page n'a pas d'autre appel
   getExploitation() {
@@ -83,7 +84,7 @@ export class ProfileService {
 
   // GET /api/labels : tous les labels proposes (la liste a cocher)
   getCatalogLabels() {
-    return this.http.get<CatalogLabel[]>(`${this.apiUrl}/labels`);
+    return this.reference.labels();
   }
 
   saveProfile(payload: ProfilePayload) {

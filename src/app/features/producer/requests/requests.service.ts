@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AvailableRequest } from '../dashboard/dashboard.model';
+import { ReferenceDataService } from '../reference-data.service';
 
 // new = a traiter, treated = reponse envoyee ou refus, archived = mise de cote par le producteur, closed = plus
 // ouverte (expiree, annulee...)
@@ -112,6 +113,7 @@ export interface QuoteDetail extends Quote {
 export class RequestsService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiURL;
+  private reference = inject(ReferenceDataService);
 
   getAvailable() {
     return this.http.get<AvailableRequest[]>(`${this.apiUrl}/producer/requests/available`);
@@ -134,7 +136,7 @@ export class RequestsService {
   }
 
   getUnits() {
-    return this.http.get<Unit[]>(`${this.apiUrl}/units`);
+    return this.reference.units();
   }
 
   sendReply(requestId: string, payload: ReplyPayload) {

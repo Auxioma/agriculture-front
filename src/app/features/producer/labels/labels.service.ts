@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, concat, forkJoin, of, switchMap, toArray } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { ProfileInfo } from '../profile/profile.service';
+import { ReferenceDataService } from '../reference-data.service';
 
 // GET /api/labels : tous les labels proposes (le texte vient de l'admin)
 export interface LabelInfo {
@@ -43,11 +44,12 @@ export interface LabelDraft {
 export class LabelsService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiURL;
+  private reference = inject(ReferenceDataService);
 
   getPage() {
     return forkJoin({
       profile: this.http.get<ProfileInfo>(`${this.apiUrl}/producer/profile`),
-      catalog: this.http.get<LabelInfo[]>(`${this.apiUrl}/labels`),
+      catalog: this.reference.labels(),
       claimed: this.http.get<ClaimedLabel[]>(`${this.apiUrl}/producer/labels`),
     });
   }

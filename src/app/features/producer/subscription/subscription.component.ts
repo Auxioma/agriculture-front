@@ -3,6 +3,7 @@ import { Component, DestroyRef, ElementRef, computed, effect, inject, signal, vi
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, first, forkJoin, map, of, switchMap, take, timer } from 'rxjs';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 import { longDate, shortDate } from '../request-format';
 import { annualSaving, formatMoney, formatPrice } from './subscription-format';
 import { BillingCycle, CurrentSubscription, Invoice, Plan, PlanPrice, ScheduledChange, SubscriptionService } from './subscription.service';
@@ -31,7 +32,7 @@ interface PlanCard {
 @Component({
   selector: 'app-producer-subscription',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './subscription.component.html',
 })
 export class SubscriptionComponent {
@@ -44,11 +45,12 @@ export class SubscriptionComponent {
   current = toSignal(
     this.refresh.pipe(switchMap(() => this.service.getCurrent().pipe(catchError(() => of('error' as const))))),
   );
-  plans = toSignal(this.service.getPlans().pipe(catchError(() => of([] as Plan[]))), { initialValue: [] as Plan[] });
+  // offres et factures : undefined tant que la 1re lecture n'est pas revenue (voir ready)
+  private loadedPlans = toSignal(this.service.getPlans().pipe(catchError(() => of([] as Plan[]))));
+  plans = computed(() => this.loadedPlans() ?? []);
   // factures, carte et changement programme se relisent avec l'abonnement (apres un paiement, un changement, une reprise)
-  invoices = toSignal(this.refresh.pipe(switchMap(() => this.service.getInvoices().pipe(catchError(() => of([] as Invoice[]))))), {
-    initialValue: [] as Invoice[],
-  });
+  private loadedInvoices = toSignal(this.refresh.pipe(switchMap(() => this.service.getInvoices().pipe(catchError(() => of([] as Invoice[]))))));
+  invoices = computed(() => this.loadedInvoices() ?? []);
   // la carte par defaut ; null si on ne peut pas la lire (pas de Stripe, pas d'abonnement...)
   card = toSignal(
     this.refresh.pipe(
@@ -64,6 +66,11 @@ export class SubscriptionComponent {
   scheduledChange = toSignal(this.refresh.pipe(switchMap(() => this.service.getScheduledChange().pipe(catchError(() => of(null))))), {
     initialValue: null as ScheduledChange | null,
   });
+
+  // la page attend l'abonnement, les offres et les factures pour s'afficher d'un bloc : avant, l'abonnement venait seul puis les
+  // offres et les factures poussaient le reste. La carte et le changement programme passent par Stripe (plus lents) : ils arrivent
+  // apres, sans bouger le reste (une ligne de texte)
+  ready = computed(() => this.current() !== undefined && this.loadedPlans() !== undefined && this.loadedInvoices() !== undefined);
 
   subscription = computed<CurrentSubscription | null>(() => {
     const current = this.current();

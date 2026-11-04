@@ -5,6 +5,7 @@ import { catchError, of } from 'rxjs';
 import { formatRadius, summarizeOpeningHours } from '../../catalog/utils/producer-format';
 import { availability, initials, largestRadius, shownLabels } from './profile-format';
 import { ProfileService } from './profile.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 const VERIFICATION: Record<string, { text: string; verified: boolean }> = {
   verified: { text: 'Vérifié', verified: true },
@@ -15,7 +16,7 @@ const VERIFICATION: Record<string, { text: string; verified: boolean }> = {
 @Component({
   selector: 'app-producer-profile',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './profile.component.html',
 })
 export class ProfileComponent {

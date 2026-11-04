@@ -7,6 +7,7 @@ import { Observable, catchError, concatMap, from, map, of, switchMap, toArray } 
 import { PHOTO_MAX_BYTES, PHOTO_TYPES } from '../photo-rules';
 import { MONTH_OPTIONS, productDetails, productTitle, unitText } from './product-format';
 import { AvailabilityPayload, ProducerProduct, ProductPhoto, ProductUnit, ProductsService, payloadOf } from './products.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 // categorie fictive des produits dont la categorie n'est pas dans la liste (desactivee par exemple)
 const OTHERS = 'others';
@@ -41,7 +42,7 @@ const messageOf = (err: HttpErrorResponse): string =>
 @Component({
   selector: 'app-producer-products',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './products.component.html',
 })
 export class ProductsComponent {

@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { cardBrand } from '../subscription-format';
 import { PaymentCard, SubscriptionService } from '../subscription.service';
+import { PageSkeletonComponent } from '../../../../core/layout/page-skeleton/page-skeleton.component';
 
 // page "Moyens de paiement" semblable au figma, branchee sur /api/subscription/payment-methods. Les cartes sont lues
 // chez Stripe a chaque ouverture (rien n'est stocke chez nous) ; "Ajouter une carte" envoie sur une page Stripe qui
@@ -11,7 +12,7 @@ import { PaymentCard, SubscriptionService } from '../subscription.service';
 @Component({
   selector: 'app-producer-payment-methods',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './payment-methods.component.html',
 })
 export class PaymentMethodsComponent {
