@@ -6,8 +6,49 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- squelette de l'espace producteur : montre tout de suite, avant que l'application ne demarre (le CSS de l'application n'est pas encore la,
+         d'ou ces regles a part). Meme gabarit que la mise en page : barre laterale en desktop, barre d'onglets en mobile. -->
+    <style>
+      #boot-skeleton, #boot-skeleton * { box-sizing: border-box; }
+      #boot-skeleton { position: fixed; inset: 0; z-index: 100; display: flex; background: #f7f7f7; }
+      #boot-skeleton[hidden] { display: none; }
+      #boot-skeleton i { display: block; border-radius: 0.5rem; background: #e9ecef; }
+      #boot-skeleton aside { display: none; width: 15rem; flex-shrink: 0; padding: 1.5rem 1rem; border-right: 1px solid #e9ecef; background: #fff; }
+      #boot-skeleton aside i { height: 2.5rem; margin-bottom: 0.25rem; }
+      #boot-skeleton aside i:first-child { width: 8rem; height: 1.5rem; margin: 0 0.75rem 2rem; }
+      #boot-skeleton main { flex: 1; min-width: 0; padding: 1rem 1rem 5rem; }
+      #boot-skeleton main i { margin-bottom: 0.75rem; }
+      #boot-skeleton main i:nth-child(1) { width: 60%; max-width: 16rem; height: 2rem; margin-bottom: 1rem; }
+      #boot-skeleton main i:nth-child(2) { height: 6rem; }
+      #boot-skeleton main i:nth-child(n + 3) { height: 4rem; }
+      #boot-skeleton nav { position: fixed; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: space-around; height: 3.5rem; border-top: 1px solid #e9ecef; background: #fff; }
+      #boot-skeleton nav i { width: 1.5rem; height: 1.5rem; }
+      @media (min-width: 1024px) {
+        #boot-skeleton aside { display: block; }
+        #boot-skeleton main { padding: 2.5rem 3rem; }
+        #boot-skeleton nav { display: none; }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        #boot-skeleton i { animation: boot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+      }
+      @keyframes boot-pulse { 50% { opacity: 0.5; } }
+    </style>
   </head>
   <body>
+    <div id="boot-skeleton" role="status" aria-busy="true" aria-label="Chargement de votre espace" hidden>
+      <aside><i></i><i></i><i></i><i></i><i></i><i></i></aside>
+      <main><i></i><i></i><i></i><i></i></main>
+      <nav><i></i><i></i><i></i><i></i><i></i></nav>
+    </div>
+    <!-- seulement pour /producer et en dessous (pas /producer-space, page publique, ni les autres pages). App le retire des que la 1re navigation
+         est finie et affichee -->
+    <script>
+      (function () {
+        var skeleton = document.getElementById('boot-skeleton');
+        if (/^\/producer(\/|$)/.test(location.pathname)) skeleton.hidden = false;
+        else skeleton.remove();
+      })();
+    </script>
     <app-root></app-root>
   </body>
 </html>
