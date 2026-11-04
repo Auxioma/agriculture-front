@@ -36,7 +36,7 @@ describe('LoginComponent', () => {
     component = fixture.componentInstance;
 
     const router = TestBed.inject(Router);
-    routerNavigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    routerNavigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
     fixture.detectChanges();
   });
@@ -79,7 +79,7 @@ describe('LoginComponent', () => {
       expect(authServiceMock.login).not.toHaveBeenCalled();
     });
 
-    it('devrait appeler login() puis fetchCurrentUser() et naviguer vers / en cas de succès', () => {
+    it('devrait appeler login() puis fetchCurrentUser() et naviguer vers /client en cas de succès', () => {
       authServiceMock.login.mockReturnValue(of({ token: 'fake-jwt' }));
       authServiceMock.fetchCurrentUser.mockReturnValue(
         of({
@@ -99,7 +99,7 @@ describe('LoginComponent', () => {
         password: 'password1234',
       });
       expect(authServiceMock.fetchCurrentUser).toHaveBeenCalled();
-      expect(routerNavigateSpy).toHaveBeenCalledWith(['/']);
+      expect(routerNavigateSpy).toHaveBeenCalledWith('/client');
       expect(component.isSubmitting).toBe(false);
       expect(component.errorMessage).toBeNull();
     });
@@ -107,12 +107,18 @@ describe('LoginComponent', () => {
     it('devrait envoyer un producteur directement sur son espace /producer', () => {
       authServiceMock.login.mockReturnValue(of({ token: 'fake-jwt' }));
       authServiceMock.fetchCurrentUser.mockReturnValue(
-        of({ id: '1', email: 'agri@test.com', firstName: 'Agri', lastName: 'Test', roles: ['ROLE_PRODUCER'] }),
+        of({
+          id: '1',
+          email: 'agri@test.com',
+          firstName: 'Agri',
+          lastName: 'Test',
+          roles: ['ROLE_PRODUCER'],
+        }),
       );
 
       component.onSubmit();
 
-      expect(routerNavigateSpy).toHaveBeenCalledWith(['/producer']);
+      expect(routerNavigateSpy).toHaveBeenCalledWith('/producer');
     });
 
     it('devrait afficher une erreur 401 sans naviguer', () => {

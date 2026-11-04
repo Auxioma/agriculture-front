@@ -11,9 +11,9 @@
     <section aria-label="Résumé" class="grid grid-cols-3 gap-3 lg:max-w-xl">
       @for (
         stat of [
-          { value: s.activeRequests, label: 'Demandes actives' },
-          { value: s.receivedReplies, label: 'Réponses reçues' },
-          { value: s.unreadMessages, label: 'Messages non lus' },
+          { value: s.activeRequests, label: ' Demandes actives' },
+          { value: s.receivedReplies, label: ' Réponses reçues' },
+          { value: s.unreadMessages, label: ' Messages non lus' },
         ];
         track stat.label
       ) {
