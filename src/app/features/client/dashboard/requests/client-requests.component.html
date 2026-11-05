@@ -1,0 +1,74 @@
+<app-page-header title="Mes demandes" />
+
+<section class="space-y-4 px-4 py-6 lg:px-0 lg:py-8">
+  <app-filter-tabs ariaLabel="Filtrer les demandes" [tabs]="filters" [(active)]="activeFilter" />
+
+  @if (loading()) {
+    <p class="text-sm text-grey-700">Chargement…</p>
+  } @else if (error()) {
+    <p class="text-sm text-danger">Impossible de charger vos demandes.</p>
+  } @else if (visible().length === 0) {
+    <p class="text-sm text-grey-700">Aucune demande dans cette catégorie.</p>
+  } @else {
+    <ul class="grid items-start gap-3 lg:grid-cols-2">
+      @for (r of visible(); track r.id) {
+        <li
+          class="relative flex items-center justify-between gap-3 rounded-lg border border-grey-200 bg-white p-3"
+        >
+          <div class="min-w-0">
+            <p class="truncate text-sm font-medium">{{ r.title }}</p>
+            <p class="text-xs text-grey-500">Envoyée le {{ formatDate(r.sentAt) }}</p>
+          </div>
+
+          <div class="flex shrink-0 items-center gap-2">
+            <span class="rounded-full px-3 py-1 text-xs font-medium" [class]="ui(r.status).badge">
+              {{ ui(r.status).label }}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Actions"
+              (click)="toggleMenu(r.id, $event)"
+              class="rounded p-1 text-grey-700 hover:bg-grey-200"
+            >
+              ⋮
+            </button>
+          </div>
+
+          @if (openMenuId() === r.id) {
+            <ul
+              class="absolute right-2 top-full z-10 mt-1 w-44 rounded-lg border border-grey-200 bg-white py-1 shadow-md"
+            >
+              <li>
+                <button
+                  class="w-full px-4 py-2 text-left text-sm hover:bg-badge-bg"
+                  (click)="duplicate(r.id)"
+                >
+                  Dupliquer
+                </button>
+              </li>
+              @if (ui(r.status).filter !== 'archived') {
+                <li>
+                  <button
+                    class="w-full px-4 py-2 text-left text-sm hover:bg-badge-bg"
+                    (click)="archive(r.id)"
+                  >
+                    Archiver
+                  </button>
+                </li>
+                <li>
+                  <button
+                    class="w-full px-4 py-2 text-left text-sm text-danger hover:bg-badge-bg"
+                    (click)="cancel(r.id)"
+                  >
+                    Annuler
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
 import { authGuard } from './core/auth/auth.guard';
 import { producerGuard } from './features/producer/producer.guard';
+import { clientGuard } from './features/client/client.guard';
 
 // pages de l'espace producteur chargees d'avance pour un producteur connecte, les plus ouvertes (voir ProducerPreloading)
 const PRELOAD = { preload: true };
@@ -19,7 +20,9 @@ export const routes: Routes = [
   {
     path: 'producer-space',
     loadComponent: () =>
-      import('./features/producer-space/producer-space.component').then((m) => m.ProducerSpaceComponent),
+      import('./features/producer-space/producer-space.component').then(
+        (m) => m.ProducerSpaceComponent,
+      ),
   },
   {
     path: 'pricing',
@@ -35,7 +38,8 @@ export const routes: Routes = [
   },
   {
     path: 'contact',
-    loadComponent: () => import('./features/contact/contact.component').then((m) => m.ContactComponent),
+    loadComponent: () =>
+      import('./features/contact/contact.component').then((m) => m.ContactComponent),
   },
   {
     path: 'resources',
@@ -51,13 +55,17 @@ export const routes: Routes = [
     data: PRELOAD,
     canActivate: [producerGuard],
     loadComponent: () =>
-      import('./features/producer/producer-layout/producer-layout.component').then((m) => m.ProducerLayoutComponent),
+      import('./features/producer/producer-layout/producer-layout.component').then(
+        (m) => m.ProducerLayoutComponent,
+      ),
     children: [
       {
         path: '',
         data: PRELOAD,
         loadComponent: () =>
-          import('./features/producer/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/producer/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
       {
         path: 'requests',
@@ -163,6 +171,50 @@ export const routes: Routes = [
     path: 'notifications',
     canActivate: [authGuard],
     loadComponent: () => import('./features/notifications/notifications-page.component').then((m) => m.NotificationsPageComponent),
+    path: 'client',
+    canActivate: [clientGuard],
+    loadComponent: () =>
+      import('./features/client/client-layout/client-layout.component').then(
+        (m) => m.ClientLayoutComponent,
+      ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/client/dashboard/dashboard.component').then(
+            (m) => m.ClientDashboardComponent,
+          ),
+      },
+      {
+        path: 'requests',
+        loadComponent: () =>
+          import('./features/client/dashboard/requests/client-requests.component').then(
+            (m) => m.ClientRequestsComponent,
+          ),
+      },
+      {
+        path: 'favorites',
+        loadComponent: () =>
+          import('./features/client/dashboard/favorites/favorites.component').then(
+            (m) => m.FavoritesComponent,
+          ),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/client/dashboard/profile/profile.component').then(
+            (m) => m.ProfileComponent,
+          ),
+      },
+    ],
+  },
+  {
+    path: 'requests/new',
+    canActivate: [clientGuard],
+    loadChildren: () =>
+      import('./features/client/request-funnel/request-funnel.routes').then(
+        (m) => m.REQUEST_FUNNEL_ROUTES,
+      ),
   },
   { path: 'auth', children: AUTH_ROUTES },
   {

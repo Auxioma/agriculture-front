@@ -24,6 +24,9 @@ const endsNavigation = (event: RouterEvent) =>
   event instanceof NavigationEnd ||
   event instanceof NavigationError ||
   (event instanceof NavigationCancel && event.code === NavigationCancellationCode.GuardRejected);
+// les espaces connectés (/producer..., /client...) ont leur propre menu : pas de navbar ni de footer du site public
+const AREAS_WITHOUT_CHROME = /^\/(producer|client)(\/|\?|#|$)/;
+const inPrivateArea = (url: string) => AREAS_WITHOUT_CHROME.test(url);
 
 @Component({
   imports: [RouterOutlet, NavbarComponent, FooterComponent],
@@ -40,9 +43,9 @@ export class App implements OnInit {
   showSiteChrome = toSignal(
     inject(Router).events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => !inProducerArea(event.urlAfterRedirects)),
+      map((event) => !inPrivateArea(event.urlAfterRedirects)),
     ),
-    { initialValue: !inProducerArea(inject(Location).path()) },
+    { initialValue: !inPrivateArea(inject(Location).path()) },
   );
 
   constructor() {
