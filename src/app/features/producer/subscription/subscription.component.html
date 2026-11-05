@@ -1,0 +1,248 @@
+<header class="px-4 pt-4 lg:p-0">
+  <h1 class="text-xl font-bold lg:text-3xl">Mon abonnement</h1>
+</header>
+
+@if (current() === 'error') {
+  <p class="px-4 py-8 text-sm text-grey-700 lg:px-0">Impossible de charger votre abonnement pour le moment.</p>
+} @else if (current() !== undefined) {
+  <div class="mt-4 space-y-5 px-4 pb-6 lg:max-w-4xl lg:px-0" [attr.inert]="pending() ? '' : null">
+    @if (notice()) {
+      <p role="status" [attr.aria-busy]="waiting()" [class.animate-pulse]="waiting()" class="rounded-lg bg-badge-bg px-4 py-3 text-sm font-medium text-agri">{{ notice() }}</p>
+    }
+    @if (error() && !pending()) {
+      <p role="alert" class="text-sm text-danger">{{ error() }}</p>
+    }
+
+    <!-- plan actuel -->
+    <section class="rounded-2xl bg-agri p-4 text-white lg:p-5">
+      <div class="flex items-center justify-between gap-3">
+        <h2 class="font-medium">Plan {{ planName() }}</h2>
+        @if (badge(); as b) {
+          <span class="shrink-0 rounded-full bg-white px-3 py-0.5 text-xs font-semibold text-agri">{{ b }}</span>
+        }
+      </div>
+      <p class="mt-2 text-2xl font-bold">{{ headline() }}</p>
+      <p class="mt-2 text-xs text-white/80">{{ summary() }}</p>
+      @if (scheduledChange(); as change) {
+        <p class="mt-2 text-xs font-medium">
+          Passage au plan {{ change.planName }} ({{ formatPrice(change.amount, change.currencyCode, change.billingCycle) }}) prévu le {{ longDate(change.effectiveAt) }}.
+        </p>
+      }
+    </section>
+
+    @if (subscription()?.status === 'past_due') {
+      <p role="alert" class="rounded-lg bg-warning px-4 py-3 text-sm text-fonts">
+        Le dernier paiement a échoué : votre accès est limité. Vous pourrez changer d’offre une fois le paiement régularisé.
+        <a routerLink="/producer/subscription/payment-methods" class="font-semibold underline">Mettre à jour ma carte</a>
+      </p>
+    }
+
+    @if (cancelling() && !pastDue()) {
+      <p class="rounded-lg bg-badge-bg px-4 py-3 text-sm text-agri">
+        Votre abonnement est en cours d’annulation : reprenez-le pour changer d’offre.
+        <button type="button" (click)="resume()" [disabled]="busy()" class="cursor-pointer font-semibold underline disabled:opacity-60">Reprendre mon abonnement</button>
+      </p>
+    }
+
+    <!-- mensuel / annuel -->
+    <div class="flex gap-2" role="group" aria-label="Durée de l'abonnement">
+      <button
+        type="button"
+        (click)="chooseCycle('monthly')"
+        [attr.aria-pressed]="cycle() === 'monthly'"
+        class="cursor-pointer rounded-lg px-5 py-2 text-sm font-semibold"
+        [class]="cycle() === 'monthly' ? 'bg-agri text-white' : 'bg-grey-200 text-grey-700'"
+      >
+        Mensuel
+      </button>
+      <button
+        type="button"
+        (click)="chooseCycle('yearly')"
+        [attr.aria-pressed]="cycle() === 'yearly'"
+        class="cursor-pointer rounded-lg px-5 py-2 text-sm font-semibold"
+        [class]="cycle() === 'yearly' ? 'bg-agri text-white' : 'bg-grey-200 text-grey-700'"
+      >
+        Annuel
+      </button>
+    </div>
+
+    <!-- les offres -->
+    <div class="grid gap-3 lg:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]">
+      @for (card of cards(); track card.price.id) {
+        <button
+          type="button"
+          (click)="select(card)"
+          [disabled]="locked() && !card.isCurrent"
+          [attr.aria-pressed]="card.isCurrent"
+          class="rounded-xl border bg-white p-4 text-left"
+          [class]="card.isCurrent ? 'cursor-default border-2 border-agri' : locked() ? 'cursor-not-allowed border-grey-200 opacity-60' : pending()?.price?.id === card.price.id ? 'cursor-pointer border-2 border-agri/60' : 'cursor-pointer border-grey-200 hover:border-grey-400'"
+        >
+          <span class="flex items-start justify-between gap-3">
+            <span class="font-semibold">{{ card.plan.name }}</span>
+            <span class="shrink-0 font-bold" [class]="card.isCurrent ? 'text-agri' : 'text-grey-500'">
+              {{ formatPrice(card.price.amount, card.price.currencyCode, card.price.billingCycle) }}
+            </span>
+          </span>
+          @if (card.plan.description) {
+            <span class="mt-1 block text-xs text-secondary">{{ card.plan.description }}</span>
+          }
+          @if (card.saving) {
+            <span class="mt-2 inline-block rounded-full bg-badge-bg px-2 py-0.5 text-xs font-semibold text-agri">
+              {{ card.saving }} % moins cher que le mensuel
+            </span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- facturation -->
+    @if (subscription() || invoices().length) {
+      <section class="rounded-xl border border-grey-200 bg-white p-4 lg:max-w-md">
+        <h2 class="font-semibold">Facturation</h2>
+        <div class="mt-3 flex items-center justify-between gap-3 text-sm">
+          <span class="flex items-center gap-2 text-grey-500">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4 shrink-0">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <path d="M2 10h20"></path>
+            </svg>
+            @if (card(); as c) {
+              Carte bancaire •••• {{ c.last4 }}
+            } @else {
+              Moyen de paiement
+            }
+          </span>
+          @if (subscription()) {
+            <a routerLink="/producer/subscription/payment-methods" class="shrink-0 font-semibold text-agri">Modifier</a>
+          }
+        </div>
+        @if (invoices().length) {
+          <ul class="mt-3 space-y-2 text-sm">
+            @for (invoice of invoices(); track invoice.id) {
+              <li class="flex items-center justify-between gap-3">
+                <span class="text-grey-500">{{ longDate(invoice.createdAt) }}</span>
+                <span class="flex items-center gap-2 font-semibold">
+                  @if (invoiceStatus(invoice); as status) {
+                    <span class="text-xs font-medium text-danger">{{ status }}</span>
+                  }
+                  {{ invoiceAmount(invoice) }}
+                  @if (invoice.invoiceUrl) {
+                    <a [attr.href]="invoice.invoiceUrl" target="_blank" rel="noopener noreferrer" [attr.aria-label]="'Télécharger la facture du ' + longDate(invoice.createdAt)" class="text-agri">
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4">
+                        <path d="M12 3v12 M7 11l5 5 5-5 M5 21h14"></path>
+                      </svg>
+                    </a>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mt-3 text-sm text-secondary">Aucune facture pour le moment.</p>
+        }
+      </section>
+    }
+
+    <div class="flex flex-wrap gap-3">
+      <a routerLink="/producer/support" class="rounded-lg border border-agri bg-white px-5 py-2.5 text-sm font-semibold text-agri">Support</a>
+      @if (subscription()?.cancelAtPeriodEnd) {
+        <button type="button" (click)="resume()" [disabled]="busy()" class="cursor-pointer rounded-lg bg-agri px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+          Reprendre mon abonnement
+        </button>
+      }
+    </div>
+
+    <!-- annulation : l'abonnement reste actif jusqu'a la fin de la periode payee -->
+    @if (subscription() && !subscription()!.cancelAtPeriodEnd) {
+      @if (confirmingCancel()) {
+        <div class="rounded-lg border border-grey-200 bg-white p-4 text-sm">
+          @if (pastDue()) {
+            <p>Votre abonnement prendra fin le {{ longDate(subscription()!.currentPeriodEnd) }}, puis vous repassez à l'offre gratuite. Votre accès reste limité tant que le dernier paiement n'est pas régularisé.</p>
+          } @else if (subscription()!.billingCycle === 'yearly') {
+            <p>Votre abonnement reste actif jusqu'au {{ longDate(subscription()!.currentPeriodEnd) }}, fin de votre engagement annuel (sans remboursement), puis vous repassez à l'offre gratuite.</p>
+          } @else {
+            <p>Votre abonnement reste actif jusqu'au {{ longDate(subscription()!.currentPeriodEnd) }}, puis vous repassez à l'offre gratuite.</p>
+          }
+          @if (scheduledChange(); as change) {
+            <p class="mt-2">Le passage au plan {{ change.planName }} prévu le {{ longDate(change.effectiveAt) }} est annulé avec l'abonnement : si vous le reprenez ensuite, ce changement ne sera pas rétabli.</p>
+          }
+          <div class="mt-3 flex gap-3">
+            <button type="button" (click)="cancel()" [disabled]="busy()" class="cursor-pointer rounded-lg bg-danger px-4 py-2 font-semibold text-white disabled:opacity-60">
+              Annuler mon abonnement
+            </button>
+            <button type="button" (click)="confirmingCancel.set(false)" [disabled]="busy()" class="cursor-pointer rounded-lg border border-grey-400 px-4 py-2 font-medium text-grey-700">
+              Garder mon abonnement
+            </button>
+          </div>
+        </div>
+      } @else {
+        <button type="button" (click)="confirmingCancel.set(true)" class="cursor-pointer text-sm text-grey-500 underline">Annuler mon abonnement</button>
+      }
+    }
+  </div>
+
+  <!-- card de confirmation sur fond flou : rien ne part chez Stripe tant que le client n'a pas accepté -->
+  @if (pending(); as p) {
+    @let price = formatPrice(p.price.amount, p.price.currencyCode, p.price.billingCycle);
+    @let renewal = p.price.billingCycle === 'yearly' ? 'chaque année' : 'chaque mois';
+    @let leavesCommitment = subscription()?.billingCycle === 'yearly' && p.price.billingCycle === 'monthly';
+    <div class="fixed inset-0 z-50 flex overflow-y-auto bg-fonts/40 p-4 backdrop-blur-sm" (click)="dismiss()">
+      <div
+        #dialog
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="change-title"
+        tabindex="-1"
+        (click)="$event.stopPropagation()"
+        (keydown.escape)="dismiss()"
+        class="m-auto w-full max-w-md rounded-2xl bg-white p-5 text-sm shadow-xl outline-none"
+      >
+        <h2 id="change-title" class="text-lg font-bold">{{ subscription() ? 'Passer' : 'Souscrire' }} au plan {{ p.plan.name }}</h2>
+        <p class="mt-1 text-2xl font-bold text-agri">{{ price }}</p>
+
+        <div class="mt-4 space-y-3">
+          @if (!subscription()) {
+            <p><strong>Aujourd’hui.</strong> Vous êtes redirigé vers la page de paiement sécurisée de Stripe et vous réglez {{ price }}.</p>
+            <p>
+              <strong>Ensuite.</strong>
+              @if (p.price.billingCycle === 'yearly') {
+                Vous vous engagez pour 12 mois : l’abonnement se renouvelle automatiquement chaque année, et l’annulation prend effet à la fin de l’engagement, sans remboursement.
+              } @else {
+                L’abonnement se renouvelle automatiquement chaque mois. Vous pouvez l’annuler à tout moment depuis cette page.
+              }
+            </p>
+          } @else if (pendingAtRenewal()) {
+            <p><strong>Aujourd’hui.</strong> Rien n’est facturé et vous gardez le plan {{ subscription()!.planName }} jusqu’à @if (leavesCommitment) {la fin de votre engagement annuel} @else {la prochaine échéance}, le {{ longDate(subscription()!.currentPeriodEnd) }}.</p>
+            <p><strong>Ensuite.</strong> Le changement prend effet ce jour-là : vous passez au plan {{ p.plan.name }} ({{ price }}), facturé à chaque renouvellement.</p>
+          } @else {
+            <p>
+              <strong>Aujourd’hui.</strong> Le changement prend effet immédiatement : seule la différence avec ce que vous avez déjà payé pour la période en cours (calcul au prorata) est facturée aujourd’hui sur votre carte enregistrée. Si le paiement est refusé, votre abonnement ne change pas.
+            </p>
+            <p>
+              <strong>Ensuite.</strong>
+              @if (p.price.billingCycle === 'yearly') {
+                @if (subscription()!.billingCycle === 'yearly') {
+                  Votre engagement annuel continue jusqu’au {{ longDate(subscription()!.currentPeriodEnd) }}.
+                } @else {
+                  Vous vous engagez pour 12 mois à partir d’aujourd’hui : pas de retour au mensuel avant la fin de la période, et l’annulation prend effet à l’échéance, sans remboursement.
+                }
+              }
+              Le plan se renouvelle automatiquement {{ renewal }}.
+            </p>
+          }
+        </div>
+
+        @if (error()) {
+          <p role="alert" class="mt-3 text-danger">{{ error() }}</p>
+        }
+        <div class="mt-5 flex gap-3">
+          <button type="button" (click)="confirm()" [disabled]="busy()" class="flex-1 cursor-pointer rounded-lg bg-agri px-4 py-2.5 font-semibold text-white disabled:opacity-60">
+            J’accepte
+          </button>
+          <button type="button" (click)="dismiss()" [disabled]="busy()" class="flex-1 cursor-pointer rounded-lg border border-grey-400 px-4 py-2.5 font-medium text-grey-700 disabled:opacity-60">
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+}

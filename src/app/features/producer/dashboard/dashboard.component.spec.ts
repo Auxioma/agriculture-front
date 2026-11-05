@@ -6,8 +6,9 @@ import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from './dashboard.service';
 import { ProducerDashboard } from './dashboard.model';
 
-const request = (overrides: Partial<ProducerDashboard['requests'][number]>) => ({
+const request = (overrides: Partial<ProducerDashboard['requests'][number]>): ProducerDashboard['requests'][number] => ({
   requestId: Math.random().toString(),
+  clientName: 'Client',
   product: 'Produit',
   quantity: null,
   unit: null,
@@ -17,6 +18,10 @@ const request = (overrides: Partial<ProducerDashboard['requests'][number]>) => (
   distanceKm: null,
   message: null,
   urgent: false,
+  clientType: 'individual',
+  isNew: false,
+  highVolume: false,
+  locked: false,
   ...overrides,
 });
 
@@ -81,6 +86,14 @@ describe('DashboardComponent', () => {
     expect(rows[1]).toContain('Avignon · 9 km · souhaite une réponse rapide');
   });
 
+  it('les filtres ne sont pas réservés au mobile : mêmes fonctionnalités en desktop', async () => {
+    await create();
+
+    const group = compiled.querySelector('[role="group"]')!;
+    expect(group.className).not.toContain('lg:hidden');
+    expect(group.className).not.toMatch(/(^|\s)hidden(\s|$)/);
+  });
+
   it('les filtres "Tout" et "< 10 km" changent la liste et son titre', async () => {
     await create();
 
@@ -114,7 +127,7 @@ describe('DashboardComponent', () => {
     TestBed.resetTestingModule();
     await create(of({ ...DASHBOARD, subscription: null }));
     expect(compiled.textContent).toContain("Vous n'avez pas encore d'abonnement.");
-    expect(compiled.querySelector('a[href="/pricing"]')).toBeTruthy();
+    expect(compiled.querySelector('a[href="/producer/subscription"]')).toBeTruthy();
   });
 
   it('indique le taux de complétion du profil et ce qu\'il manque', async () => {
@@ -134,5 +147,20 @@ describe('DashboardComponent', () => {
     await create(throwError(() => new Error('API down')));
 
     expect(compiled.textContent).toContain('Impossible de charger votre tableau de bord');
+  });
+
+  it('sans abonnement : les demandes sont en aperçu limité, avec le lien de déblocage', async () => {
+    await create(of({ ...DASHBOARD, requests: DASHBOARD.requests.map((r) => ({ ...r, locked: true, message: null, budgetMax: null })), subscription: null }));
+
+    expect(compiled.textContent).toContain('Aperçu limité');
+    const unlock = [...compiled.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Débloquer les demandes')!;
+    expect(unlock.getAttribute('href')).toBe('/producer/subscription');
+  });
+
+  it('avec un abonnement : pas de message d\'aperçu limité', async () => {
+    await create();
+
+    expect(compiled.textContent).not.toContain('Aperçu limité');
+    expect([...compiled.querySelectorAll('a')].some((a) => a.textContent?.trim() === 'Débloquer les demandes')).toBe(false);
   });
 });
