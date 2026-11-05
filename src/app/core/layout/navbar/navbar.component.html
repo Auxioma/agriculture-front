@@ -257,10 +257,10 @@
           Déconnexion
         </button>
         @if (isProducer()) {
-          <a routerLink="/producer" class="rounded-full bg-gold-wheat px-4 py-2 text-sm font-semibold text-fonts">
-            Mon exploitation
-          </a>
-          <a routerLink="/requests" class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white">
+          <a
+            routerLink="/requests"
+            class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white"
+          >
             Voir les annonces
           </a>
         } @else {
@@ -515,13 +515,6 @@
             Déconnexion
           </button>
           @if (isProducer()) {
-            <a
-              routerLink="/producer"
-              (click)="closeMobileMenu()"
-              class="rounded-full bg-gold-wheat px-4 py-2 text-center text-sm font-semibold text-fonts"
-            >
-              Mon exploitation
-            </a>
             <a
               routerLink="/requests"
               (click)="closeMobileMenu()"

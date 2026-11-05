@@ -7,8 +7,9 @@ import { AuthService } from './core/auth/auth.service';
 import { NavbarComponent } from './core/layout/navbar/navbar.component';
 import { FooterComponent } from './core/layout/footer/footer.component';
 
-// l'espace producteur (/producer...) a son propre menu : pas de navbar ni de footer du site public
-const inProducerArea = (url: string) => url.startsWith('/producer');
+// les espaces connectés (/producer..., /client...) ont leur propre menu : pas de navbar ni de footer du site public
+const AREAS_WITHOUT_CHROME = /^\/(producer|client)(\/|\?|#|$)/;
+const inPrivateArea = (url: string) => AREAS_WITHOUT_CHROME.test(url);
 
 @Component({
   imports: [RouterOutlet, NavbarComponent, FooterComponent],
@@ -23,9 +24,9 @@ export class App implements OnInit {
   showSiteChrome = toSignal(
     inject(Router).events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => !inProducerArea(event.urlAfterRedirects)),
+      map((event) => !inPrivateArea(event.urlAfterRedirects)),
     ),
-    { initialValue: !inProducerArea(inject(Location).path()) },
+    { initialValue: !inPrivateArea(inject(Location).path()) },
   );
 
   ngOnInit(): void {

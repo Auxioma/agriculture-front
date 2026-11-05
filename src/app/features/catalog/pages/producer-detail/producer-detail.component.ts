@@ -22,6 +22,7 @@ import {
   labelBadgeClass,
   summarizeOpeningHours,
 } from '../../utils/producer-format';
+import { FavoriteButtonComponent } from '../../../client/dashboard/favorites/favorite-button.component';
 
 /** Les états possibles de la page : un seul signal, impossible d'être « chargé ET en erreur » */
 type ProducerState =
@@ -35,7 +36,7 @@ const REVIEWS_PREVIEW_COUNT = 2;
 
 @Component({
   selector: 'app-producer-detail',
-  imports: [RouterLink, NgOptimizedImage],
+  imports: [RouterLink, NgOptimizedImage, FavoriteButtonComponent],
   templateUrl: './producer-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

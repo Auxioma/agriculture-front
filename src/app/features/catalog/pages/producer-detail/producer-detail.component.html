@@ -57,6 +57,10 @@
         @if (p.photoUrl) {
           <img [ngSrc]="p.photoUrl" [alt]="p.farmName" fill priority class="object-cover" />
         }
+
+        <div class="absolute top-3 right-3 z-10">
+          <app-favorite-button targetType="producer_profile" [targetId]="p.id" />
+        </div>
       </div>
 
       <div class="mt-4 flex items-start justify-between gap-3">
