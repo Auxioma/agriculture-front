@@ -64,13 +64,11 @@ jobs:
         run: npx ng build
 
   # * Le cahier DevOps demande l'audit des dépendances, bloquant si la criticité est haute (comme "composer audit" côté back).
-  # * Pas bloquant pour l'instant : des failles connues sont déjà dans package-lock.json (dont une critique). Quand elles sont
-  # * corrigées ("npm audit fix"), enlever continue-on-error pour que ça bloque.
+  # * Si une faille sort un jour : "npm audit fix", puis tests et build avant de pousser.
   audit:
     name: Audit des dépendances
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
