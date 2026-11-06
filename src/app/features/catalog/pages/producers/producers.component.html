@@ -48,9 +48,11 @@
 
   @if (q() || near()) {
     <p class="mt-3 text-sm text-grey-700">
-      Résultats @if (q()) {
+      Résultats
+      @if (q()) {
         pour « {{ q() }} »
-      } @if (near()) {
+      }
+      @if (near()) {
         près de {{ near() }}
       }
     </p>
@@ -59,6 +61,14 @@
   @if (productId()) {
     <p class="mt-3 text-sm text-grey-700">Producteurs qui proposent ce produit.</p>
   }
+
+  <!-- retient la recherche (texte, lieu, catégorie, produit) dans Mes favoris, onglet Recherches -->
+  <app-save-search-button
+    [text]="q()"
+    [place]="near()"
+    [categoryId]="categoryId()"
+    [productId]="productId()"
+  />
 
   <!-- categoryId null : aucun filtre de catégorie, tous les producteurs actifs -->
   <app-producer-list

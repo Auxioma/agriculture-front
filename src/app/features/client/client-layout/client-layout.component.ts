@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NotificationBellComponent } from '../../../core/layout/notification-bell/notification-bell.component';
 
 @Component({
   selector: 'app-client-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, NotificationBellComponent],
   templateUrl: './client-layout.component.html',
 })
 export class ClientLayoutComponent {

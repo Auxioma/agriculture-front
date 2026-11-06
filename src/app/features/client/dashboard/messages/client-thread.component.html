@@ -10,7 +10,8 @@
 } @else {
   <div class="flex h-full flex-col">
     <!-- mobile : fleche de retour a gauche du nom et menu a droite ; desktop : le nom, et "Signaler" en lien a droite -->
-    <header class="shrink-0 px-4 pt-4 lg:px-0 lg:pt-0">
+    <!-- pr-14 : la cloche de la mise en page (en haut à droite en mobile) garde sa place, le menu se place à sa gauche -->
+    <header class="shrink-0 pl-4 pr-14 pt-4 lg:px-0 lg:pt-0">
       <div class="flex items-center gap-2">
         <a
           routerLink="/client/messages"

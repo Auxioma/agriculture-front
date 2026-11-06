@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { SaveSearchButtonComponent } from '../../../client/dashboard/favorites/save-search-button.component';
 import { ProducerListComponent } from '../../catalog-layouts/producer-list/producer-list.component';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -13,7 +14,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 @Component({
   selector: 'app-producers',
-  imports: [RouterLink, ProducerListComponent],
+  imports: [RouterLink, ProducerListComponent, SaveSearchButtonComponent],
   templateUrl: './producers.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

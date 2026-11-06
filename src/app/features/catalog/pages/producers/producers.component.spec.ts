@@ -309,10 +309,29 @@ describe('ProducersComponent', () => {
       ctx.host.querySelector('form[role=search]')!.dispatchEvent(new Event('submit'));
       await ctx.harness.fixture.whenStable();
 
-      const url = new URL(ctx.harness.routeNativeElement ? 'http://x' + TestBed.inject(Router).url : '');
+      const url = new URL(
+        ctx.harness.routeNativeElement ? 'http://x' + TestBed.inject(Router).url : '',
+      );
       expect(url.searchParams.get('q')).toBe('pommes');
       expect(url.searchParams.has('near')).toBe(false);
       expect(url.searchParams.get('categoryId')).toBe('0f3c9f0e-7c5a-4f6e-9d8b-2a1b3c4d5e6f');
+    });
+  });
+
+  // * Recherche sauvegardée : le bouton n'apparaît que s'il y a une recherche à retenir
+  describe('enregistrer la recherche', () => {
+    it("propose « Enregistrer cette recherche » quand l'adresse porte une recherche", async () => {
+      const ctx = await setup('/producers?q=tomates');
+      showResults(ctx, await nextSearch(ctx), []);
+
+      expect(textOf(ctx.host)).toContain('Enregistrer cette recherche');
+    });
+
+    it('ne le propose pas sans recherche', async () => {
+      const ctx = await setup();
+      showResults(ctx, await nextSearch(ctx), []);
+
+      expect(textOf(ctx.host)).not.toContain('Enregistrer cette recherche');
     });
   });
 
@@ -325,9 +344,13 @@ describe('ProducersComponent', () => {
       const hearts = ctx.host.querySelectorAll('app-favorite-button');
 
       expect(hearts.length).toBe(2);
-      expect(hearts[0].querySelector('button')?.getAttribute('aria-label')).toBe('Ajouter aux favoris');
+      expect(hearts[0].querySelector('button')?.getAttribute('aria-label')).toBe(
+        'Ajouter aux favoris',
+      );
       expect(hearts[0].closest('a')).toBeNull();
-      expect(hearts[0].closest('li')?.querySelector('a')?.getAttribute('href')).toBe('/producers/ferme-1');
+      expect(hearts[0].closest('li')?.querySelector('a')?.getAttribute('href')).toBe(
+        '/producers/ferme-1',
+      );
     });
 
     it('filtre sur le produit de l’adresse (celui d’un favori), et ignore une valeur qui n’est pas un identifiant', async () => {
