@@ -32,13 +32,14 @@ import { NotificationSettings } from '../profile.model';
 })
 export class NotificationsSectionComponent {
   readonly settings = input.required<NotificationSettings>();
-  /** Émet uniquement la clé modifiée, ex. { newMessage: false } (correspond au PATCH). */
+  /** Émet uniquement la clé modifiée, ex. { new_message: false } (correspond au PUT). */
   readonly changed = output<Partial<NotificationSettings>>();
 
   readonly items: { key: keyof NotificationSettings; label: string }[] = [
-    { key: 'producerReply', label: 'Nouvelle réponse producteur' },
-    { key: 'newMessage', label: 'Nouveau message' },
-    { key: 'requestExpiring', label: 'Demande expirant bientôt' },
+    { key: 'producer_replied', label: 'Nouvelle réponse producteur' },
+    { key: 'new_message', label: 'Nouveau message' },
+    { key: 'quote_received', label: 'Devis reçu' },
+    { key: 'request_expiring_soon', label: 'Demande expirant bientôt' },
   ];
 
   toggle(key: keyof NotificationSettings): void {

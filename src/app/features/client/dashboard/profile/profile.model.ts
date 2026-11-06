@@ -1,23 +1,26 @@
 export type Locale = 'fr' | 'en' | 'es' | 'it' | 'de';
 export type Currency = 'EUR' | 'USD' | 'GBP' | 'CHF';
 
-export interface NotificationSettings {
-  producerReply: boolean;
-  newMessage: boolean;
-  requestExpiring: boolean;
-}
+/** Les notifications client du cahier que l'on peut couper, avec les noms du back (NotificationPreferences::SWITCHABLE_TYPES). */
+export type NotificationType =
+  | 'producer_replied'
+  | 'new_message'
+  | 'quote_received'
+  | 'request_expiring_soon';
+
+export type NotificationSettings = Record<NotificationType, boolean>;
 
 export interface Preferences {
   locale: Locale;
   currency: Currency;
-  notificationSettings: NotificationSettings;
+  notifications: NotificationSettings;
 }
 
-/** Corps du PATCH : tout est optionnel, on n'envoie que ce qui change. */
+/** Corps du PUT /me/preferences : tout est optionnel, on n'envoie que ce qui change. */
 export interface PreferencesPatch {
   locale?: Locale;
   currency?: Currency;
-  notificationSettings?: Partial<NotificationSettings>;
+  notifications?: Partial<NotificationSettings>;
 }
 
 export interface Address {
