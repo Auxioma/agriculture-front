@@ -344,6 +344,17 @@ describe('HomeComponent', () => {
     expect(compiled.textContent).not.toContain('Oui, pour les clients.');
   });
 
+  it("ne plante pas et masque la section FAQ quand l'API de la FAQ échoue", () => {
+    faqServiceMock.getAll.mockReturnValue(throwError(() => new Error('boom')));
+
+    const otherFixture = TestBed.createComponent(HomeComponent);
+    otherFixture.detectChanges();
+
+    const text = (otherFixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).not.toContain('Questions fréquemment posées');
+    expect(text).toContain('agricole réuni');
+  });
+
   it('ne montre pas la section FAQ quand le service ne renvoie aucun article', () => {
     faqServiceMock.getAll.mockReturnValue(of([]));
 

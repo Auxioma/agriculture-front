@@ -1,4 +1,4 @@
-<header class="flex items-center justify-between bg-badge-bg px-4 py-3 lg:bg-transparent lg:p-0">
+<header class="flex items-center justify-between bg-badge-bg py-3 pl-4 pr-14 lg:bg-transparent lg:p-0">
   <a routerLink="/" class="text-lg font-semibold text-agri lg:hidden">TrouveMoi Agri</a>
   <h1 class="text-right text-lg font-bold lg:text-left lg:text-3xl">Demandes disponibles</h1>
   <!-- en desktop le lien vers "Mes devis" est ici, en mobile c'est le bouton fixe en bas de page -->
@@ -80,6 +80,8 @@
       </li>
     }
   </ul>
+} @else {
+  <app-page-skeleton />
 }
 
 <!-- mobile : bouton fixe au-dessus de la barre d'onglets (le meme lien est dans l'en-tete en desktop) -->

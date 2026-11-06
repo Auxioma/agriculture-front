@@ -1,4 +1,4 @@
-import { Component, inject, effect } from '@angular/core';
+import { Component, inject, effect, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -29,7 +29,8 @@ export class RegisterComponent {
     acceptTerms: [false, Validators.requiredTrue],
   });
 
-  errorMessage: string | null = null;
+  // signaux : sans zone.js, une propriété simple changée dans un subscribe n'est pas réaffichée
+  errorMessage = signal<string | null>(null);
 
   constructor() {
     // Réagit à chaque changement de rôle (venant de ce composant OU de LoginComponent,
@@ -51,7 +52,7 @@ export class RegisterComponent {
     if (this.form.invalid) return;
 
     const { email, password, firstName, lastName, farmName, countryCode } = this.form.getRawValue();
-    this.errorMessage = null;
+    this.errorMessage.set(null);
 
     const call$ =
       this.authRole.role() === 'client'
@@ -73,11 +74,11 @@ export class RegisterComponent {
 
   private handleError(err: HttpErrorResponse): void {
     if (err.status === 409) {
-      this.errorMessage = err.error.error;
+      this.errorMessage.set(err.error.error);
     } else if (err.status === 422) {
-      this.errorMessage = err.error.error ?? 'Données invalides.';
+      this.errorMessage.set(err.error.error ?? 'Données invalides.');
     } else {
-      this.errorMessage = 'Une erreur est survenue, réessayez.';
+      this.errorMessage.set('Une erreur est survenue, réessayez.');
     }
   }
 }

@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { requestQuantity } from '../../request-format';
 import { RequestDetail, RequestsService } from '../requests.service';
+import { PageSkeletonComponent } from '../../../../core/layout/page-skeleton/page-skeleton.component';
 
 // les codes sont ceux que le back accepte (ReportClientRequestRequest)
 const REASONS = [
@@ -26,7 +27,7 @@ const REASONS = [
 @Component({
   selector: 'app-producer-report',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './report.component.html',
 })
 export class ReportComponent {

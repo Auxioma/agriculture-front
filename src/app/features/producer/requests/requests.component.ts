@@ -5,6 +5,7 @@ import { catchError, of } from 'rxjs';
 import { AvailableRequest } from '../dashboard/dashboard.model';
 import { requestDetails, requestTitle } from '../request-format';
 import { RequestsService } from './requests.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
 
 type Toggle = 'urgent' | 'near' | 'volume' | 'budget';
 
@@ -23,7 +24,7 @@ const CHIP = 'shrink-0 cursor-pointer appearance-none field-sizing-content round
 @Component({
   selector: 'app-producer-requests',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './requests.component.html',
 })
 export class RequestsComponent {
@@ -72,7 +73,7 @@ export class RequestsComponent {
   // un seul badge par carte, comme sur la maquette : urgent d'abord, puis volume, puis nouveau
   badge(request: AvailableRequest): { label: string; style: string } | null {
     if (request.urgent) return { label: 'Urgent', style: 'bg-warning text-fonts' };
-    if (request.highVolume) return { label: 'Volume élevé', style: 'border border-grey-400 text-grey-500' };
+    if (request.highVolume) return { label: 'Volume élevé', style: 'border border-grey-400 text-secondary' };
     if (request.isNew) return { label: 'Nouveau', style: 'bg-agri text-white' };
     return null;
   }

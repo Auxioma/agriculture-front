@@ -25,7 +25,7 @@ export class ProfileService {
   }
 
   updatePreferences(patch: PreferencesPatch): Observable<Preferences> {
-    return this.http.patch<Preferences>(`${this.api}/me/preferences`, patch);
+    return this.http.put<Preferences>(`${this.api}/me/preferences`, patch);
   }
 
   addresses(): Observable<Address[]> {

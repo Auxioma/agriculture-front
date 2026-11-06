@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NavbarComponent } from './navbar.component';
 import { AuthService } from '../../auth/auth.service';
 import type { CurrentUser } from '../../auth/auth.models';
 import { CatalogService } from '../../../features/catalog/services/catalog.service';
 import { makeCategory } from '../../../features/catalog/testing/catalog.fixtures';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 // * Mock local, volontairement séparé de core/auth/auth.service.mock.ts :
 
@@ -39,10 +40,16 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let authServiceMock: NavbarAuthServiceMock;
   let catalogServiceMock: { getPopularCategories: ReturnType<typeof vi.fn> };
+  let notificationsMock: { latest: ReturnType<typeof vi.fn>; changes$: typeof NEVER };
 
   function linkTexts(): string[] {
     const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('a');
     return Array.from(links).map((a) => a.textContent?.trim() ?? '');
+  }
+
+  function hrefOf(text: string): string | null {
+    const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
+    return links.find((a) => a.textContent?.trim() === text)?.getAttribute('href') ?? null;
   }
 
   // menu mobile fermé : un seul bouton "Catégories" dans le dom (le desktop)
@@ -56,12 +63,14 @@ describe('NavbarComponent', () => {
   beforeEach(async () => {
     authServiceMock = createNavbarAuthServiceMock();
     catalogServiceMock = { getPopularCategories: vi.fn(() => of(POPULAR_CATEGORIES)) };
+    notificationsMock = { latest: vi.fn(() => of([])), changes$: NEVER };
 
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: CatalogService, useValue: catalogServiceMock },
+        { provide: NotificationsService, useValue: notificationsMock },
         provideRouter([]),
       ],
     }).compileComponents();
@@ -111,6 +120,16 @@ describe('NavbarComponent', () => {
     expect(texts).not.toContain('Mon exploitation');
   });
 
+  // pas de page 404 : un lien vers une route qui n'existe pas donne une page vide
+  it("devrait envoyer le client vers les pages de son espace, pas vers des routes qui n'existent pas", () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    expect(hrefOf('Mes annonces')).toBe('/client/requests');
+    expect(hrefOf('Mon compte')).toBe('/client/profile');
+  });
+
   it('devrait afficher la navigation producteur si le rôle ROLE_PRODUCER est présent', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
@@ -143,6 +162,14 @@ describe('NavbarComponent', () => {
     expect(links.length).toBe(1);
     expect(links[0].getAttribute('href')).toBe('/producer');
     expect(links[0].classList).toContain('bg-gold-wheat');
+  });
+
+  it('devrait envoyer le producteur voir les annonces dans son espace (/producer/requests)', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+
+    expect(hrefOf('Voir les annonces')).toBe('/producer/requests');
   });
 
   it('devrait appeler authService.logout() au clic sur Déconnexion', () => {
@@ -333,12 +360,43 @@ describe('NavbarComponent', () => {
     expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeTruthy();
   });
 
-  it('ne devrait pas afficher la cloche de notifications pour un utilisateur connecté', () => {
+  it('devrait remplacer le lien de la cloche par la cloche à card pour un utilisateur connecté', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeFalsy();
+    // * une seule cloche, la meme en mobile et en desktop (sinon deux lectures du back et deux cards)
+    expect(fixture.nativeElement.querySelectorAll('app-notification-bell')).toHaveLength(1);
+    expect(notificationsMock.latest).toHaveBeenCalledTimes(1);
+  });
+
+  it('devrait afficher la même cloche à un producteur', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('app-notification-bell')).toHaveLength(1);
+  });
+
+  it('ne devrait rien demander au back pour un invité', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-notification-bell')).toBeNull();
+    expect(notificationsMock.latest).not.toHaveBeenCalled();
+  });
+
+  it('devrait ouvrir la card des notifications au clic sur la cloche d\'un utilisateur connecté', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('app-notification-bell button').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#notification-card')).toBeTruthy();
   });
 
   it('devrait ouvrir le panneau filtres au clic et afficher produit/localisation/date', () => {

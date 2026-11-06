@@ -1,0 +1,80 @@
+name: CI front
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+permissions:
+  contents: read
+
+# * un nouveau push sur la même branche annule la CI en cours : inutile de finir de tester un commit dépassé
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # * sur un runner l'Angular CLI ne doit pas poser sa question de statistiques
+  NG_CLI_ANALYTICS: "false"
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # * Angular 22 demande Node 22.22.3 minimum, ou 24.15 et plus (champ "engines" de @angular/cli) : la 24 convient
+          node-version: 24
+          cache: npm
+
+      # * package.json donne la version de npm dans "packageManager" : on la lit au lieu de la recopier ici
+      - name: Utiliser la version de npm du projet
+        run: npm install -g "$(node -p "require('./package.json').packageManager")"
+
+      - run: npm ci
+
+      - name: Lancer les tests
+        run: npx ng test --watch=false
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Utiliser la version de npm du projet
+        run: npm install -g "$(node -p "require('./package.json').packageManager")"
+
+      - run: npm ci
+
+      # * le build prérend les pages : il appelle l'API de production (environment.ts), il lui faut donc le réseau
+      - name: Compiler pour la production
+        run: npx ng build
+
+  # * Le cahier DevOps demande l'audit des dépendances, bloquant si la criticité est haute (comme "composer audit" côté back).
+  # * Si une faille sort un jour : "npm audit fix", puis tests et build avant de pousser.
+  audit:
+    name: Audit des dépendances
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm audit --audit-level=high

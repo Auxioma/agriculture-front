@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { requestQuantity, shortDate } from '../../request-format';
 import { ReceivedRequest, RequestsService } from '../requests.service';
+import { PageSkeletonComponent } from '../../../../core/layout/page-skeleton/page-skeleton.component';
 
 type StatusFilter = 'all' | 'new' | 'treated';
 
@@ -20,7 +21,7 @@ const FILTERS: { id: StatusFilter; label: string }[] = [
 @Component({
   selector: 'app-producer-received',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './received.component.html',
 })
 export class ReceivedComponent {

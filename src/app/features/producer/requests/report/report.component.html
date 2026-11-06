@@ -55,7 +55,7 @@
             placeholder="Ajoutez des précisions utiles pour notre équipe…"
             (input)="message.set(messageBox.value)"
             #messageBox
-            class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-grey-500"
+            class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-secondary"
           ></textarea>
         </div>
 
@@ -86,4 +86,6 @@
       </form>
     }
   </div>
+} @else {
+  <app-page-skeleton />
 }

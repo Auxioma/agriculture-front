@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PaymentCard, SubscriptionService } from '../subscription.service';
 import { PaymentMethodsComponent } from './payment-methods.component';
@@ -144,5 +144,19 @@ describe('PaymentMethodsComponent', () => {
     await create();
 
     expect(compiled.querySelector('a[href="/producer/subscription"]')?.textContent?.trim()).toBe('Retour à mon abonnement');
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<(typeof VISA)[]>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next([VISA, MASTERCARD]);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

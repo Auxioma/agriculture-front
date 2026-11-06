@@ -24,7 +24,7 @@
           </div>
         }
       </div>
-      <a routerLink="/faq" class="mt-3 inline-block text-sm font-semibold text-agri">Voir toute la FAQ →</a>
+      <a routerLink="/faq" class="mt-2 inline-block py-1.5 text-sm font-semibold text-agri">Voir toute la FAQ →</a>
     </section>
   }
 
@@ -42,7 +42,7 @@
           [value]="subject()"
           (input)="subject.set(subjectBox.value)"
           #subjectBox
-          class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2.5 text-sm placeholder:text-grey-500"
+          class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2.5 text-sm placeholder:text-secondary"
         />
       </div>
       <div>
@@ -55,7 +55,7 @@
           [value]="message()"
           (input)="message.set(messageBox.value)"
           #messageBox
-          class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2.5 text-sm placeholder:text-grey-500"
+          class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2.5 text-sm placeholder:text-secondary"
         ></textarea>
       </div>
       @if (error()) {

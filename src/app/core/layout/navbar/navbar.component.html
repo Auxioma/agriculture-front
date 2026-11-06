@@ -94,16 +94,18 @@
       </div>
     </ng-template>
 
-    <!-- Recherche : pas encore de page de résultats ("/search") ni de service de recherche -->
-    <form class="hidden max-w-md flex-1 items-center gap-2 md:flex" role="search">
+    <!-- Recherche : pas encore de page de résultats ("/search") ni de service de recherche.
+         Elle rétrécit (min-w-44 comme plancher, w-0 sur le champ) : sans ça le champ garde sa largeur d'origine
+         (199 px) et la navbar d'un utilisateur connecté, plus chargée avec la cloche, déborde de l'écran -->
+    <form class="hidden min-w-44 max-w-md flex-1 items-center gap-2 md:flex" role="search">
       <div
-        class="relative flex flex-1 items-center gap-2 rounded-full border border-grey-400 bg-white px-3 py-1.5"
+        class="relative flex min-w-0 flex-1 items-center gap-2 rounded-full border border-grey-400 bg-white px-3 py-1.5"
       >
         <input
           type="search"
           name="q"
           placeholder="Rechercher..."
-          class="min-w-0 flex-1 text-sm outline-none"
+          class="w-0 min-w-0 flex-1 text-sm outline-none"
         />
         <button
           type="button"
@@ -143,7 +145,7 @@
       </div>
     </form>
 
-    <!--! Liens : aucune de ces routes n'existe encore dans app.routes.ts, seuls "/" et "/auth/*" sont réels -->
+    <!--! Liens : chaque route doit exister dans app.routes.ts, il n'y a pas de page 404 (un lien faux = page vide) -->
     <div
       class="hidden shrink-0 items-center gap-6 whitespace-nowrap text-sm font-medium text-grey-700 lg:flex"
     >
@@ -178,7 +180,7 @@
         <a routerLink="/producer/requests">Demandes</a>
         <a routerLink="/producer/requests/quotes">Mes devis</a>
         <a routerLink="/pricing">Tarif producteurs</a>
-        <a routerLink="/messages">Messagerie</a>
+        <a routerLink="/producer/messages">Messagerie</a>
       } @else {
         <ng-container
           *ngTemplateOutlet="
@@ -193,13 +195,14 @@
           "
         ></ng-container>
         <a routerLink="/producers">Producteurs</a>
-        <a routerLink="/my-requests">Mes annonces</a>
-        <a routerLink="/account">Mon compte</a>
-        <a routerLink="/messages">Messagerie</a>
+        <a routerLink="/client/requests">Mes annonces</a>
+        <a routerLink="/client/profile">Mon compte</a>
+        <!-- pas encore de page messagerie côté client : le tableau de bord montre les derniers messages -->
+        <a routerLink="/client">Messagerie</a>
       }
     </div>
 
-    <!--! Actions : pareil pour "/requests/new", "/notifications" etc. sont des routes à créer -->
+    <!-- Actions -->
     <div class="hidden shrink-0 items-center gap-4 whitespace-nowrap lg:flex">
       @if (!authService.isAuthenticated()) {
         <a
@@ -257,8 +260,11 @@
           Déconnexion
         </button>
         @if (isProducer()) {
+          <a routerLink="/producer" class="rounded-full bg-gold-wheat px-4 py-2 text-sm font-semibold text-fonts">
+            Mon exploitation
+          </a>
           <a
-            routerLink="/requests"
+            routerLink="/producer/requests"
             class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white"
           >
             Voir les annonces
@@ -274,10 +280,12 @@
       }
     </div>
 
-    <!-- cloche visible en mobile aussi (capture "Mobile accueil V2"), dans la barre du haut pas dans le panneau -->
-    <div class="flex items-center gap-3 lg:hidden">
+    <!-- cloche visible en mobile aussi (capture "Mobile accueil V2"), dans la barre du haut pas dans le panneau.
+         Ce bloc sert aussi en desktop : c'est la qu'est la cloche d'un utilisateur connecte (une seule, avec sa card) ;
+         celle de l'invite (simple lien) et le burger restent mobile seulement -->
+    <div class="flex items-center gap-3">
       @if (!authService.isAuthenticated()) {
-        <a routerLink="/notifications" aria-label="Notifications" class="text-grey-700">
+        <a routerLink="/notifications" aria-label="Notifications" class="text-grey-700 lg:hidden">
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -289,6 +297,8 @@
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
         </a>
+      } @else {
+        <app-notification-bell />
       }
 
       <!-- pas de maquette mobile pour cette navbar : burger + panneau classique -->
@@ -297,7 +307,7 @@
         (click)="toggleMobileMenu()"
         [attr.aria-expanded]="mobileMenuOpen()"
         aria-label="Menu"
-        class="text-grey-700"
+        class="text-grey-700 lg:hidden"
       >
         @if (mobileMenuOpen()) {
           <svg
@@ -462,7 +472,7 @@
           <a routerLink="/producer/requests" (click)="closeMobileMenu()">Demandes</a>
           <a routerLink="/producer/requests/quotes" (click)="closeMobileMenu()">Mes devis</a>
           <a routerLink="/pricing" (click)="closeMobileMenu()">Tarif producteurs</a>
-          <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
+          <a routerLink="/producer/messages" (click)="closeMobileMenu()">Messagerie</a>
         } @else {
           <ng-container
             *ngTemplateOutlet="
@@ -477,9 +487,9 @@
             "
           ></ng-container>
           <a routerLink="/producers" (click)="closeMobileMenu()">Producteurs</a>
-          <a routerLink="/my-requests" (click)="closeMobileMenu()">Mes annonces</a>
-          <a routerLink="/account" (click)="closeMobileMenu()">Mon compte</a>
-          <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
+          <a routerLink="/client/requests" (click)="closeMobileMenu()">Mes annonces</a>
+          <a routerLink="/client/profile" (click)="closeMobileMenu()">Mon compte</a>
+          <a routerLink="/client" (click)="closeMobileMenu()">Messagerie</a>
         }
       </div>
 
@@ -516,7 +526,14 @@
           </button>
           @if (isProducer()) {
             <a
-              routerLink="/requests"
+              routerLink="/producer"
+              (click)="closeMobileMenu()"
+              class="rounded-full bg-gold-wheat px-4 py-2 text-center text-sm font-semibold text-fonts"
+            >
+              Mon exploitation
+            </a>
+            <a
+              routerLink="/producer/requests"
               (click)="closeMobileMenu()"
               class="rounded-full bg-agri px-4 py-2 text-center text-sm font-semibold text-white"
             >

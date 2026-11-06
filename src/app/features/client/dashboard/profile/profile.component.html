@@ -96,7 +96,7 @@
     >
       @if (preferences(); as prefs) {
         <app-notifications-section
-          [settings]="prefs.notificationSettings"
+          [settings]="prefs.notifications"
           (changed)="setNotifications($event)"
         />
       }

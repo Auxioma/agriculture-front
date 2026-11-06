@@ -209,7 +209,7 @@ describe('RegisterComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe('Un compte existe déjà avec cet email.');
+      expect(component.errorMessage()).toBe('Un compte existe déjà avec cet email.');
       expect(routerNavigateSpy).not.toHaveBeenCalled();
     });
 
@@ -224,7 +224,7 @@ describe('RegisterComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe('Pays inconnu.');
+      expect(component.errorMessage()).toBe('Pays inconnu.');
     });
 
     it('devrait afficher un message générique pour toute autre erreur', () => {
@@ -234,7 +234,26 @@ describe('RegisterComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe('Une erreur est survenue, réessayez.');
+      expect(component.errorMessage()).toBe('Une erreur est survenue, réessayez.');
+    });
+
+    // sans zone.js rien ne relance l'affichage tout seul : le message doit venir d'un signal (pas de detectChanges() ici)
+    it("devrait afficher l'erreur dans la page dès la réponse du serveur, sans autre interaction", async () => {
+      authServiceMock.registerClient.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: { error: 'Un compte existe déjà avec cet email.' },
+            }),
+        ),
+      );
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      const errorEl: HTMLElement = fixture.nativeElement.querySelector('.form-error');
+      expect(errorEl?.textContent).toContain('Un compte existe déjà avec cet email.');
     });
   });
 
@@ -252,11 +271,23 @@ describe('RegisterComponent', () => {
     });
 
     it("devrait afficher le message d'erreur dans le DOM", async () => {
-      component.errorMessage = 'Un compte existe déjà avec cet email.';
+      component.errorMessage.set('Un compte existe déjà avec cet email.');
       await detectChangesForced();
 
       const errorEl: HTMLElement = fixture.nativeElement.querySelector('.form-error');
       expect(errorEl?.textContent).toContain('Un compte existe déjà avec cet email.');
+    });
+
+    // /cgu n'existe pas dans les routes (pas de page 404 : le clic donnait une page vide) ; les pages légales sont sous /legal/:code
+    it('devrait pointer les liens CGU et confidentialité vers les pages légales', () => {
+      const links: HTMLAnchorElement[] = Array.from(
+        fixture.nativeElement.querySelectorAll('label[for="acceptTerms"] a'),
+      );
+
+      expect(links.map((a) => a.getAttribute('href'))).toEqual([
+        '/legal/cgu',
+        '/legal/confidentialite',
+      ]);
     });
 
     it('devrait désactiver le bouton si le formulaire est invalide', () => {

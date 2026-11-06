@@ -1,0 +1,53 @@
+<div class="space-y-3 text-sm">
+  <p>Vous pouvez exporter ou supprimer vos données personnelles à tout moment (RGPD).</p>
+
+  <button
+    type="button"
+    (click)="exportData()"
+    [disabled]="exporting()"
+    class="w-full cursor-pointer rounded-lg border border-agri bg-badge-bg px-5 py-2.5 font-semibold text-agri disabled:opacity-60 lg:w-auto"
+  >
+    {{ exporting() ? "Préparation…" : "Exporter mes données" }}
+  </button>
+  @if (exportError()) {
+    <p role="alert" class="text-danger">{{ exportError() }}</p>
+  }
+
+  @if (!confirming()) {
+    <button type="button" (click)="openConfirmation()" class="block cursor-pointer text-left font-semibold text-danger">Supprimer mon compte</button>
+  } @else {
+    <!-- la carte de confirmation : ce qui disparait, ce qui reste, l'abonnement s'il y en a un, et le mot de passe -->
+    <div role="group" aria-labelledby="delete-title" class="space-y-3 rounded-lg border border-danger bg-white p-3">
+      <h3 id="delete-title" class="font-semibold text-danger">Supprimer mon compte ?</h3>
+      <p>
+        Votre compte est anonymisé et votre fiche publique retirée, avec vos photos et vos justificatifs. Cette action est définitive. Vos
+        factures sont conservées, comme la loi l'exige.
+      </p>
+      @if (atStake(); as sub) {
+        <p class="rounded-lg bg-badge-bg px-3 py-2 font-medium">
+          Votre abonnement {{ sub.planName }} est résilié immédiatement, sans remboursement de la période déjà payée (jusqu'au {{ endDate() }}).
+        </p>
+      }
+      <div>
+        <label for="delete-password" class="mb-1 block font-medium">Mot de passe pour confirmer</label>
+        <input id="delete-password" type="password" [formControl]="password" autocomplete="current-password" class="w-full rounded-lg border border-grey-200 bg-white px-3 py-2" />
+      </div>
+      @if (error()) {
+        <p role="alert" class="text-danger">{{ error() }}</p>
+      }
+      <div class="flex flex-col gap-2 lg:flex-row">
+        <button
+          type="button"
+          (click)="deleteAccount()"
+          [disabled]="busy() || atStake() === undefined"
+          class="cursor-pointer rounded-lg bg-danger px-5 py-2.5 font-semibold text-white disabled:opacity-60"
+        >
+          {{ busy() ? "Suppression…" : hasSubscription() ? "J'accepte et supprime mon compte" : "Supprimer définitivement mon compte" }}
+        </button>
+        <button type="button" (click)="cancelConfirmation()" [disabled]="busy()" class="cursor-pointer rounded-lg border border-grey-400 bg-white px-5 py-2.5 font-semibold text-grey-700">
+          Annuler
+        </button>
+      </div>
+    </div>
+  }
+</div>

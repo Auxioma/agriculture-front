@@ -41,7 +41,7 @@
           </div>
           <div>
             <label for="unit" class="mb-1 block text-sm font-medium">Unité</label>
-            <select id="unit" formControlName="unitId" [class]="input" [class.text-grey-500]="!form.controls.unitId.value">
+            <select id="unit" formControlName="unitId" [class]="input" [class.text-secondary]="!form.controls.unitId.value">
               <option value="">{{ unitText(r.unit) }}</option>
               @for (u of units(); track u.id) {
                 <option [value]="u.id">{{ unitText(u.code) }}</option>
@@ -132,4 +132,6 @@
       </div>
     </form>
   }
+} @else {
+  <app-page-skeleton />
 }

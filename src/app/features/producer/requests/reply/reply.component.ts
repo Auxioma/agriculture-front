@@ -6,8 +6,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { requestQuantity, unitLabel } from '../../request-format';
 import { ReplyDraft, ReplyFile, ReplyPayload, RequestsService } from '../requests.service';
+import { PageSkeletonComponent } from '../../../../core/layout/page-skeleton/page-skeleton.component';
 
-const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-grey-500';
+const INPUT = 'w-full rounded-lg border border-grey-200 bg-white px-3 py-2 text-sm placeholder:text-secondary';
 
 // "12,5" ou "12.5" -> nombre, NaN si ce n'est pas un nombre
 const toNumber = (value: string): number => (value.trim() === '' ? NaN : Number(value.trim().replace(',', '.')));
@@ -24,7 +25,7 @@ const toNumber = (value: string): number => (value.trim() === '' ? NaN : Number(
 @Component({
   selector: 'app-producer-reply',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './reply.component.html',
 })
 export class ReplyComponent {

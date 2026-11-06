@@ -7,6 +7,7 @@ import { AuthService } from '../../auth/auth.service';
 import { CatalogService } from '../../../features/catalog/services/catalog.service';
 import { Category } from '../../../features/catalog/models/category.model';
 import { hasProducerRole } from '../../../features/producer/producer-role';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 // * Seules Default (invité), Client et Producteur sont reprises ici -! pas la variante Admin
 // * (les admins n'utilisent pas ce front public de toute facon).
 //
@@ -32,7 +33,7 @@ interface MenuLink {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, NgTemplateOutlet],
+  imports: [RouterLink, NgTemplateOutlet, NotificationBellComponent],
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent {

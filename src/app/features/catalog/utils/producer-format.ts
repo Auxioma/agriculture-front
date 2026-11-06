@@ -1,4 +1,5 @@
-import { OpeningHour } from '../models/producer-detail.model';
+import { unitText } from '../../producer/products/product-format';
+import { OpeningHour, ProducerProductSummary } from '../models/producer-detail.model';
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const MONTH_LABELS = [
@@ -50,6 +51,34 @@ export function availabilityLabel(
     : `de ${MONTH_LABELS[startMonth - 1]}`;
 
   return `Disponible ${from} à ${MONTH_LABELS[endMonth - 1]}`;
+}
+
+const quantities = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 3 });
+
+/** « 50 kg », « 30 unités » ; sans unité « volume 50 » ; null sans volume */
+export function productQuantity(product: Pick<ProducerProductSummary, 'quantity' | 'unit'>): string | null {
+  const quantity = Number(product.quantity ?? NaN);
+  if (!Number.isFinite(quantity)) return null;
+
+  return product.unit
+    ? `${quantities.format(quantity)} ${unitText(product.unit.code, quantity)}`
+    : `volume ${quantities.format(quantity)}`;
+}
+
+/** « 3,50 €/kg » ; sans unité « 3,50 € » ; null sans prix. La devise est l'euro quand elle n'est pas donnée. */
+export function productPrice(
+  product: Pick<ProducerProductSummary, 'price' | 'currencyCode' | 'unit'>,
+): string | null {
+  const price = Number(product.price ?? NaN);
+  if (!Number.isFinite(price)) return null;
+
+  const money = new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: product.currencyCode ?? 'EUR',
+    minimumFractionDigits: 2,
+  }).format(price);
+
+  return product.unit ? `${money}/${unitText(product.unit.code)}` : money;
 }
 
 function formatTime(time: string): string {

@@ -20,10 +20,21 @@ describe('SecuritySectionComponent', () => {
     const { component } = setup();
     component.form.setValue({
       currentPassword: 'old',
-      newPassword: 'password123',
+      newPassword: 'motdepasse1234',
       confirmPassword: 'autre',
     });
     expect(component.form.hasError('mismatch')).toBe(true);
+  });
+
+  it('exige 12 caractères au moins, comme le back', () => {
+    const { component } = setup();
+    const set = (newPassword: string) =>
+      component.form.setValue({ currentPassword: 'old', newPassword, confirmPassword: newPassword });
+
+    set('onze-car-11');
+    expect(component.form.controls.newPassword.hasError('minlength')).toBe(true);
+    set('douze-car-12');
+    expect(component.form.controls.newPassword.hasError('minlength')).toBe(false);
   });
 
   it("n'appelle pas l'API si le formulaire est invalide", () => {
@@ -36,13 +47,13 @@ describe('SecuritySectionComponent', () => {
     const { component, changePassword } = setup();
     component.form.setValue({
       currentPassword: 'old',
-      newPassword: 'password123',
-      confirmPassword: 'password123',
+      newPassword: 'motdepasse1234',
+      confirmPassword: 'motdepasse1234',
     });
     component.submit();
     expect(changePassword).toHaveBeenCalledWith({
       currentPassword: 'old',
-      newPassword: 'password123',
+      newPassword: 'motdepasse1234',
     });
     expect(component.success()).toBe(true);
     expect(component.form.getRawValue().newPassword).toBe('');
@@ -56,8 +67,8 @@ describe('SecuritySectionComponent', () => {
     const { component } = setup(vi.fn(() => throwError(() => err)));
     component.form.setValue({
       currentPassword: 'faux',
-      newPassword: 'password123',
-      confirmPassword: 'password123',
+      newPassword: 'motdepasse1234',
+      confirmPassword: 'motdepasse1234',
     });
     component.submit();
     expect(component.error()).toBe('Mot de passe actuel incorrect.');
