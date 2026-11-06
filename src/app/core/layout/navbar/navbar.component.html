@@ -97,7 +97,7 @@
     <!-- Recherche : pas encore de page de résultats ("/search") ni de service de recherche.
          Elle rétrécit (min-w-44 comme plancher, w-0 sur le champ) : sans ça le champ garde sa largeur d'origine
          (199 px) et la navbar d'un utilisateur connecté, plus chargée avec la cloche, déborde de l'écran -->
-    <form class="hidden min-w-44 max-w-md flex-1 items-center gap-2 md:flex" role="search">
+    <form class="hidden min-w-40 max-w-md flex-1 items-center gap-2 md:flex" role="search">
       <div
         class="relative flex min-w-0 flex-1 items-center gap-2 rounded-full border border-grey-400 bg-white px-3 py-1.5"
       >
@@ -105,7 +105,7 @@
           type="search"
           name="q"
           placeholder="Rechercher..."
-          class="w-0 min-w-0 flex-1 text-sm outline-none"
+          class="w-0 min-w-0 flex-1 text-base outline-none"
         />
         <button
           type="button"
@@ -196,7 +196,6 @@
         ></ng-container>
         <a routerLink="/producers">Producteurs</a>
         <a routerLink="/client/requests">Mes annonces</a>
-        <a routerLink="/client/profile">Mon compte</a>
         <a routerLink="/client/messages">Messagerie</a>
       }
     </div>
@@ -269,6 +268,9 @@
             Voir les annonces
           </a>
         } @else {
+          <a routerLink="/client" class="rounded-full bg-gold-wheat px-4 py-2 text-sm font-semibold text-fonts">
+            Mon compte
+          </a>
           <a
             routerLink="/requests/new"
             class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white"
@@ -402,7 +404,7 @@
         <input
           type="search"
           placeholder="Rechercher..."
-          class="min-w-0 flex-1 text-sm outline-none"
+          class="min-w-0 flex-1 text-base outline-none"
         />
         <button
           type="button"
@@ -487,7 +489,6 @@
           ></ng-container>
           <a routerLink="/producers" (click)="closeMobileMenu()">Producteurs</a>
           <a routerLink="/client/requests" (click)="closeMobileMenu()">Mes annonces</a>
-          <a routerLink="/client/profile" (click)="closeMobileMenu()">Mon compte</a>
           <a routerLink="/client/messages" (click)="closeMobileMenu()">Messagerie</a>
         }
       </div>
@@ -539,6 +540,13 @@
               Voir les annonces
             </a>
           } @else {
+            <a
+              routerLink="/client"
+              (click)="closeMobileMenu()"
+              class="rounded-full bg-gold-wheat px-4 py-2 text-center text-sm font-semibold text-fonts"
+            >
+              Mon compte
+            </a>
             <a
               routerLink="/requests/new"
               (click)="closeMobileMenu()"

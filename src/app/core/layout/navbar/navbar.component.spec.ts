@@ -127,8 +127,47 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
 
     expect(hrefOf('Mes annonces')).toBe('/client/requests');
-    expect(hrefOf('Mon compte')).toBe('/client/profile');
     expect(hrefOf('Messagerie')).toBe('/client/messages');
+  });
+
+  // comme « Mon exploitation » pour le producteur : un bouton doré vers son espace, pas un lien du menu
+  it('devrait afficher un seul bouton "Mon compte" doré pour le client, qui mène à son espace', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    const links = (Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[]).filter(
+      (a) => a.textContent?.trim() === 'Mon compte',
+    );
+
+    expect(links.length).toBe(1);
+    expect(links[0].getAttribute('href')).toBe('/client');
+    expect(links[0].classList).toContain('bg-gold-wheat');
+  });
+
+  it("n'affiche pas « Mon compte » à un producteur ni à un visiteur", () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+    expect(linkTexts()).not.toContain('Mon compte');
+
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+    expect(linkTexts()).not.toContain('Mon compte');
+  });
+
+  it('devrait agrandir le texte des champs de recherche (desktop et mobile) pour qu on voie ce que l on écrit', () => {
+    fixture.componentInstance.mobileMenuOpen.set(true);
+    fixture.detectChanges();
+
+    const inputs = Array.from(fixture.nativeElement.querySelectorAll('input[type="search"]')) as HTMLInputElement[];
+
+    expect(inputs.length).toBe(2);
+    inputs.forEach((input) => {
+      expect(input.classList).toContain('text-base');
+      expect(input.classList).not.toContain('text-sm');
+    });
   });
 
   it('devrait afficher la navigation producteur si le rôle ROLE_PRODUCER est présent', () => {
