@@ -195,6 +195,29 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'requests/:id',
+        loadComponent: () =>
+          import('./features/client/dashboard/requests/detail/request-detail.component').then(
+            (m) => m.RequestDetailComponent,
+          ),
+      },
+      {
+        path: 'messages',
+        loadComponent: () =>
+          import('./features/client/dashboard/messages/client-messages.component').then(
+            (m) => m.ClientMessagesComponent,
+          ),
+        children: [
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/client/dashboard/messages/client-thread.component').then(
+                (m) => m.ClientThreadComponent,
+              ),
+          },
+        ],
+      },
+      {
         path: 'favorites',
         loadComponent: () =>
           import('./features/client/dashboard/favorites/favorites.component').then(

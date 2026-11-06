@@ -128,6 +128,7 @@ describe('NavbarComponent', () => {
 
     expect(hrefOf('Mes annonces')).toBe('/client/requests');
     expect(hrefOf('Mon compte')).toBe('/client/profile');
+    expect(hrefOf('Messagerie')).toBe('/client/messages');
   });
 
   it('devrait afficher la navigation producteur si le rôle ROLE_PRODUCER est présent', () => {

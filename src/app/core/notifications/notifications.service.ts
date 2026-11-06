@@ -9,6 +9,8 @@ export interface AppNotification {
   type: string | null;
   title: string | null;
   body: string | null;
+  // ce que le back y a mis pour retrouver l'objet (requestId, conversationId...), selon le type ; vide sinon
+  data?: Record<string, unknown> | unknown[] | null;
   readAt: string | null;
   createdAt: string;
 }

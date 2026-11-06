@@ -2,18 +2,17 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { iconOf, producerDestination, timeAgo } from '../../core/notifications/notification-format';
+import { destinationFor, iconOf, timeAgo } from '../../core/notifications/notification-format';
 import { NotificationItemComponent, NotificationRow } from '../../core/notifications/notification-item.component';
 import { AppNotification, NotificationsService } from '../../core/notifications/notifications.service';
 import { PageSkeletonComponent } from '../../core/layout/page-skeleton/page-skeleton.component';
 import { messageOf } from '../producer/message-of';
-import { hasProducerRole } from '../producer/producer-role';
 
 // page "Notifications" : ce vers quoi mene "Voir toutes les notifications" de la cloche. Pas de maquette : elle reprend les lignes de la card
 // de la cloche, avec un filtre "Non lues" et "Tout marquer comme lu". Deux adresses, un seul composant : /notifications (site public,
 // utilisateur connecte) et /producer/notifications (dans l'espace producteur, pour ne pas en sortir).
 // Les 100 dernieres : c'est le plafond de `limit` cote back, qui n'a pas de pagination. Une notification qui mene quelque part
-// (producteur seulement, voir producerDestination) est un lien qui la marque lue en passant.
+// (voir destinationFor) est un lien qui la marque lue en passant.
 
 // plafond du back pour `limit`
 const FETCHED = 100;
@@ -46,12 +45,11 @@ export class NotificationsPageComponent {
   unread = computed(() => this.items().filter((n) => !n.readAt).length);
 
   rows = computed<NotificationRow[]>(() => {
-    const user = this.user();
-    const destination = user && hasProducerRole(user.roles) ? producerDestination : () => null;
+    const roles = this.user()?.roles;
 
     return this.items()
       .filter((n) => this.filter() === 'all' || !n.readAt)
-      .map((n) => ({ n, unread: !n.readAt, icon: iconOf(n.type), time: timeAgo(n.createdAt, this.now()), link: destination(n.type) }));
+      .map((n) => ({ n, unread: !n.readAt, icon: iconOf(n.type), time: timeAgo(n.createdAt, this.now()), link: destinationFor(roles, n.type, n.data) }));
   });
 
   constructor() {

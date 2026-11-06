@@ -1,3 +1,6 @@
+import { hasClientRole } from '../../features/client/client-role';
+import { hasProducerRole } from '../../features/producer/producer-role';
+
 // dessins des icones (trace svg, 24x24, trait seul) ; la cloche sert pour tout type que le back ajouterait plus tard
 const ICONS = {
   reply: 'M9 17l-5-5 5-5 M20 18v-2a4 4 0 0 0-4-4H4',
@@ -12,6 +15,7 @@ const ICONS = {
 const ICON_OF_TYPE: Record<string, keyof typeof ICONS> = {
   producer_replied: 'reply',
   quote_received: 'reply',
+  client_replied: 'reply',
   new_message: 'message',
   support_reply: 'message',
   request_expiring_soon: 'clock',
@@ -41,9 +45,41 @@ const PRODUCER_DESTINATION: Record<string, string> = {
   profile_rejected: '/producer/profile',
   profile_more_info_needed: '/producer/profile',
   support_reply: '/producer/support',
+  client_replied: '/producer/requests/quotes',
 };
 
 export const producerDestination = (type: string | null): string | null => (type && PRODUCER_DESTINATION[type]) || null;
+
+// idem pour le client : la section de son espace, et l'element precis quand le back a donne son identifiant (requestId pour une reponse,
+// un devis ou une demande qui expire ; conversationId pour un message). "Demande envoyee" ne mene qu'a la liste de ses demandes.
+const CLIENT_DESTINATION: Record<string, string> = {
+  request_sent: '/client/requests',
+  request_expiring_soon: '/client/requests',
+  producer_replied: '/client/requests',
+  quote_received: '/client/requests',
+  new_message: '/client/messages',
+};
+
+const idIn = (data: unknown, key: string): string | null => {
+  const value = data && !Array.isArray(data) ? (data as Record<string, unknown>)[key] : null;
+  return typeof value === 'string' && value ? value : null;
+};
+
+export function clientDestination(type: string | null, data: unknown): string | null {
+  const section = type ? CLIENT_DESTINATION[type] : undefined;
+  if (!section) return null;
+
+  const id = idIn(data, type === 'new_message' ? 'conversationId' : 'requestId');
+  return id && type !== 'request_sent' ? `${section}/${id}` : section;
+}
+
+// ou mene une notification, selon le role de celui qui la lit
+export function destinationFor(roles: readonly string[] | null | undefined, type: string | null, data: unknown): string | null {
+  if (!roles) return null;
+  if (hasProducerRole([...roles])) return producerDestination(type);
+  if (hasClientRole([...roles])) return clientDestination(type, data);
+  return null;
+}
 
 const DAY = 24 * 60 * 60 * 1000;
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();

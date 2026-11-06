@@ -10,7 +10,8 @@ export type NotificationType =
   | 'payment_failed'
   | 'subscription_renewing_soon'
   | 'profile_validated'
-  | 'new_review';
+  | 'new_review'
+  | 'client_replied';
 
 // GET et PUT /api/me/preferences. supportEmail est un reglage de l'admin (parametres de la plateforme), pas du producteur.
 export interface Preferences {

@@ -42,7 +42,7 @@ describe('NotificationsPageComponent', () => {
   afterEach(() => vi.useRealTimers());
 
   // roles : ceux de l'utilisateur connecte ; null = personne
-  async function create(list$: Observable<AppNotification[]> = of(LIST), roles: string[] | null = ['ROLE_CLIENT']): Promise<void> {
+  async function create(list$: Observable<AppNotification[]> = of(LIST), roles: string[] | null = ['ROLE_ADMIN']): Promise<void> {
     service = { latest: vi.fn(() => list$), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)), announceChange: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [NotificationsPageComponent],
@@ -225,10 +225,25 @@ describe('NotificationsPageComponent', () => {
       expect(rowOf('Profil validé').querySelector('a')!.classList.contains('bg-badge-bg')).toBe(false);
     });
 
-    it('un client n’a aucune destination', async () => {
-      await create(of(LIST), ['ROLE_CLIENT']);
+    it('un compte ni client ni producteur n’a aucune destination', async () => {
+      await create(of(LIST), ['ROLE_ADMIN']);
 
       expect(compiled.querySelectorAll('ul a').length).toBe(0);
+    });
+
+    it('pour un client, une notification mène à sa demande ou à sa conversation quand le back en donne l’identifiant', async () => {
+      const list = [
+        note('c1', { type: 'quote_received', title: 'Devis reçu', data: { requestId: 'r-1', conversationId: 'c-1' } }),
+        note('c2', { type: 'new_message', title: 'Nouveau message', data: { conversationId: 'c-9' } }),
+        note('c3', { type: 'request_expiring_soon', title: 'Demande expirant bientôt', data: { requestId: 'r-2' } }),
+        note('c4', { type: 'request_sent', title: 'Demande envoyée' }),
+      ];
+      await create(of(list), ['ROLE_CLIENT']);
+
+      expect(linkOf('Devis reçu')).toBe('/client/requests/r-1');
+      expect(linkOf('Nouveau message')).toBe('/client/messages/c-9');
+      expect(linkOf('Demande expirant bientôt')).toBe('/client/requests/r-2');
+      expect(linkOf('Demande envoyée')).toBe('/client/requests');
     });
 
     it('un type du client ne mène nulle part, même pour un producteur', async () => {

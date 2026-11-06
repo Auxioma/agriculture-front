@@ -19,6 +19,7 @@ const PREFERENCES: Preferences = {
     subscription_renewing_soon: false,
     profile_validated: true,
     new_review: false,
+    client_replied: true,
   },
   supportEmail: 'support@trouvemoi.com',
 };
@@ -104,8 +105,9 @@ describe('SettingsComponent', () => {
       'Abonnement bientôt renouvelé',
       'Profil validé',
       'Nouvel avis client',
+      'Réponse client',
     ]);
-    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'true', 'false', 'true', 'false']);
+    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'true', 'false', 'true', 'false', 'true']);
     expect(compiled.textContent).toContain("Une notification désactivée ne vous est plus envoyée, ni par e-mail ni dans l'application.");
   });
 
@@ -117,14 +119,14 @@ describe('SettingsComponent', () => {
     fixture.detectChanges();
 
     expect(service.updatePreferences).toHaveBeenCalledWith({ notifications: { payment_failed: false } });
-    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'false', 'false', 'true', 'false']);
+    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'false', 'false', 'true', 'false', 'true']);
     expect(compiled.querySelector('[role=status]')?.textContent).toContain('Préférences enregistrées.');
   });
 
   it('chaque interrupteur enregistre sa propre notification, à l inverse de son état', async () => {
     await create();
     open('Notifications');
-    const types = ['new_relevant_request', 'request_expiring_soon', 'new_message', 'payment_failed', 'subscription_renewing_soon', 'profile_validated', 'new_review'];
+    const types = ['new_relevant_request', 'request_expiring_soon', 'new_message', 'payment_failed', 'subscription_renewing_soon', 'profile_validated', 'new_review', 'client_replied'];
 
     types.forEach((type, i) => {
       const before = PREFERENCES.notifications[type as keyof Preferences['notifications']];
@@ -133,7 +135,7 @@ describe('SettingsComponent', () => {
 
       expect(service.updatePreferences).toHaveBeenLastCalledWith({ notifications: { [type]: !before } });
     });
-    expect(service.updatePreferences).toHaveBeenCalledTimes(7);
+    expect(service.updatePreferences).toHaveBeenCalledTimes(8);
   });
 
   it('remet l interrupteur comme avant et dit pourquoi quand l enregistrement échoue', async () => {
@@ -144,7 +146,7 @@ describe('SettingsComponent', () => {
     switches()[4].click();
     fixture.detectChanges();
 
-    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'true', 'false', 'true', 'false']);
+    expect(switches().map((s) => s.getAttribute('aria-checked'))).toEqual(['true', 'true', 'false', 'true', 'false', 'true', 'false', 'true']);
     expect(compiled.querySelector('[role=alert]')?.textContent).toContain('Notification inconnue.');
     expect(compiled.querySelector('[role=status]')).toBeNull();
   });

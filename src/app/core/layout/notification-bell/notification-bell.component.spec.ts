@@ -315,13 +315,29 @@ describe('NotificationBellComponent', () => {
       expect(linkOf('Un producteur a répondu')).toBeNull();
     });
 
-    it('un client n a aucune destination : bouton pour une non lue, rien pour une lue', async () => {
-      await create(of(LIST), ['ROLE_CLIENT']);
+    it('un compte ni client ni producteur n a aucune destination : bouton pour une non lue, rien pour une lue', async () => {
+      await create(of(LIST), ['ROLE_ADMIN']);
       openCard();
 
       expect(card()!.querySelectorAll('li a').length).toBe(0);
       expect(rowOf('Nouveau message').querySelector('button')).toBeTruthy();
       expect(rowOf('Profil validé').querySelector('button')).toBeNull();
+    });
+
+    it('pour un client, une notification mène à sa demande ou à sa conversation quand le back en donne l identifiant', async () => {
+      const list = [
+        note('c1', { type: 'producer_replied', title: 'Un producteur a répondu', data: { requestId: 'r-1', conversationId: 'c-1' } }),
+        note('c2', { type: 'new_message', title: 'Nouveau message', data: { conversationId: 'c-9' } }),
+        note('c3', { type: 'request_sent', title: 'Demande envoyée', data: [] }),
+        note('c4', { type: 'new_relevant_request', title: 'Nouvelle demande pertinente' }),
+      ];
+      await create(of(list), ['ROLE_CLIENT']);
+      openCard();
+
+      expect(linkOf('Un producteur a répondu')).toBe('/client/requests/r-1');
+      expect(linkOf('Nouveau message')).toBe('/client/messages/c-9');
+      expect(linkOf('Demande envoyée')).toBe('/client/requests');
+      expect(linkOf('Nouvelle demande pertinente')).toBeNull();
     });
 
     it('un visiteur sans compte n a pas de destination non plus', async () => {

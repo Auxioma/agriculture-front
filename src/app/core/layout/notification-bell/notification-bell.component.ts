@@ -3,16 +3,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { messageOf } from '../../../features/producer/message-of';
-import { hasProducerRole } from '../../../features/producer/producer-role';
 import { AuthService } from '../../auth/auth.service';
 import { AppNotification, NotificationsService } from '../../notifications/notifications.service';
 import { NotificationItemComponent, NotificationRow } from '../../notifications/notification-item.component';
-import { iconOf, producerDestination, timeAgo } from '../../notifications/notification-format';
+import { destinationFor, iconOf, timeAgo } from '../../notifications/notification-format';
 
 // card sous la cloche (semblable au figma) : les plus recentes, les non lues sur fond vert avec un point.
 // "Voir toutes les notifications" mene a la page des notifications (/notifications, ou /producer/notifications dans l'espace producteur).
 // Cliquer une notification la marque lue ; pour un producteur elle mene en plus a la section de son espace qui la concerne, d'apres son
-// type (le back ne donne pas d'identifiant, pas de requestId, etc.). Pour un client elle ne mene nulle part : a son cote de le dire.
+// type (voir destinationFor) ; pour un client, a sa demande ou a sa conversation quand le back en donne l'identifiant.
 //
 // Seulement pour un utilisateur connecte : la navbar ne l'affiche pas autrement, donc rien n'est demande au back pour un invite
 // ni cote serveur (SSR : pas de connexion la-bas).
@@ -52,15 +51,10 @@ export class NotificationBellComponent {
 
   unread = computed(() => this.items().filter((n) => !n.readAt).length);
   badge = computed(() => (this.unread() > BADGE_MAX ? `${BADGE_MAX}+` : String(this.unread())));
-  // seul un producteur a des destinations (voir producerDestination)
-  private destination = computed(() => {
-    const user = this.user();
-    return user && hasProducerRole(user.roles) ? producerDestination : () => null;
-  });
   rows = computed<NotificationRow[]>(() =>
     this.items()
       .slice(0, CARD_SIZE)
-      .map((n) => ({ n, unread: !n.readAt, icon: iconOf(n.type), time: timeAgo(n.createdAt, this.now()), link: this.destination()(n.type) })),
+      .map((n) => ({ n, unread: !n.readAt, icon: iconOf(n.type), time: timeAgo(n.createdAt, this.now()), link: destinationFor(this.user()?.roles, n.type, n.data) })),
   );
   hasAny = computed(() => this.items().length > 0);
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { iconOf, producerDestination, timeAgo } from './notification-format';
+import { clientDestination, destinationFor, iconOf, producerDestination, timeAgo } from './notification-format';
 
 describe('timeAgo', () => {
   // dates locales (pas d'ISO fixe) : "hier" se compte dans le fuseau du navigateur, le test doit tenir dans n'importe lequel
@@ -60,6 +60,7 @@ describe('producerDestination', () => {
     expect(producerDestination('support_reply')).toBe('/producer/support');
     expect(producerDestination('profile_more_info_needed')).toBe('/producer/profile');
     expect(producerDestination('subscription_duplicate_cancelled')).toBe('/producer/subscription');
+    expect(producerDestination('client_replied')).toBe('/producer/requests/quotes');
   });
 
   it('ne mene nulle part pour un type du client, un type inconnu ou sans type', () => {
@@ -68,6 +69,46 @@ describe('producerDestination', () => {
     expect(producerDestination('request_sent')).toBeNull();
     expect(producerDestination('un_type_futur')).toBeNull();
     expect(producerDestination(null)).toBeNull();
+  });
+});
+
+describe('clientDestination', () => {
+  it('mène une réponse, un devis ou une demande qui expire à la demande concernée quand le back en donne l’identifiant', () => {
+    expect(clientDestination('producer_replied', { requestId: 'r-1' })).toBe('/client/requests/r-1');
+    expect(clientDestination('quote_received', { requestId: 'r-2', conversationId: 'c-2' })).toBe('/client/requests/r-2');
+    expect(clientDestination('request_expiring_soon', { requestId: 'r-3' })).toBe('/client/requests/r-3');
+  });
+
+  it('mène un nouveau message à sa conversation, sinon à la messagerie', () => {
+    expect(clientDestination('new_message', { conversationId: 'c-9' })).toBe('/client/messages/c-9');
+    expect(clientDestination('new_message', null)).toBe('/client/messages');
+  });
+
+  it('se rabat sur la liste des demandes sans identifiant, ou quand data est vide (le back renvoie [])', () => {
+    expect(clientDestination('producer_replied', null)).toBe('/client/requests');
+    expect(clientDestination('quote_received', [])).toBe('/client/requests');
+    expect(clientDestination('request_expiring_soon', {})).toBe('/client/requests');
+    expect(clientDestination('request_sent', { requestId: 'r-1' })).toBe('/client/requests');
+  });
+
+  it('ne mène nulle part pour un type du producteur, un type inconnu ou sans type', () => {
+    expect(clientDestination('new_relevant_request', { requestId: 'r-1' })).toBeNull();
+    expect(clientDestination('un_type_futur', null)).toBeNull();
+    expect(clientDestination(null, null)).toBeNull();
+  });
+});
+
+describe('destinationFor', () => {
+  it('suit le rôle : producteur, équipe du producteur, client', () => {
+    expect(destinationFor(['ROLE_PRODUCER'], 'new_message', null)).toBe('/producer/messages');
+    expect(destinationFor(['ROLE_PRODUCER_TEAM'], 'new_message', null)).toBe('/producer/messages');
+    expect(destinationFor(['ROLE_CLIENT'], 'new_message', { conversationId: 'c-1' })).toBe('/client/messages/c-1');
+  });
+
+  it('ne mène nulle part sans rôle connu : visiteur, administrateur', () => {
+    expect(destinationFor(null, 'new_message', null)).toBeNull();
+    expect(destinationFor(undefined, 'new_message', null)).toBeNull();
+    expect(destinationFor(['ROLE_ADMIN'], 'new_message', null)).toBeNull();
   });
 });
 

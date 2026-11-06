@@ -15,10 +15,10 @@
         <li
           class="relative flex items-center justify-between gap-3 rounded-lg border border-grey-200 bg-white p-3"
         >
-          <div class="min-w-0">
+          <a [routerLink]="['/client/requests', r.id]" class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium">{{ r.title }}</p>
             <p class="text-xs text-grey-500">Envoyée le {{ formatDate(r.sentAt) }}</p>
-          </div>
+          </a>
 
           <div class="flex shrink-0 items-center gap-2">
             <span class="rounded-full px-3 py-1 text-xs font-medium" [class]="ui(r.status).badge">

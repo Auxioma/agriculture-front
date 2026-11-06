@@ -27,8 +27,8 @@ const SECTIONS: { id: SectionId; title: string; hint: string; icon: string[] }[]
 ];
 
 // les notifications qu'on peut couper : les trois du figma (dans son ordre) et les notifications producteur du cahier que le back envoie aussi.
-// Les autres partent toujours (refus ou complement de profil, invitation d'equipe, reponse du support...). "Reponse client" n'y est pas :
-// rien ne l'envoie encore. Le cahier dit "avis publie", le back envoie "Nouvel avis client" des la creation de l'avis.
+// Les autres partent toujours (refus ou complement de profil, invitation d'equipe, reponse du support...). Le cahier dit "avis publie",
+// le back envoie "Nouvel avis client" des la creation de l'avis ; "Reponse client" part quand le client accepte ou refuse un devis.
 const NOTIFICATIONS: { type: NotificationType; label: string }[] = [
   { type: 'new_relevant_request', label: 'Nouvelle demande pertinente' },
   { type: 'request_expiring_soon', label: 'Demande expirant bientôt' },
@@ -37,6 +37,7 @@ const NOTIFICATIONS: { type: NotificationType; label: string }[] = [
   { type: 'subscription_renewing_soon', label: 'Abonnement bientôt renouvelé' },
   { type: 'profile_validated', label: 'Profil validé' },
   { type: 'new_review', label: 'Nouvel avis client' },
+  { type: 'client_replied', label: 'Réponse client' },
 ];
 
 // langues et devises du cahier fonctionnel (internationalisation)
