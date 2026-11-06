@@ -98,9 +98,11 @@
         />
         <label for="acceptTerms" class="text-sm font-semibold leading-snug">
           J'accepte les
-          <a routerLink="/cgu" class="text-agri hover:underline">CGU</a>
+          <a routerLink="/legal/cgu" class="text-agri hover:underline">CGU</a>
           et la
-          <a routerLink="/cgu" class="text-agri hover:underline">politique de confidentialité</a>
+          <a routerLink="/legal/confidentialite" class="text-agri hover:underline"
+            >politique de confidentialité</a
+          >
         </label>
       </div>
       @if (form.controls.acceptTerms.invalid && form.controls.acceptTerms.touched) {
@@ -108,8 +110,8 @@
       }
 
       <!-- Erreur globale renvoyée par l'API (409, 422, etc.) -->
-      @if (errorMessage) {
-        <p class="form-error mt-1.5 text-xs text-danger">{{ errorMessage }}</p>
+      @if (errorMessage()) {
+        <p class="form-error mt-1.5 text-xs text-danger">{{ errorMessage() }}</p>
       }
 
       <button
