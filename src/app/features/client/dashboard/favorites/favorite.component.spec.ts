@@ -151,7 +151,18 @@ describe('FavoritesComponent', () => {
             target: { id: 'prod-9', slug: 'pommes', name: 'Pommes' },
           }),
         ),
-      ).toEqual(['/products', 'pommes']);
+      ).toEqual(['/producers']);
+    });
+
+    // pas de page par produit : un produit en favori mène aux producteurs qui le proposent
+    it('mène un produit en favori à /producers?productId=, les autres types sans paramètre', async () => {
+      await setup();
+      const component = fixture.componentInstance;
+      const product = makeFavorite({ targetType: 'product', targetId: 'prod-9', target: { id: 'prod-9', slug: 'pommes', name: 'Pommes' } });
+      const category = makeFavorite({ targetType: 'category', target: { id: 'cat-1', slug: 'miel', name: 'Miel' } });
+
+      expect(component.queryParams(product)).toEqual({ productId: 'prod-9' });
+      expect(component.queryParams(category)).toBeNull();
     });
   });
 });

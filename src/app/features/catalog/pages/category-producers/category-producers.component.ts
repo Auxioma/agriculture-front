@@ -3,12 +3,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { ProducerListComponent } from '../../catalog-layouts/producer-list/producer-list.component';
+import { FavoriteButtonComponent } from '../../../client/dashboard/favorites/favorite-button.component';
 import { CatalogService } from '../../services/catalog.service';
 
 /** Page /categories/:slug : retrouve la catégorie du slug, puis affiche la liste de ses producteurs */
 @Component({
   selector: 'app-category-producers',
-  imports: [RouterLink, ProducerListComponent],
+  imports: [RouterLink, ProducerListComponent, FavoriteButtonComponent],
   templateUrl: './category-producers.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

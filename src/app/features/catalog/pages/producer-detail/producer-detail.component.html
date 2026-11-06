@@ -152,8 +152,14 @@
                 availabilityLabel(product.seasonStartMonth, product.seasonEndMonth);
               @let quantity = productQuantity(product);
               @let price = productPrice(product);
-              <li class="rounded-lg border border-grey-200 bg-white p-3">
-                <p class="font-medium text-fonts">
+              <li class="relative rounded-lg border border-grey-200 bg-white p-3">
+                @if (product.productId) {
+                  <!-- le produit du catalogue en favori (Mes favoris, onglet Produits) -->
+                  <div class="absolute top-2 right-2">
+                    <app-favorite-button targetType="product" [targetId]="product.productId" />
+                  </div>
+                }
+                <p class="pr-12 font-medium text-fonts">
                   {{ product.name }}
                   @if (product.variety) {
                     · {{ product.variety }}

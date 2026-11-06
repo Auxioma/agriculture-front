@@ -12,7 +12,13 @@
     </ol>
   </nav>
 
-  <h1 class="mt-3 text-3xl font-bold text-fonts md:text-2xl">Producteurs</h1>
+  <div class="mt-3 flex items-center justify-between gap-3">
+    <h1 class="text-3xl font-bold text-fonts md:text-2xl">Producteurs</h1>
+    <!-- la catégorie en favori (Mes favoris, onglet Catégories) -->
+    @if (category(); as cat) {
+      <app-favorite-button targetType="category" [targetId]="cat.id" />
+    }
+  </div>
 
   @if (categoryNotFound()) {
     <p role="alert" class="mt-5 rounded-lg border border-danger p-4 text-danger">

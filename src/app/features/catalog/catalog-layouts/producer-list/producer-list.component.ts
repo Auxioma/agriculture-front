@@ -22,6 +22,7 @@ import {
   ProducerSort,
   ProducerSummary,
 } from '../../models/producer-summary.model';
+import { FavoriteButtonComponent } from '../../../client/dashboard/favorites/favorite-button.component';
 import { CatalogService } from '../../services/catalog.service';
 import { GeocodingService } from '../../services/geocoding.service';
 import { ProducerSearchService } from '../../services/producer-search.service';
@@ -42,7 +43,7 @@ const DEFAULT_RADIUS_KM = 25;
  */
 @Component({
   selector: 'app-producer-list',
-  imports: [RouterLink, NgOptimizedImage],
+  imports: [RouterLink, NgOptimizedImage, FavoriteButtonComponent],
   templateUrl: './producer-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -58,6 +59,12 @@ export class ProducerListComponent {
   readonly categorySlug = input<string | null>(null);
   /** Nom de la catégorie, pour le message « aucun résultat » */
   readonly categoryName = input<string | null>(null);
+  /** Texte de la recherche (/producers?q=) : nom de ferme, ville, produit ou catégorie */
+  readonly searchText = input('');
+  /** Produit du catalogue (/producers?productId=) : seulement les producteurs qui le proposent */
+  readonly productId = input<string | null>(null);
+  /** Localisation de départ (/producers?near=), reprise dans le champ « Localisation » des filtres */
+  readonly initialLocation = input('');
 
   private readonly catalog = inject(CatalogService);
   private readonly geocoding = inject(GeocodingService);
@@ -70,7 +77,8 @@ export class ProducerListComponent {
   });
 
   // ── Filtres : un signal par filtre ──
-  readonly location = signal('');
+  // linkedSignal : part de la localisation de l'adresse (?near=), puis le champ du panneau garde la main jusqu'à la prochaine adresse
+  readonly location = linkedSignal(() => this.initialLocation().trim());
   readonly radius = signal(DEFAULT_RADIUS_KM);
   readonly seasonalOnly = signal(false);
   readonly pickup = signal(false);
@@ -95,6 +103,8 @@ export class ProducerListComponent {
     if (categoryId === undefined) return null;
     return {
       categoryId,
+      text: this.searchText().trim(),
+      productId: this.productId(),
       location: this.location().trim(),
       radius: this.radius(),
       seasonalOnly: this.seasonalOnly(),

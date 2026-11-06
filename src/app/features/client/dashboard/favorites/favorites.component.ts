@@ -61,10 +61,16 @@ export class FavoritesComponent {
       case 'producer_profile':
         return ['/producers', slug];
       case 'product':
-        return ['/products', slug];
+        // * pas de page par produit : on mène aux producteurs qui le proposent (voir queryParams)
+        return ['/producers'];
       case 'category':
         return ['/categories', slug];
     }
+  }
+
+  /** Un produit en favori mène à /producers?productId= ; les autres types n'ont pas de paramètre */
+  queryParams(f: Favorite): Record<string, string> | null {
+    return f.targetType === 'product' && f.targetId ? { productId: f.targetId } : null;
   }
 
   remove(fav: Favorite): void {

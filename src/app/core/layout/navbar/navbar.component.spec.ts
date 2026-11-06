@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { NEVER, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NavbarComponent } from './navbar.component';
@@ -479,5 +479,81 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.isFilterCategorySelected('c1')).toBe(false);
+  });
+
+  describe('recherche', () => {
+    let navigate: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      authServiceMock.isAuthenticated.mockReturnValue(false);
+      authServiceMock.currentUser.mockReturnValue(null);
+      navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      fixture.detectChanges();
+    });
+
+    const type = (input: HTMLInputElement, value: string) => {
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    const desktopForm = () => fixture.nativeElement.querySelector('form[role="search"]') as HTMLFormElement;
+    const desktopInput = () => desktopForm().querySelector('input[type="search"]') as HTMLInputElement;
+
+    it('mène à la page de résultats avec le texte cherché', () => {
+      type(desktopInput(), '  tomates  ');
+
+      desktopForm().dispatchEvent(new Event('submit'));
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], { queryParams: { q: 'tomates', near: null, categoryId: null } });
+    });
+
+    it("n'ajoute rien à l'adresse quand les champs sont vides", () => {
+      desktopForm().dispatchEvent(new Event('submit'));
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], { queryParams: { q: null, near: null, categoryId: null } });
+    });
+
+    it('ajoute la localisation et la catégorie choisies dans le panneau de filtres', () => {
+      type(desktopInput(), 'miel');
+      fixture.componentInstance.toggleFilters();
+      fixture.detectChanges();
+      const place = fixture.nativeElement.querySelector('input[placeholder="Bordeaux"]') as HTMLInputElement;
+      type(place, 'Avignon');
+      (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).find((b) => b.textContent?.trim() === 'Fruits')!.click();
+      fixture.detectChanges();
+
+      (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).filter((b) => b.textContent?.trim() === 'Rechercher').pop()!.click();
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], { queryParams: { q: 'miel', near: 'Avignon', categoryId: 'c1' } });
+    });
+
+    it("ne garde qu'une catégorie : en cocher une autre remplace la première", () => {
+      fixture.componentInstance.toggleFilterCategory('c1');
+      fixture.componentInstance.toggleFilterCategory('c2');
+
+      expect(fixture.componentInstance.selectedFilterCategories()).toEqual(['c2']);
+    });
+
+    it('referme le panneau de filtres et le menu mobile une fois la recherche lancée', () => {
+      fixture.componentInstance.mobileMenuOpen.set(true);
+      fixture.componentInstance.filtersOpen.set(true);
+
+      fixture.componentInstance.search();
+
+      expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
+      expect(fixture.componentInstance.filtersOpen()).toBe(false);
+    });
+
+    it('la recherche du menu mobile se lance avec Entrée et partage le texte du champ desktop', () => {
+      fixture.componentInstance.mobileMenuOpen.set(true);
+      fixture.detectChanges();
+      const mobile = fixture.nativeElement.querySelector('#mobile-panel input[type="search"]') as HTMLInputElement;
+
+      type(mobile, 'pommes');
+      mobile.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], expect.objectContaining({ queryParams: expect.objectContaining({ q: 'pommes' }) }));
+      expect(desktopInput().value).toBe('pommes');
+    });
   });
 });

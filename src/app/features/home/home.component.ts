@@ -8,6 +8,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { FavoriteButtonComponent } from '../client/dashboard/favorites/favorite-button.component';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,7 +31,7 @@ const LABEL_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, FavoriteButtonComponent],
   templateUrl: './home.component.html',
 })
 export class HomeComponent {

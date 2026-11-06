@@ -182,6 +182,25 @@ describe('ProducerDetailComponent', () => {
     ]);
   });
 
+  // * Favoris : un cœur par produit du catalogue (productId), pas pour une ligne sans produit rattaché
+  it('met un cœur « Ajouter aux favoris » sur les produits du catalogue seulement', async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          { id: 'l1', productId: 'pommes', name: 'Pommes', seasonStartMonth: 9, seasonEndMonth: 12 },
+          { id: 'l2', name: 'Miel', seasonStartMonth: 1, seasonEndMonth: 12 },
+        ],
+      }),
+    );
+
+    const cards = ctx.host.querySelectorAll('#disponibilites > ul > li');
+    expect(cards[0].querySelector('app-favorite-button button')?.getAttribute('aria-label')).toBe('Ajouter aux favoris');
+    expect(cards[1].querySelector('app-favorite-button')).toBeNull();
+  });
+
   it("n'affiche ni volume, ni prix, ni labels, ni photos quand le producteur ne les a pas renseignés", async () => {
     const ctx = await setup();
 
