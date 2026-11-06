@@ -47,6 +47,11 @@ describe('NavbarComponent', () => {
     return Array.from(links).map((a) => a.textContent?.trim() ?? '');
   }
 
+  function hrefOf(text: string): string | null {
+    const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
+    return links.find((a) => a.textContent?.trim() === text)?.getAttribute('href') ?? null;
+  }
+
   // menu mobile fermé : un seul bouton "Catégories" dans le dom (le desktop)
   function openDesktopCategoriesDropdown(): void {
     const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
@@ -115,6 +120,16 @@ describe('NavbarComponent', () => {
     expect(texts).not.toContain('Mon exploitation');
   });
 
+  // pas de page 404 : un lien vers une route qui n'existe pas donne une page vide
+  it("devrait envoyer le client vers les pages de son espace, pas vers des routes qui n'existent pas", () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    expect(hrefOf('Mes annonces')).toBe('/client/requests');
+    expect(hrefOf('Mon compte')).toBe('/client/profile');
+  });
+
   it('devrait afficher la navigation producteur si le rôle ROLE_PRODUCER est présent', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
@@ -147,6 +162,14 @@ describe('NavbarComponent', () => {
     expect(links.length).toBe(1);
     expect(links[0].getAttribute('href')).toBe('/producer');
     expect(links[0].classList).toContain('bg-gold-wheat');
+  });
+
+  it('devrait envoyer le producteur voir les annonces dans son espace (/producer/requests)', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+
+    expect(hrefOf('Voir les annonces')).toBe('/producer/requests');
   });
 
   it('devrait appeler authService.logout() au clic sur Déconnexion', () => {

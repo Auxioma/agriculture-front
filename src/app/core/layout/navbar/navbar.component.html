@@ -145,7 +145,7 @@
       </div>
     </form>
 
-    <!--! Liens : aucune de ces routes n'existe encore dans app.routes.ts, seuls "/" et "/auth/*" sont réels -->
+    <!--! Liens : chaque route doit exister dans app.routes.ts, il n'y a pas de page 404 (un lien faux = page vide) -->
     <div
       class="hidden shrink-0 items-center gap-6 whitespace-nowrap text-sm font-medium text-grey-700 lg:flex"
     >
@@ -195,13 +195,14 @@
           "
         ></ng-container>
         <a routerLink="/producers">Producteurs</a>
-        <a routerLink="/my-requests">Mes annonces</a>
-        <a routerLink="/account">Mon compte</a>
-        <a routerLink="/messages">Messagerie</a>
+        <a routerLink="/client/requests">Mes annonces</a>
+        <a routerLink="/client/profile">Mon compte</a>
+        <!-- pas encore de page messagerie côté client : le tableau de bord montre les derniers messages -->
+        <a routerLink="/client">Messagerie</a>
       }
     </div>
 
-    <!--! Actions : pareil pour "/requests/new", "/notifications" etc. sont des routes à créer -->
+    <!-- Actions -->
     <div class="hidden shrink-0 items-center gap-4 whitespace-nowrap lg:flex">
       @if (!authService.isAuthenticated()) {
         <a
@@ -259,8 +260,11 @@
           Déconnexion
         </button>
         @if (isProducer()) {
+          <a routerLink="/producer" class="rounded-full bg-gold-wheat px-4 py-2 text-sm font-semibold text-fonts">
+            Mon exploitation
+          </a>
           <a
-            routerLink="/requests"
+            routerLink="/producer/requests"
             class="rounded-full bg-agri px-4 py-2 text-sm font-semibold text-white"
           >
             Voir les annonces
@@ -483,9 +487,9 @@
             "
           ></ng-container>
           <a routerLink="/producers" (click)="closeMobileMenu()">Producteurs</a>
-          <a routerLink="/my-requests" (click)="closeMobileMenu()">Mes annonces</a>
-          <a routerLink="/account" (click)="closeMobileMenu()">Mon compte</a>
-          <a routerLink="/messages" (click)="closeMobileMenu()">Messagerie</a>
+          <a routerLink="/client/requests" (click)="closeMobileMenu()">Mes annonces</a>
+          <a routerLink="/client/profile" (click)="closeMobileMenu()">Mon compte</a>
+          <a routerLink="/client" (click)="closeMobileMenu()">Messagerie</a>
         }
       </div>
 
@@ -522,7 +526,14 @@
           </button>
           @if (isProducer()) {
             <a
-              routerLink="/requests"
+              routerLink="/producer"
+              (click)="closeMobileMenu()"
+              class="rounded-full bg-gold-wheat px-4 py-2 text-center text-sm font-semibold text-fonts"
+            >
+              Mon exploitation
+            </a>
+            <a
+              routerLink="/producer/requests"
               (click)="closeMobileMenu()"
               class="rounded-full bg-agri px-4 py-2 text-center text-sm font-semibold text-white"
             >
