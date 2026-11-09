@@ -42,10 +42,10 @@ describe('ProfileService', () => {
     expect(http.expectOne(`${api}/me/preferences`).request.method).toBe('GET');
   });
 
-  it('PATCH /me/preferences envoie uniquement le patch', () => {
+  it('PUT /me/preferences envoie uniquement ce qui change', () => {
     service.updatePreferences({ currency: 'GBP' }).subscribe();
     const req = http.expectOne(`${api}/me/preferences`);
-    expect(req.request.method).toBe('PATCH');
+    expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual({ currency: 'GBP' });
   });
 

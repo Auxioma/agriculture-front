@@ -104,7 +104,7 @@ export class ProfileComponent implements OnInit {
   }
 
   setNotifications(change: Partial<NotificationSettings>): void {
-    this.savePreferences({ notificationSettings: change });
+    this.savePreferences({ notifications: change });
   }
 
   /**
@@ -119,7 +119,7 @@ export class ProfileComponent implements OnInit {
     this.preferences.set({
       ...previous,
       ...patch,
-      notificationSettings: { ...previous.notificationSettings, ...patch.notificationSettings },
+      notifications: { ...previous.notifications, ...patch.notifications },
     });
 
     this.profile.updatePreferences(patch).subscribe({

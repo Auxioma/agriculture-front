@@ -74,9 +74,9 @@ describe('ForgotPasswordComponent', () => {
       component.onSubmit();
 
       expect(authServiceMock.forgotPassword).toHaveBeenCalledWith({ email: 'test@test.com' });
-      expect(component.isSubmitted).toBe(true);
-      expect(component.isSubmitting).toBe(false);
-      expect(component.errorMessage).toBeNull();
+      expect(component.isSubmitted()).toBe(true);
+      expect(component.isSubmitting()).toBe(false);
+      expect(component.errorMessage()).toBeNull();
     });
 
     it('devrait afficher un message dédié pour une erreur 429', () => {
@@ -86,9 +86,9 @@ describe('ForgotPasswordComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe('Trop de tentatives, réessayez plus tard.');
-      expect(component.isSubmitted).toBe(false);
-      expect(component.isSubmitting).toBe(false);
+      expect(component.errorMessage()).toBe('Trop de tentatives, réessayez plus tard.');
+      expect(component.isSubmitted()).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
     });
 
     it('devrait afficher un message générique pour toute autre erreur', () => {
@@ -98,8 +98,8 @@ describe('ForgotPasswordComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe('Une erreur est survenue, réessayez.');
-      expect(component.isSubmitted).toBe(false);
+      expect(component.errorMessage()).toBe('Une erreur est survenue, réessayez.');
+      expect(component.isSubmitted()).toBe(false);
     });
   });
 
@@ -112,7 +112,7 @@ describe('ForgotPasswordComponent', () => {
     });
 
     it('devrait afficher la confirmation neutre (anti-énumération) après envoi', async () => {
-      component.isSubmitted = true;
+      component.isSubmitted.set(true);
       await detectChangesForced();
 
       expect(fixture.nativeElement.querySelector('form')).toBeNull();
@@ -120,7 +120,7 @@ describe('ForgotPasswordComponent', () => {
     });
 
     it("devrait afficher le message d'erreur dans le DOM", async () => {
-      component.errorMessage = 'Trop de tentatives, réessayez plus tard.';
+      component.errorMessage.set('Trop de tentatives, réessayez plus tard.');
       await detectChangesForced();
 
       expect(fixture.nativeElement.textContent).toContain(

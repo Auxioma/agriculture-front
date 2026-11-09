@@ -5,6 +5,7 @@ import { catchError, of } from 'rxjs';
 import { requestTitle, shortDate } from '../../request-format';
 import { Quote, RequestsService } from '../requests.service';
 import { formatPrice, quoteBadge } from './quote-format';
+import { PageSkeletonComponent } from '../../../../core/layout/page-skeleton/page-skeleton.component';
 
 type StatusFilter = 'all' | 'sent' | 'seen' | 'accepted' | 'draft' | 'archived';
 
@@ -31,7 +32,7 @@ const plain = (text: string): string => text.normalize('NFD').replace(/[̀-ͯ]/g
 @Component({
   selector: 'app-producer-quotes',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './quotes.component.html',
 })
 export class QuotesComponent {

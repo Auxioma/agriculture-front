@@ -139,7 +139,7 @@ describe('ResetPasswordComponent', () => {
         component.onSubmit();
 
         expect(routerNavigateSpy).toHaveBeenCalledWith(['/auth/login']);
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
       });
 
       it('devrait afficher "Lien invalide ou expiré." pour une erreur 422', async () => {
@@ -150,9 +150,9 @@ describe('ResetPasswordComponent', () => {
 
         component.onSubmit();
 
-        expect(component.errorMessage).toBe('Lien invalide ou expiré.');
+        expect(component.errorMessage()).toBe('Lien invalide ou expiré.');
         expect(routerNavigateSpy).not.toHaveBeenCalled();
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
       });
 
       it('devrait afficher un message générique pour toute autre erreur', async () => {
@@ -163,14 +163,14 @@ describe('ResetPasswordComponent', () => {
 
         component.onSubmit();
 
-        expect(component.errorMessage).toBe('Une erreur est survenue, réessayez.');
+        expect(component.errorMessage()).toBe('Une erreur est survenue, réessayez.');
       });
     });
 
     describe('rendu du template', () => {
       it("devrait afficher le message d'erreur dans le DOM", async () => {
         await setup('abc123');
-        component.errorMessage = 'Lien invalide ou expiré.';
+        component.errorMessage.set('Lien invalide ou expiré.');
         await detectChangesForced();
 
         expect(fixture.nativeElement.textContent).toContain('Lien invalide ou expiré.');

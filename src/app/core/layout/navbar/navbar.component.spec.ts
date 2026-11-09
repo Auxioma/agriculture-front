@@ -1,12 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Router, provideRouter } from '@angular/router';
+import { NEVER, of, throwError } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NavbarComponent } from './navbar.component';
 import { AuthService } from '../../auth/auth.service';
 import type { CurrentUser } from '../../auth/auth.models';
 import { CatalogService } from '../../../features/catalog/services/catalog.service';
 import { makeCategory } from '../../../features/catalog/testing/catalog.fixtures';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 // * Mock local, volontairement séparé de core/auth/auth.service.mock.ts :
 
@@ -39,10 +40,16 @@ describe('NavbarComponent', () => {
   let fixture: ComponentFixture<NavbarComponent>;
   let authServiceMock: NavbarAuthServiceMock;
   let catalogServiceMock: { getPopularCategories: ReturnType<typeof vi.fn> };
+  let notificationsMock: { latest: ReturnType<typeof vi.fn>; changes$: typeof NEVER };
 
   function linkTexts(): string[] {
     const links: NodeListOf<HTMLAnchorElement> = fixture.nativeElement.querySelectorAll('a');
     return Array.from(links).map((a) => a.textContent?.trim() ?? '');
+  }
+
+  function hrefOf(text: string): string | null {
+    const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
+    return links.find((a) => a.textContent?.trim() === text)?.getAttribute('href') ?? null;
   }
 
   // menu mobile fermé : un seul bouton "Catégories" dans le dom (le desktop)
@@ -56,12 +63,14 @@ describe('NavbarComponent', () => {
   beforeEach(async () => {
     authServiceMock = createNavbarAuthServiceMock();
     catalogServiceMock = { getPopularCategories: vi.fn(() => of(POPULAR_CATEGORIES)) };
+    notificationsMock = { latest: vi.fn(() => of([])), changes$: NEVER };
 
     await TestBed.configureTestingModule({
       imports: [NavbarComponent],
       providers: [
         { provide: AuthService, useValue: authServiceMock },
         { provide: CatalogService, useValue: catalogServiceMock },
+        { provide: NotificationsService, useValue: notificationsMock },
         provideRouter([]),
       ],
     }).compileComponents();
@@ -111,6 +120,56 @@ describe('NavbarComponent', () => {
     expect(texts).not.toContain('Mon exploitation');
   });
 
+  // pas de page 404 : un lien vers une route qui n'existe pas donne une page vide
+  it("devrait envoyer le client vers les pages de son espace, pas vers des routes qui n'existent pas", () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    expect(hrefOf('Mes annonces')).toBe('/client/requests');
+    expect(hrefOf('Messagerie')).toBe('/client/messages');
+  });
+
+  // comme « Mon exploitation » pour le producteur : un bouton doré vers son espace, pas un lien du menu
+  it('devrait afficher un seul bouton "Mon compte" doré pour le client, qui mène à son espace', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    const links = (Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[]).filter(
+      (a) => a.textContent?.trim() === 'Mon compte',
+    );
+
+    expect(links.length).toBe(1);
+    expect(links[0].getAttribute('href')).toBe('/client');
+    expect(links[0].classList).toContain('bg-gold-wheat');
+  });
+
+  it("n'affiche pas « Mon compte » à un producteur ni à un visiteur", () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+    expect(linkTexts()).not.toContain('Mon compte');
+
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+    expect(linkTexts()).not.toContain('Mon compte');
+  });
+
+  it('devrait agrandir le texte des champs de recherche (desktop et mobile) pour qu on voie ce que l on écrit', () => {
+    fixture.componentInstance.mobileMenuOpen.set(true);
+    fixture.detectChanges();
+
+    const inputs = Array.from(fixture.nativeElement.querySelectorAll('input[type="search"]')) as HTMLInputElement[];
+
+    expect(inputs.length).toBe(2);
+    inputs.forEach((input) => {
+      expect(input.classList).toContain('text-base');
+      expect(input.classList).not.toContain('text-sm');
+    });
+  });
+
   it('devrait afficher la navigation producteur si le rôle ROLE_PRODUCER est présent', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
@@ -143,6 +202,14 @@ describe('NavbarComponent', () => {
     expect(links.length).toBe(1);
     expect(links[0].getAttribute('href')).toBe('/producer');
     expect(links[0].classList).toContain('bg-gold-wheat');
+  });
+
+  it('devrait envoyer le producteur voir les annonces dans son espace (/producer/requests)', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+
+    expect(hrefOf('Voir les annonces')).toBe('/producer/requests');
   });
 
   it('devrait appeler authService.logout() au clic sur Déconnexion', () => {
@@ -333,12 +400,43 @@ describe('NavbarComponent', () => {
     expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeTruthy();
   });
 
-  it('ne devrait pas afficher la cloche de notifications pour un utilisateur connecté', () => {
+  it('devrait remplacer le lien de la cloche par la cloche à card pour un utilisateur connecté', () => {
     authServiceMock.isAuthenticated.mockReturnValue(true);
     authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('a[aria-label="Notifications"]')).toBeFalsy();
+    // * une seule cloche, la meme en mobile et en desktop (sinon deux lectures du back et deux cards)
+    expect(fixture.nativeElement.querySelectorAll('app-notification-bell')).toHaveLength(1);
+    expect(notificationsMock.latest).toHaveBeenCalledTimes(1);
+  });
+
+  it('devrait afficher la même cloche à un producteur', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_PRODUCER']));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('app-notification-bell')).toHaveLength(1);
+  });
+
+  it('ne devrait rien demander au back pour un invité', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(false);
+    authServiceMock.currentUser.mockReturnValue(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-notification-bell')).toBeNull();
+    expect(notificationsMock.latest).not.toHaveBeenCalled();
+  });
+
+  it('devrait ouvrir la card des notifications au clic sur la cloche d\'un utilisateur connecté', () => {
+    authServiceMock.isAuthenticated.mockReturnValue(true);
+    authServiceMock.currentUser.mockReturnValue(makeCurrentUser(['ROLE_CLIENT']));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('app-notification-bell button').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#notification-card')).toBeTruthy();
   });
 
   it('devrait ouvrir le panneau filtres au clic et afficher produit/localisation/date', () => {
@@ -381,5 +479,81 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.isFilterCategorySelected('c1')).toBe(false);
+  });
+
+  describe('recherche', () => {
+    let navigate: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      authServiceMock.isAuthenticated.mockReturnValue(false);
+      authServiceMock.currentUser.mockReturnValue(null);
+      navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      fixture.detectChanges();
+    });
+
+    const type = (input: HTMLInputElement, value: string) => {
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    };
+    const desktopForm = () => fixture.nativeElement.querySelector('form[role="search"]') as HTMLFormElement;
+    const desktopInput = () => desktopForm().querySelector('input[type="search"]') as HTMLInputElement;
+
+    it('mène à la page de résultats avec le texte cherché', () => {
+      type(desktopInput(), '  tomates  ');
+
+      desktopForm().dispatchEvent(new Event('submit'));
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], { queryParams: { q: 'tomates', near: null, categoryId: null } });
+    });
+
+    it("n'ajoute rien à l'adresse quand les champs sont vides", () => {
+      desktopForm().dispatchEvent(new Event('submit'));
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], { queryParams: { q: null, near: null, categoryId: null } });
+    });
+
+    it('ajoute la localisation et la catégorie choisies dans le panneau de filtres', () => {
+      type(desktopInput(), 'miel');
+      fixture.componentInstance.toggleFilters();
+      fixture.detectChanges();
+      const place = fixture.nativeElement.querySelector('input[placeholder="Bordeaux"]') as HTMLInputElement;
+      type(place, 'Avignon');
+      (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).find((b) => b.textContent?.trim() === 'Fruits')!.click();
+      fixture.detectChanges();
+
+      (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).filter((b) => b.textContent?.trim() === 'Rechercher').pop()!.click();
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], { queryParams: { q: 'miel', near: 'Avignon', categoryId: 'c1' } });
+    });
+
+    it("ne garde qu'une catégorie : en cocher une autre remplace la première", () => {
+      fixture.componentInstance.toggleFilterCategory('c1');
+      fixture.componentInstance.toggleFilterCategory('c2');
+
+      expect(fixture.componentInstance.selectedFilterCategories()).toEqual(['c2']);
+    });
+
+    it('referme le panneau de filtres et le menu mobile une fois la recherche lancée', () => {
+      fixture.componentInstance.mobileMenuOpen.set(true);
+      fixture.componentInstance.filtersOpen.set(true);
+
+      fixture.componentInstance.search();
+
+      expect(fixture.componentInstance.mobileMenuOpen()).toBe(false);
+      expect(fixture.componentInstance.filtersOpen()).toBe(false);
+    });
+
+    it('la recherche du menu mobile se lance avec Entrée et partage le texte du champ desktop', () => {
+      fixture.componentInstance.mobileMenuOpen.set(true);
+      fixture.detectChanges();
+      const mobile = fixture.nativeElement.querySelector('#mobile-panel input[type="search"]') as HTMLInputElement;
+
+      type(mobile, 'pommes');
+      mobile.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+      expect(navigate).toHaveBeenCalledWith(['/producers'], expect.objectContaining({ queryParams: expect.objectContaining({ q: 'pommes' }) }));
+      expect(desktopInput().value).toBe('pommes');
+    });
   });
 });

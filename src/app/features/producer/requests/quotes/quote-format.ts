@@ -7,8 +7,8 @@ const BADGES: Record<string, { label: string; style: string }> = {
   seen: { label: 'Vue', style: 'border border-grey-400 text-grey-700' },
   accepted: { label: 'Acceptée', style: 'bg-success text-white' },
   declined: { label: 'Refusée', style: 'bg-danger text-white' },
-  expired: { label: 'Expirée', style: 'border border-grey-400 text-grey-500' },
-  archived: { label: 'Archivée', style: 'border border-grey-400 text-grey-500' },
+  expired: { label: 'Expirée', style: 'border border-grey-400 text-secondary' },
+  archived: { label: 'Archivée', style: 'border border-grey-400 text-secondary' },
 };
 
 export const quoteBadge = (status: string): { label: string; style: string } =>

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject, isObservable } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RequestDetail, RequestsService, Unit } from '../requests.service';
 import { ReplyComponent } from './reply.component';
@@ -54,9 +54,9 @@ describe('ReplyComponent', () => {
   };
   let navigate: ReturnType<typeof vi.fn>;
 
-  async function create(request: RequestDetail = detail(), reply$: Observable<unknown> = of({ id: 'r1', status: 'sent' }), from: string | null = null): Promise<void> {
+  async function create(request: RequestDetail | Observable<RequestDetail> = detail(), reply$: Observable<unknown> = of({ id: 'r1', status: 'sent' }), from: string | null = null): Promise<void> {
     serviceMock = {
-      getDetail: vi.fn(() => of(request)),
+      getDetail: vi.fn(() => (isObservable(request) ? request : of(request))),
       getUnits: vi.fn(() => of(UNITS)),
       sendReply: vi.fn(() => reply$),
       uploadReplyFile: vi.fn(() => of(FILE)),
@@ -304,5 +304,19 @@ describe('ReplyComponent', () => {
 
     expect(text()).not.toContain('demande un abonnement actif');
     expect([...compiled.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Envoyer la réponse')!.disabled).toBe(false);
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<ReturnType<typeof detail>>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(detail());
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

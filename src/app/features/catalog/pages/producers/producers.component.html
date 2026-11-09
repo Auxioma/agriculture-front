@@ -10,6 +10,71 @@
 
   <h1 class="mt-3 text-3xl font-bold text-fonts md:text-2xl">Producteurs</h1>
 
+  <!-- Recherche : produit, ferme ou ville, et un lieu. Le formulaire change l'adresse (?q= et ?near=), la liste suit -->
+  <form
+    role="search"
+    (submit)="$event.preventDefault(); search(text.value, place.value)"
+    class="mt-4 flex flex-col gap-2 md:flex-row"
+  >
+    <label for="producers-q" class="sr-only">Rechercher un produit, une ferme ou une ville</label>
+    <input
+      #text
+      id="producers-q"
+      type="search"
+      name="q"
+      maxlength="100"
+      [value]="q()"
+      placeholder="Un produit, une ferme, une ville…"
+      class="min-w-0 flex-1 rounded-lg border border-grey-400 bg-white px-4 py-2.5 text-base focus-visible:outline-2 focus-visible:outline-agri"
+    />
+    <label for="producers-near" class="sr-only">Localisation</label>
+    <input
+      #place
+      id="producers-near"
+      type="text"
+      name="near"
+      autocomplete="postal-code"
+      [value]="near()"
+      placeholder="Où ? Ville ou code postal"
+      class="min-w-0 rounded-lg border border-grey-400 bg-white px-4 py-2.5 text-base focus-visible:outline-2 focus-visible:outline-agri md:w-64"
+    />
+    <button
+      type="submit"
+      class="cursor-pointer rounded-lg bg-agri px-6 py-2.5 text-base font-semibold text-white hover:opacity-90"
+    >
+      Rechercher
+    </button>
+  </form>
+
+  @if (q() || near()) {
+    <p class="mt-3 text-sm text-grey-700">
+      Résultats
+      @if (q()) {
+        pour « {{ q() }} »
+      }
+      @if (near()) {
+        près de {{ near() }}
+      }
+    </p>
+  }
+
+  @if (productId()) {
+    <p class="mt-3 text-sm text-grey-700">Producteurs qui proposent ce produit.</p>
+  }
+
+  <!-- retient la recherche (texte, lieu, catégorie, produit) dans Mes favoris, onglet Recherches -->
+  <app-save-search-button
+    [text]="q()"
+    [place]="near()"
+    [categoryId]="categoryId()"
+    [productId]="productId()"
+  />
+
   <!-- categoryId null : aucun filtre de catégorie, tous les producteurs actifs -->
-  <app-producer-list [categoryId]="null" />
+  <app-producer-list
+    [categoryId]="categoryId()"
+    [productId]="productId()"
+    [searchText]="q()"
+    [initialLocation]="near()"
+  />
 </section>

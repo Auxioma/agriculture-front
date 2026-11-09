@@ -24,6 +24,10 @@ export class ProducerSearchService {
     // * Sans catégorie, on n'envoie pas le paramètre : un categoryId vide serait refusé par le back (UUID invalide)
     if (query.categoryId) params = params.set('categoryId', query.categoryId);
 
+    // * Recherche texte (?q=) : le back en fait un ET entre les mots, sur la ferme, la ville, les produits et leur catégorie
+    if (query.text) params = params.set('q', query.text);
+    if (query.productId) params = params.set('productId', query.productId);
+
     if (query.seasonalOnly) params = params.set('seasonal', true);
     if (query.pickup) params = params.set('pickupAvailable', true);
     if (query.delivery) params = params.set('deliveryAvailable', true);

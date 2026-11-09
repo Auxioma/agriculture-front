@@ -1,12 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { AuthService } from '../../auth/auth.service';
 import { CatalogService } from '../../../features/catalog/services/catalog.service';
 import { Category } from '../../../features/catalog/models/category.model';
 import { hasProducerRole } from '../../../features/producer/producer-role';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 // * Seules Default (invité), Client et Producteur sont reprises ici -! pas la variante Admin
 // * (les admins n'utilisent pas ce front public de toute facon).
 //
@@ -32,18 +33,22 @@ interface MenuLink {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, NgTemplateOutlet],
+  imports: [RouterLink, NgTemplateOutlet, NotificationBellComponent],
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent {
   authService = inject(AuthService);
   private catalog = inject(CatalogService);
+  private router = inject(Router);
 
   mobileMenuOpen = signal(false);
   openMenu = signal<MenuId | null>(null);
   filtersOpen = signal(false);
   // ids des catégories cochées dans le panneau de filtres
   selectedFilterCategories = signal<string[]>([]);
+  // ce qui est tapé dans la recherche (desktop et mobile partagent les mêmes valeurs) et dans « Localisation » du panneau de filtres
+  searchText = signal('');
+  searchLocation = signal('');
 
   // * Le rôle reste calculé ici plutôt que sur AuthService voir NOTES.md.
   isProducer = computed(() => hasProducerRole(this.authService.currentUser()?.roles ?? []));
@@ -99,12 +104,23 @@ export class NavbarComponent {
     this.filtersOpen.update((open) => !open);
   }
 
+  // une seule catégorie à la fois : la recherche (back et page de résultats) n'en filtre qu'une
   toggleFilterCategory(categoryId: string): void {
     this.selectedFilterCategories.update((selected) =>
-      selected.includes(categoryId)
-        ? selected.filter((id) => id !== categoryId)
-        : [...selected, categoryId],
+      selected.includes(categoryId) ? [] : [categoryId],
     );
+  }
+
+  // mène à la page de résultats (/producers) avec ce qui est renseigné ; un champ vide n'ajoute rien à l'adresse
+  search(): void {
+    this.router.navigate(['/producers'], {
+      queryParams: {
+        q: this.searchText().trim() || null,
+        near: this.searchLocation().trim() || null,
+        categoryId: this.selectedFilterCategories()[0] ?? null,
+      },
+    });
+    this.closeMobileMenu();
   }
 
   isFilterCategorySelected(categoryId: string): boolean {

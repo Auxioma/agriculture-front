@@ -1,10 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { catchError, of } from 'rxjs';
 import { AvailableRequest } from '../dashboard/dashboard.model';
 import { requestDetails, requestTitle } from '../request-format';
 import { RequestsService } from './requests.service';
+import { PageSkeletonComponent } from '../../../core/layout/page-skeleton/page-skeleton.component';
+import { LoadMoreComponent } from '../../../core/layout/load-more/load-more.component';
+import { PagedList } from '../../../core/http/paged-list';
 
 type Toggle = 'urgent' | 'near' | 'volume' | 'budget';
 
@@ -23,12 +24,16 @@ const CHIP = 'shrink-0 cursor-pointer appearance-none field-sizing-content round
 @Component({
   selector: 'app-producer-requests',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent, LoadMoreComponent],
   templateUrl: './requests.component.html',
 })
 export class RequestsComponent {
+  private service = inject(RequestsService);
+
+  // par pages (« Voir plus ») : les chips et les listes ne trient que les demandes deja chargees
+  readonly list = new PagedList((page) => this.service.getAvailablePage(page), (r) => r.requestId);
   // undefined = chargement, null = erreur (back injoignable, compte sans profil producteur...)
-  requests = toSignal(inject(RequestsService).getAvailable().pipe(catchError(() => of(null))));
+  requests = this.list.items;
 
   private toggles = signal<Toggle[]>([]);
   product = signal('');
@@ -72,7 +77,7 @@ export class RequestsComponent {
   // un seul badge par carte, comme sur la maquette : urgent d'abord, puis volume, puis nouveau
   badge(request: AvailableRequest): { label: string; style: string } | null {
     if (request.urgent) return { label: 'Urgent', style: 'bg-warning text-fonts' };
-    if (request.highVolume) return { label: 'Volume élevé', style: 'border border-grey-400 text-grey-500' };
+    if (request.highVolume) return { label: 'Volume élevé', style: 'border border-grey-400 text-secondary' };
     if (request.isNew) return { label: 'Nouveau', style: 'bg-agri text-white' };
     return null;
   }

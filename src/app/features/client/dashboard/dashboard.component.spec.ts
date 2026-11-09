@@ -89,6 +89,18 @@ describe('ClientDashboardComponent', () => {
     });
   });
 
+  describe('liens', () => {
+    it('chaque demande mène à son détail, chaque conversation à son fil', async () => {
+      await setup(fullSummary);
+
+      const requests = Array.from(section('requests-title').querySelectorAll('li a')).map((a) => a.getAttribute('href'));
+      const messages = Array.from(section('messages-title').querySelectorAll('li a')).map((a) => a.getAttribute('href'));
+
+      expect(requests).toEqual(['/client/requests/r1', '/client/requests/r2']);
+      expect(messages).toEqual(['/client/messages/m1', '/client/messages/m2']);
+    });
+  });
+
   describe('en-tête', () => {
     it('affiche le prénom de l’utilisateur', async () => {
       await setup(fullSummary);

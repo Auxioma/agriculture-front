@@ -13,10 +13,14 @@ export class ProducerDetailService {
     return this.http.get<ProducerDetail>(`${this.apiUrl}/producers/${encodeURIComponent(id)}`);
   }
 
-  /** GET /api/producers/{id}/reviews : avis publiés, du plus récent au plus ancien, avec la moyenne */
-  getReviews(id: string) {
+  /**
+   * GET /api/producers/{id}/reviews : avis publiés, du plus récent au plus ancien, avec la moyenne et le nombre de TOUS les avis.
+   * Par pages (vingt par défaut) : sans `page`, la première.
+   */
+  getReviews(id: string, page = 1) {
     return this.http.get<ProducerReviews>(
       `${this.apiUrl}/producers/${encodeURIComponent(id)}/reviews`,
+      { params: page > 1 ? { page } : {} },
     );
   }
 }

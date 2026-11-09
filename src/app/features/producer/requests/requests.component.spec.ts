@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, map, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AvailableRequest } from '../dashboard/dashboard.model';
 import { RequestsComponent } from './requests.component';
@@ -35,10 +35,14 @@ describe('RequestsComponent', () => {
   let fixture: ComponentFixture<RequestsComponent>;
   let compiled: HTMLElement;
 
-  async function create(data$: Observable<AvailableRequest[]> = of(REQUESTS)): Promise<void> {
+  let service: { getAvailablePage: ReturnType<typeof vi.fn> };
+
+  // total : celui que le back annonce pour toutes les pages (null = liste entiere recue)
+  async function create(data$: Observable<AvailableRequest[]> = of(REQUESTS), total: number | null = null): Promise<void> {
+    service = { getAvailablePage: vi.fn(() => data$.pipe(map((items) => ({ items, total })))) };
     await TestBed.configureTestingModule({
       imports: [RequestsComponent],
-      providers: [provideRouter([]), { provide: RequestsService, useValue: { getAvailable: vi.fn(() => data$) } }],
+      providers: [provideRouter([]), { provide: RequestsService, useValue: service }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RequestsComponent);
@@ -148,5 +152,62 @@ describe('RequestsComponent', () => {
     expect(compiled.textContent).not.toContain('Aperçu limité');
     expect(compiled.querySelector('a[href="/producer/subscription"]')).toBeNull();
     expect((chip('Budget') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof REQUESTS>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(REQUESTS);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
+  });
+
+  describe('pages', () => {
+    const more = () => [...compiled.querySelectorAll('app-load-more button')].find((b) => b.textContent?.trim() === 'Voir plus') as HTMLElement | undefined;
+
+    it('demande la première page, trente par trente', async () => {
+      await create();
+
+      expect(service.getAvailablePage).toHaveBeenCalledWith(1);
+    });
+
+    it('propose « Voir plus » quand il y a plus de demandes que chargées, pas sinon', async () => {
+      await create(of(REQUESTS), 45);
+      expect(more()).toBeDefined();
+      expect(compiled.textContent).toContain('3 sur 45');
+
+      TestBed.resetTestingModule();
+      await create(of(REQUESTS), 3);
+      expect(more()).toBeUndefined();
+    });
+
+    it('charge la page suivante et la met à la suite', async () => {
+      await create(of(REQUESTS), 4);
+      service.getAvailablePage.mockReturnValue(of({ items: [request({ product: 'Fraises' })], total: 4 }));
+
+      more()!.click();
+      fixture.detectChanges();
+
+      expect(service.getAvailablePage).toHaveBeenLastCalledWith(2);
+      expect(rows().length).toBe(4);
+      expect(rows()[3]).toContain('Fraises');
+      expect(more()).toBeUndefined();
+    });
+
+    it('prévient que les filtres ne portent que sur les demandes affichées tant qu\'il en reste à charger', async () => {
+      await create(of(REQUESTS), 45);
+      expect(compiled.textContent).not.toContain('Les filtres ne portent que');
+
+      chip('Urgentes').click();
+      fixture.detectChanges();
+
+      expect(compiled.textContent).toContain('Les filtres ne portent que sur les demandes affichées.');
+    });
   });
 });

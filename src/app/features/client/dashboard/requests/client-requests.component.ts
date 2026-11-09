@@ -8,28 +8,10 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ClientRequestItem, RequestStatus } from './client-request.model';
+import { Filter, STATUS_UI } from './request-status';
 import { ClientRequestsService } from './client-requests.service';
 import { PageHeaderComponent } from '../../ui/page-header.component';
 import { FilterTabsComponent } from '../../ui/filter-tabs.component';
-
-type Filter = 'all' | 'pending' | 'replied' | 'archived';
-
-const STATUS_UI: Record<RequestStatus, { label: string; filter: Filter; badge: string }> = {
-  sent: { label: 'En attente', filter: 'pending', badge: 'bg-gold-wheat text-white' },
-  waiting_replies: { label: 'En attente', filter: 'pending', badge: 'bg-gold-wheat text-white' },
-  replies_received: { label: 'Réponses reçues', filter: 'replied', badge: 'bg-agri text-white' },
-  conversation_open: {
-    label: 'Conversation ouverte',
-    filter: 'replied',
-    badge: 'bg-agri text-white',
-  },
-  archived: {
-    label: 'Archivée',
-    filter: 'archived',
-    badge: 'border border-grey-400 text-grey-700',
-  },
-  expired: { label: 'Expirée', filter: 'archived', badge: 'border border-grey-400 text-grey-700' },
-};
 
 @Component({
   selector: 'app-client-requests',

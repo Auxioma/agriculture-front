@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -39,8 +39,9 @@ export class ResetPasswordComponent {
     { validators: passwordsMatchValidator },
   );
 
-  isSubmitting = false;
-  errorMessage: string | null = null;
+  // signaux : sans zone.js, une propriété simple changée dans un subscribe n'est pas réaffichée
+  isSubmitting = signal(false);
+  errorMessage = signal<string | null>(null);
 
   constructor() {
     const tokenFromUrl = this.route.snapshot.queryParamMap.get('token');
@@ -54,8 +55,8 @@ export class ResetPasswordComponent {
   onSubmit(): void {
     if (this.form.invalid || this.tokenMissing) return;
 
-    this.isSubmitting = true;
-    this.errorMessage = null;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
 
     this.authService
       .resetPassword({
@@ -64,13 +65,14 @@ export class ResetPasswordComponent {
       })
       .subscribe({
         next: () => {
-          this.isSubmitting = false;
+          this.isSubmitting.set(false);
           this.router.navigate(['/auth/login']);
         },
         error: (err: HttpErrorResponse) => {
-          this.isSubmitting = false;
-          this.errorMessage =
-            err.status === 422 ? 'Lien invalide ou expiré.' : 'Une erreur est survenue, réessayez.';
+          this.isSubmitting.set(false);
+          this.errorMessage.set(
+            err.status === 422 ? 'Lien invalide ou expiré.' : 'Une erreur est survenue, réessayez.',
+          );
         },
       });
   }

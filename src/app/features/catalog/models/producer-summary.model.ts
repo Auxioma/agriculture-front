@@ -38,6 +38,10 @@ export type ProducerSort = 'relevance' | 'distance' | 'popularity' | 'newest';
 export interface ProducerQuery {
   /** null = pas de filtre de catégorie : tous les producteurs actifs (page Producteurs) */
   categoryId: string | null;
+  /** Texte libre de la recherche (nom de ferme, ville, produit, catégorie) ; vide = pas de recherche texte */
+  text: string;
+  /** Produit du catalogue : seulement les producteurs qui le proposent (un produit en favori y mène) ; null = pas de filtre */
+  productId: string | null;
   location: string;
   radius: number;
   seasonalOnly: boolean;

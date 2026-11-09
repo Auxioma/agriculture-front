@@ -1,7 +1,11 @@
 import { Routes } from '@angular/router';
 import { AUTH_ROUTES } from './features/auth/auth.routes';
+import { authGuard } from './core/auth/auth.guard';
 import { producerGuard } from './features/producer/producer.guard';
 import { clientGuard } from './features/client/client.guard';
+
+// pages de l'espace producteur chargees d'avance pour un producteur connecte, les plus ouvertes (voir ProducerPreloading)
+const PRELOAD = { preload: true };
 
 export const routes: Routes = [
   {
@@ -48,6 +52,7 @@ export const routes: Routes = [
   },
   {
     path: 'producer',
+    data: PRELOAD,
     canActivate: [producerGuard],
     loadComponent: () =>
       import('./features/producer/producer-layout/producer-layout.component').then(
@@ -56,6 +61,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        data: PRELOAD,
         loadComponent: () =>
           import('./features/producer/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent,
@@ -63,6 +69,7 @@ export const routes: Routes = [
       },
       {
         path: 'requests',
+        data: PRELOAD,
         loadComponent: () =>
           import('./features/producer/requests/requests.component').then((m) => m.RequestsComponent),
       },
@@ -83,6 +90,7 @@ export const routes: Routes = [
       // apres requests/received et requests/quotes : sinon "received" ou "quotes" serait pris pour un identifiant de demande
       {
         path: 'requests/:id',
+        data: PRELOAD,
         loadComponent: () => import('./features/producer/requests/detail/detail.component').then((m) => m.DetailComponent),
       },
       {
@@ -94,7 +102,20 @@ export const routes: Routes = [
         loadComponent: () => import('./features/producer/requests/report/report.component').then((m) => m.ReportComponent),
       },
       {
+        path: 'messages',
+        data: PRELOAD,
+        loadComponent: () => import('./features/producer/messages/messages.component').then((m) => m.MessagesComponent),
+        children: [
+          {
+            path: ':id',
+            data: PRELOAD,
+            loadComponent: () => import('./features/producer/messages/thread/thread.component').then((m) => m.ThreadComponent),
+          },
+        ],
+      },
+      {
         path: 'subscription',
+        data: PRELOAD,
         loadComponent: () => import('./features/producer/subscription/subscription.component').then((m) => m.SubscriptionComponent),
       },
       {
@@ -103,10 +124,53 @@ export const routes: Routes = [
           import('./features/producer/subscription/payment-methods/payment-methods.component').then((m) => m.PaymentMethodsComponent),
       },
       {
+        path: 'products',
+        data: PRELOAD,
+        loadComponent: () => import('./features/producer/products/products.component').then((m) => m.ProductsComponent),
+      },
+      {
+        path: 'profile',
+        data: PRELOAD,
+        loadComponent: () => import('./features/producer/profile/profile.component').then((m) => m.ProfileComponent),
+      },
+      {
+        path: 'profile/edit',
+        loadComponent: () => import('./features/producer/profile/profile-edit.component').then((m) => m.ProfileEditComponent),
+      },
+      {
+        path: 'profile/settings',
+        loadComponent: () => import('./features/producer/settings/settings.component').then((m) => m.SettingsComponent),
+      },
+      {
+        path: 'profile/zones',
+        loadComponent: () => import('./features/producer/zones/zones.component').then((m) => m.ZonesComponent),
+      },
+      {
+        path: 'profile/reviews',
+        loadComponent: () => import('./features/producer/reviews/reviews.component').then((m) => m.ReviewsComponent),
+      },
+      {
+        path: 'profile/statistics',
+        loadComponent: () => import('./features/producer/statistics/statistics.component').then((m) => m.StatisticsComponent),
+      },
+      {
+        path: 'profile/labels',
+        loadComponent: () => import('./features/producer/labels/labels.component').then((m) => m.LabelsComponent),
+      },
+      {
         path: 'support',
         loadComponent: () => import('./features/producer/support/support.component').then((m) => m.SupportComponent),
       },
+      {
+        path: 'notifications',
+        loadComponent: () => import('./features/notifications/notifications-page.component').then((m) => m.NotificationsPageComponent),
+      },
     ],
+  },
+  {
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/notifications/notifications-page.component').then((m) => m.NotificationsPageComponent),
   },
   {
     path: 'client',
@@ -129,6 +193,29 @@ export const routes: Routes = [
           import('./features/client/dashboard/requests/client-requests.component').then(
             (m) => m.ClientRequestsComponent,
           ),
+      },
+      {
+        path: 'requests/:id',
+        loadComponent: () =>
+          import('./features/client/dashboard/requests/detail/request-detail.component').then(
+            (m) => m.RequestDetailComponent,
+          ),
+      },
+      {
+        path: 'messages',
+        loadComponent: () =>
+          import('./features/client/dashboard/messages/client-messages.component').then(
+            (m) => m.ClientMessagesComponent,
+          ),
+        children: [
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/client/dashboard/messages/client-thread.component').then(
+                (m) => m.ClientThreadComponent,
+              ),
+          },
+        ],
       },
       {
         path: 'favorites',
@@ -172,5 +259,11 @@ export const routes: Routes = [
       import('./features/catalog/pages/producer-detail/producer-detail.component').then(
         (m) => m.ProducerDetailComponent,
       ),
+  },
+  // toujours la dernière : toute adresse inconnue, au lieu d'une page vide
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
   },
 ];

@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AvailableRequest } from '../dashboard/dashboard.model';
+import { ReferenceDataService } from '../reference-data.service';
+import { getAllPages, getPage } from '../../../core/http/paged';
 
 // new = a traiter, treated = reponse envoyee ou refus, archived = mise de cote par le producteur, closed = plus
 // ouverte (expiree, annulee...)
@@ -108,21 +110,25 @@ export interface QuoteDetail extends Quote {
   decidedAt?: string | null;
 }
 
+const PAGE_SIZE = 30;
+
 @Injectable({ providedIn: 'root' })
 export class RequestsService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiURL;
+  private reference = inject(ReferenceDataService);
 
-  getAvailable() {
-    return this.http.get<AvailableRequest[]>(`${this.apiUrl}/producer/requests/available`);
+  // ces deux listes sont paginees et peuvent etre longues : une page a la fois (« Voir plus »), avec le total de toutes les pages
+  getAvailablePage(page: number) {
+    return getPage<AvailableRequest>(this.http, `${this.apiUrl}/producer/requests/available`, { page, pageSize: PAGE_SIZE });
   }
 
-  getReceived() {
-    return this.http.get<ReceivedRequest[]>(`${this.apiUrl}/producer/requests/received`);
+  getReceivedPage(page: number) {
+    return getPage<ReceivedRequest>(this.http, `${this.apiUrl}/producer/requests/received`, { page, pageSize: PAGE_SIZE });
   }
 
   getQuotes() {
-    return this.http.get<Quote[]>(`${this.apiUrl}/producer/quotes`);
+    return getAllPages<Quote>(this.http, `${this.apiUrl}/producer/quotes`);
   }
 
   getQuote(replyId: string) {
@@ -134,7 +140,7 @@ export class RequestsService {
   }
 
   getUnits() {
-    return this.http.get<Unit[]>(`${this.apiUrl}/units`);
+    return this.reference.units();
   }
 
   sendReply(requestId: string, payload: ReplyPayload) {

@@ -341,4 +341,13 @@ describe('CategoryProducersComponent', () => {
     expect(textOf(ctx.host)).toContain("Cette catégorie n'existe pas");
     ctx.http.expectNone((r) => r.url === producersUrl);
   });
+
+  it('met un cœur « Ajouter aux favoris » à côté du titre pour mettre la catégorie en favori', async () => {
+    const ctx = await setup();
+
+    const heart = ctx.host.querySelector('h1')?.parentElement?.querySelector('app-favorite-button');
+
+    expect(heart).toBeTruthy();
+    expect(heart?.querySelector('button')?.getAttribute('aria-label')).toBe('Ajouter aux favoris');
+  });
 });

@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Favorite } from './favorite.model';
 import { FavoriteService } from './favorite.service';
 import { FavoritesComponent } from './favorites.component';
+import { SavedSearch } from './saved-search.model';
+import { SavedSearchService } from './saved-search.service';
 
 function makeFavorite(overrides: Partial<Favorite> = {}): Favorite {
   return {
@@ -24,6 +26,17 @@ function makeFavorite(overrides: Partial<Favorite> = {}): Favorite {
   };
 }
 
+function makeSavedSearch(overrides: Partial<SavedSearch> = {}): SavedSearch {
+  return {
+    id: 'search-1',
+    name: 'Tomates, Lyon',
+    criteria: { q: 'tomates', near: 'Lyon' },
+    notificationsEnabled: false,
+    createdAt: '2026-11-06T10:00:00+00:00',
+    ...overrides,
+  };
+}
+
 describe('FavoritesComponent', () => {
   let fixture: ComponentFixture<FavoritesComponent>;
   let el: HTMLElement;
@@ -31,6 +44,10 @@ describe('FavoritesComponent', () => {
   const serviceMock = {
     favorites: favorites.asReadonly(),
     load: vi.fn(),
+    remove: vi.fn(),
+  };
+  const savedSearchMock = {
+    list: vi.fn(),
     remove: vi.fn(),
   };
 
@@ -47,10 +64,16 @@ describe('FavoritesComponent', () => {
     favorites.set([]);
     serviceMock.load.mockReset().mockReturnValue(of([]));
     serviceMock.remove.mockReset().mockReturnValue(of(undefined));
+    savedSearchMock.list.mockReset().mockReturnValue(of([]));
+    savedSearchMock.remove.mockReset().mockReturnValue(of(undefined));
 
     TestBed.configureTestingModule({
       imports: [FavoritesComponent],
-      providers: [provideRouter([]), { provide: FavoriteService, useValue: serviceMock }],
+      providers: [
+        provideRouter([]),
+        { provide: FavoriteService, useValue: serviceMock },
+        { provide: SavedSearchService, useValue: savedSearchMock },
+      ],
     });
   });
 
@@ -151,7 +174,138 @@ describe('FavoritesComponent', () => {
             target: { id: 'prod-9', slug: 'pommes', name: 'Pommes' },
           }),
         ),
-      ).toEqual(['/products', 'pommes']);
+      ).toEqual(['/producers']);
+    });
+
+    // pas de page par produit : un produit en favori mène aux producteurs qui le proposent
+    it('mène un produit en favori à /producers?productId=, les autres types sans paramètre', async () => {
+      await setup();
+      const component = fixture.componentInstance;
+      const product = makeFavorite({
+        targetType: 'product',
+        targetId: 'prod-9',
+        target: { id: 'prod-9', slug: 'pommes', name: 'Pommes' },
+      });
+      const category = makeFavorite({
+        targetType: 'category',
+        target: { id: 'cat-1', slug: 'miel', name: 'Miel' },
+      });
+
+      expect(component.queryParams(product)).toEqual({ productId: 'prod-9' });
+      expect(component.queryParams(category)).toBeNull();
+    });
+  });
+
+  // * Onglet « Recherches » : les recherches sauvegardées depuis /producers (cahier : « recherches et zones sauvegardées »)
+  describe('recherches sauvegardées', () => {
+    async function openSearchesTab(searches: SavedSearch[] = []): Promise<void> {
+      savedSearchMock.list.mockReturnValue(of(searches));
+      await setup();
+      const tab = Array.from(el.querySelectorAll<HTMLButtonElement>('app-filter-tabs button')).find(
+        (b) => b.textContent?.includes('Recherches'),
+      );
+      expect(tab).toBeDefined();
+      tab!.click();
+      fixture.detectChanges();
+    }
+
+    it("propose l'onglet Recherches à côté des trois types de favoris", async () => {
+      await setup();
+
+      const labels = Array.from(el.querySelectorAll('app-filter-tabs button')).map((b) =>
+        b.textContent?.trim(),
+      );
+
+      expect(labels).toEqual(['Producteurs', 'Produits', 'Catégories', 'Recherches']);
+      expect(savedSearchMock.list).toHaveBeenCalledTimes(1);
+    });
+
+    it("n'affiche pas les recherches dans les onglets de favoris", async () => {
+      savedSearchMock.list.mockReturnValue(of([makeSavedSearch()]));
+      await setup();
+
+      expect(el.textContent).not.toContain('Tomates, Lyon');
+    });
+
+    it('explique comment en créer une quand il n’y en a aucune', async () => {
+      await openSearchesTab([]);
+
+      expect(el.textContent).toContain('Aucune recherche enregistrée');
+      expect(el.querySelector('a[href="/producers"]')).not.toBeNull();
+    });
+
+    it('liste les recherches : nom, résumé, et lien qui relance la recherche', async () => {
+      await openSearchesTab([makeSavedSearch()]);
+
+      expect(el.textContent).toContain('Tomates, Lyon');
+      expect(el.textContent).toContain('« tomates », près de Lyon');
+      expect(el.querySelector('li a')?.getAttribute('href')).toBe('/producers?q=tomates&near=Lyon');
+    });
+
+    it("dit que le chargement a échoué sans casser l'onglet des favoris", async () => {
+      savedSearchMock.list.mockReturnValue(throwError(() => new Error('API down')));
+      await setup();
+      expect(el.textContent).not.toContain('Impossible de charger vos recherches');
+
+      Array.from(el.querySelectorAll<HTMLButtonElement>('app-filter-tabs button'))
+        .find((b) => b.textContent?.includes('Recherches'))!
+        .click();
+      fixture.detectChanges();
+
+      expect(el.textContent).toContain('Impossible de charger vos recherches');
+    });
+
+    it('supprime une recherche : appelle le service avec son id et la retire de la liste', async () => {
+      await openSearchesTab([
+        makeSavedSearch({ id: 's1' }),
+        makeSavedSearch({ id: 's2', name: 'Miel bio' }),
+      ]);
+
+      el.querySelector<HTMLButtonElement>(
+        'button[aria-label="Supprimer la recherche Tomates, Lyon"]',
+      )!.click();
+      fixture.detectChanges();
+
+      expect(savedSearchMock.remove).toHaveBeenCalledWith('s1');
+      expect(el.textContent).not.toContain('Tomates, Lyon');
+      expect(el.textContent).toContain('Miel bio');
+    });
+
+    it('garde la recherche et le dit quand la suppression échoue', async () => {
+      savedSearchMock.remove.mockReturnValue(throwError(() => new Error('API down')));
+      await openSearchesTab([makeSavedSearch()]);
+
+      el.querySelector<HTMLButtonElement>('button[aria-label^="Supprimer la recherche"]')!.click();
+      fixture.detectChanges();
+
+      expect(el.textContent).toContain('Tomates, Lyon');
+      expect(el.querySelector('[role=alert]')?.textContent).toContain('Impossible de supprimer');
+    });
+
+    describe('summary() et searchParams()', () => {
+      it('résume ce que la recherche retient', async () => {
+        await setup();
+        const component = fixture.componentInstance;
+
+        expect(component.summary(makeSavedSearch())).toBe('« tomates », près de Lyon');
+        expect(
+          component.summary(makeSavedSearch({ criteria: { categoryId: 'c', productId: 'p' } })),
+        ).toBe('dans une catégorie, pour un produit précis');
+        expect(component.summary(makeSavedSearch({ criteria: null }))).toBe('Tous les producteurs');
+      });
+
+      it("ne reprend dans l'adresse que les critères présents", async () => {
+        await setup();
+        const component = fixture.componentInstance;
+
+        expect(
+          component.searchParams(makeSavedSearch({ criteria: { q: 'miel', categoryId: 'c1' } })),
+        ).toEqual({
+          q: 'miel',
+          categoryId: 'c1',
+        });
+        expect(component.searchParams(makeSavedSearch({ criteria: null }))).toEqual({});
+      });
     });
   });
 });

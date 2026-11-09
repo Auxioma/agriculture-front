@@ -46,6 +46,7 @@ describe('FavoriteButtonComponent', () => {
   }
 
   beforeEach(() => {
+    sessionStorage.clear();
     favorites.set([]);
     authMock.isAuthenticated.mockReset().mockReturnValue(true);
     routerMock.navigate.mockReset();
@@ -171,6 +172,102 @@ describe('FavoriteButtonComponent', () => {
       button.click();
 
       expect(serviceMock.load).not.toHaveBeenCalled();
+    });
+
+    it("le dit à côté du cœur quand la modification échoue, et l'efface au clic suivant", async () => {
+      serviceMock.add.mockReturnValueOnce(
+        throwError(() => new HttpErrorResponse({ status: 500, statusText: 'Server Error' })),
+      );
+      await setup();
+
+      button.click();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[role=alert]')?.textContent).toContain('Impossible de modifier');
+
+      button.click();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[role=alert]')).toBeNull();
+    });
+
+    it('renvoie vers la connexion, en retenant la cible, quand la session a expiré (401)', async () => {
+      serviceMock.add.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Unauthorized' })),
+      );
+      await setup();
+
+      button.click();
+
+      expect(routerMock.navigate).toHaveBeenCalledWith(['/auth/login'], {
+        queryParams: { returnUrl: '/producers/ferme-dupont' },
+      });
+      expect(JSON.parse(sessionStorage.getItem('pendingFavorite')!)).toMatchObject({ type: 'producer_profile', id: 'prod-1' });
+      expect(fixture.nativeElement.querySelector('[role=alert]')).toBeNull();
+    });
+  });
+
+  // un clic sans être connecté ne doit pas être perdu : la connexion ramène sur la page, le favori s'ajoute
+  describe('favori demandé avant la connexion', () => {
+    const remember = (overrides: Record<string, unknown> = {}) =>
+      sessionStorage.setItem('pendingFavorite', JSON.stringify({ type: 'producer_profile', id: 'prod-1', at: Date.now(), ...overrides }));
+
+    it('retient la cible quand on clique sans être connecté', async () => {
+      authMock.isAuthenticated.mockReturnValue(false);
+      await setup();
+
+      button.click();
+
+      expect(JSON.parse(sessionStorage.getItem('pendingFavorite')!)).toMatchObject({ type: 'producer_profile', id: 'prod-1' });
+    });
+
+    it('ajoute le favori retenu au retour connecté, une seule fois', async () => {
+      remember();
+      await setup();
+
+      expect(serviceMock.load).toHaveBeenCalledTimes(1);
+      expect(serviceMock.add).toHaveBeenCalledWith('producer_profile', 'prod-1');
+      expect(sessionStorage.getItem('pendingFavorite')).toBeNull();
+    });
+
+    it("n'ajoute rien quand la cible est déjà en favori", async () => {
+      remember();
+      favorites.set([makeFavorite()]);
+      await setup();
+
+      expect(serviceMock.add).not.toHaveBeenCalled();
+      expect(sessionStorage.getItem('pendingFavorite')).toBeNull();
+    });
+
+    it("laisse la demande à l'autre bouton quand la cible est un autre producteur", async () => {
+      remember({ id: 'autre-producteur' });
+      await setup();
+
+      expect(serviceMock.add).not.toHaveBeenCalled();
+      expect(sessionStorage.getItem('pendingFavorite')).not.toBeNull();
+    });
+
+    it('jette une demande vieille de plus de dix minutes', async () => {
+      remember({ at: Date.now() - 11 * 60 * 1000 });
+      await setup();
+
+      expect(serviceMock.add).not.toHaveBeenCalled();
+      expect(sessionStorage.getItem('pendingFavorite')).toBeNull();
+    });
+
+    it("ne fait rien tant qu'on n'est pas connecté", async () => {
+      remember();
+      authMock.isAuthenticated.mockReturnValue(false);
+      await setup();
+
+      expect(serviceMock.add).not.toHaveBeenCalled();
+      expect(sessionStorage.getItem('pendingFavorite')).not.toBeNull();
+    });
+
+    it("le dit quand l'ajout rejoué échoue", async () => {
+      remember();
+      serviceMock.add.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      await setup();
+
+      expect(fixture.nativeElement.querySelector('[role=alert]')).toBeTruthy();
     });
   });
 });

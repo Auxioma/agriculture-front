@@ -10,6 +10,7 @@ import {
   PreferencesPatch,
 } from './profile.model';
 import { environment } from '../../../../../environments/environment';
+import { getAllPages } from '../../../../core/http/paged';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -25,11 +26,11 @@ export class ProfileService {
   }
 
   updatePreferences(patch: PreferencesPatch): Observable<Preferences> {
-    return this.http.patch<Preferences>(`${this.api}/me/preferences`, patch);
+    return this.http.put<Preferences>(`${this.api}/me/preferences`, patch);
   }
 
   addresses(): Observable<Address[]> {
-    return this.http.get<Address[]>(`${this.api}/me/addresses`);
+    return getAllPages<Address>(this.http, `${this.api}/me/addresses`);
   }
 
   createAddress(payload: AddressPayload): Observable<Address> {

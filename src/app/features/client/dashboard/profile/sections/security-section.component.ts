@@ -44,7 +44,7 @@ export function passwordsMatch(group: AbstractControl): ValidationErrors | null 
           [class]="ui.input"
         />
         @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('minlength')) {
-          <p [class]="ui.error">8 caractères minimum.</p>
+          <p [class]="ui.error">12 caractères minimum.</p>
         }
       </div>
       <div>
@@ -83,11 +83,11 @@ export class SecuritySectionComponent {
   readonly error = signal<string | null>(null);
   readonly success = signal(false);
 
-  // ! Garde la même longueur minimale que le backend (ChangePasswordRequest / RegisterClientRequest)
+  // ! Garde la même longueur minimale que le backend (Auth/ChangePasswordRequest, comme l'inscription) : 12 caractères
   readonly form = this.fb.group(
     {
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      newPassword: ['', [Validators.required, Validators.minLength(12)]],
       confirmPassword: ['', Validators.required],
     },
     { validators: passwordsMatch },

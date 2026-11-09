@@ -8,6 +8,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { FavoriteButtonComponent } from '../client/dashboard/favorites/favorite-button.component';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,7 +31,7 @@ const LABEL_COLORS: Record<string, string> = {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, FavoriteButtonComponent],
   templateUrl: './home.component.html',
 })
 export class HomeComponent {
@@ -151,7 +152,14 @@ export class HomeComponent {
         afterNextRender(() => this.updateScrollState(), { injector: this.injector });
       });
     
-    this.faqService.getAll().subscribe((articles) => this.faqArticles.set(articles));
+    // comme les deux autres : une FAQ qui ne se charge pas laisse la section vide, sans erreur
+    this.faqService
+      .getAll()
+      .pipe(
+        catchError(() => of([] as FaqArticle[])),
+        takeUntilDestroyed(),
+      )
+      .subscribe((articles) => this.faqArticles.set(articles));
   }
 
   updateScrollState(): void {

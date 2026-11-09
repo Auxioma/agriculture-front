@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
 import { createAuthServiceMock, type AuthServiceMock } from './auth.service.mock';
+import { environment } from '../../../environments/environment';
 
 describe('authInterceptor', () => {
   let authServiceMock: AuthServiceMock & {
@@ -47,6 +48,69 @@ describe('authInterceptor', () => {
 
     const forwardedRequest = nextSpy.mock.calls[0][0];
     expect(forwardedRequest.headers.has('Authorization')).toBe(false);
+  });
+
+  describe('lectures publiques du back', () => {
+    const forwarded = (method: string, path: string) => {
+      authServiceMock.getToken.mockReturnValue('fake-jwt-token');
+
+      TestBed.runInInjectionContext(() => {
+        authInterceptor(new HttpRequest(method as 'GET', `${environment.apiURL}${path}`, method === 'GET' ? undefined : {}), nextSpy);
+      });
+
+      return nextSpy.mock.calls[0][0];
+    };
+
+    it.each([
+      '/categories',
+      '/categories?sort=popular&limit=5',
+      '/products',
+      '/products/p1',
+      '/labels',
+      '/units',
+      '/faq',
+      '/legal',
+      '/legal/cgu',
+      '/producers',
+      '/producers?page=2',
+      '/producers/featured?limit=3',
+      '/producers/ferme-dupont',
+      '/producers/ferme-dupont/reviews',
+    ])('n envoie pas le jeton pour GET %s', (path) => {
+      expect(forwarded('GET', path).headers.has('Authorization')).toBe(false);
+    });
+
+    it.each([
+      '/me',
+      '/notifications?limit=20',
+      '/producer/dashboard',
+      '/producer/products',
+      '/subscription/plans',
+      '/conversations',
+    ])('envoie le jeton pour GET %s', (path) => {
+      expect(forwarded('GET', path).headers.get('Authorization')).toBe('Bearer fake-jwt-token');
+    });
+
+    it('envoie le jeton pour une écriture, même sur une adresse publique en lecture', () => {
+      expect(forwarded('POST', '/producers/p1/favorite').headers.get('Authorization')).toBe('Bearer fake-jwt-token');
+    });
+
+    it('ne confond pas /categories avec un autre début de chemin', () => {
+      expect(forwarded('GET', '/categories-admin').headers.get('Authorization')).toBe('Bearer fake-jwt-token');
+      expect(forwarded('GET', '/producers-export').headers.get('Authorization')).toBe('Bearer fake-jwt-token');
+    });
+
+    it('ne touche qu’aux adresses de l’API : une autre origine garde son comportement habituel', () => {
+      authServiceMock.getToken.mockReturnValue('fake-jwt-token');
+      // * même longueur que l'adresse de l'API, pour qu'un début de chemin pareil ne s'y trompe pas
+      const elsewhere = 'https://autre.example.org'.padEnd(environment.apiURL.length, 'x');
+
+      TestBed.runInInjectionContext(() => {
+        authInterceptor(new HttpRequest('GET', `${elsewhere}/faq`), nextSpy);
+      });
+
+      expect(nextSpy.mock.calls[0][0].headers.get('Authorization')).toBe('Bearer fake-jwt-token');
+    });
   });
 
   it('ne devrait pas modifier la requête originale (immutabilité)', () => {

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardService } from './dashboard.service';
@@ -157,10 +157,31 @@ describe('DashboardComponent', () => {
     expect(unlock.getAttribute('href')).toBe('/producer/subscription');
   });
 
+  it('« Gérer mes produits disponibles » mène à la page des produits', async () => {
+    await create();
+
+    const link = [...compiled.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Gérer mes produits disponibles')!;
+    expect(link.getAttribute('href')).toBe('/producer/products');
+  });
+
   it('avec un abonnement : pas de message d\'aperçu limité', async () => {
     await create();
 
     expect(compiled.textContent).not.toContain('Aperçu limité');
     expect([...compiled.querySelectorAll('a')].some((a) => a.textContent?.trim() === 'Débloquer les demandes')).toBe(false);
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<typeof DASHBOARD>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(DASHBOARD);
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });

@@ -19,6 +19,8 @@ describe('ProducerSearchService', () => {
   const avignon: Coordinates = { latitude: 43.9493, longitude: 4.8057 };
   const noFilter: ProducerQuery = {
     categoryId: 'cat-1',
+    text: '',
+    productId: null,
     location: '',
     radius: 25,
     seasonalOnly: false,
@@ -119,5 +121,30 @@ describe('ProducerSearchService', () => {
   it('envoie le tri par distance uniquement avec des coordonnées', () => {
     expect(search({ sort: 'distance' }, avignon).request.params.get('sort')).toBe('distance');
     expect(search({ sort: 'distance' }).request.params.has('sort')).toBe(false);
+  });
+
+  describe('recherche texte', () => {
+    it('envoie le texte cherché dans q', () => {
+      const req = search({ text: 'tomates bio' });
+
+      expect(req.request.params.get('q')).toBe('tomates bio');
+    });
+
+    it("n'envoie pas q quand le texte est vide", () => {
+      expect(search({ text: '' }).request.params.has('q')).toBe(false);
+    });
+
+    it('se combine avec la localisation et la catégorie', () => {
+      const req = search({ text: 'miel' }, avignon);
+
+      expect(req.request.params.get('q')).toBe('miel');
+      expect(req.request.params.get('latitude')).toBe('43.9493');
+      expect(req.request.params.get('categoryId')).toBe('cat-1');
+    });
+  });
+
+  it('envoie productId pour ne garder que les producteurs de ce produit, et rien sans produit', () => {
+    expect(search({ productId: 'prod-1' }).request.params.get('productId')).toBe('prod-1');
+    expect(search({ productId: null }).request.params.has('productId')).toBe(false);
   });
 });

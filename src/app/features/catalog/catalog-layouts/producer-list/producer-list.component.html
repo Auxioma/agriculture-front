@@ -209,7 +209,7 @@
         } @else {
           <ul class="grid gap-4 md:grid-cols-3">
             @for (producer of producers(); track producer.id) {
-              <li>
+              <li class="relative">
                 <!-- L'URL de la fiche utilise le slug du producteur.
                      ?category=<slug> permet à la fiche d'afficher « Catégories / Miel / Ferme… » dans son fil d'Ariane
                      (absent quand la liste n'est pas filtrée par catégorie : page Producteurs). -->
@@ -261,6 +261,9 @@
                     }
                   </div>
                 </a>
+                <div class="absolute top-2 right-2 z-10">
+                  <app-favorite-button targetType="producer_profile" [targetId]="producer.id" />
+                </div>
               </li>
             }
           </ul>

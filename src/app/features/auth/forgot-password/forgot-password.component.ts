@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -18,27 +18,28 @@ export class ForgotPasswordComponent {
     email: ['', [Validators.required, Validators.email]],
   });
 
-  isSubmitting = false;
-  isSubmitted = false;
-  errorMessage: string | null = null;
+  // signaux : sans zone.js, une propriété simple changée dans un subscribe n'est pas réaffichée
+  isSubmitting = signal(false);
+  isSubmitted = signal(false);
+  errorMessage = signal<string | null>(null);
 
   onSubmit(): void {
     if (this.form.invalid) return;
 
-    this.isSubmitting = true;
-    this.errorMessage = null;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
 
     this.authService.forgotPassword(this.form.getRawValue()).subscribe({
       next: () => {
-        this.isSubmitting = false;
-        this.isSubmitted = true;
+        this.isSubmitting.set(false);
+        this.isSubmitted.set(true);
       },
       error: (err: HttpErrorResponse) => {
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
         if (err.status === 429) {
-          this.errorMessage = 'Trop de tentatives, réessayez plus tard.';
+          this.errorMessage.set('Trop de tentatives, réessayez plus tard.');
         } else {
-          this.errorMessage = 'Une erreur est survenue, réessayez.';
+          this.errorMessage.set('Une erreur est survenue, réessayez.');
         }
       },
     });

@@ -188,9 +188,10 @@
         class="no-scrollbar flex gap-4 overflow-x-auto pb-2"
       >
         @for (producer of featuredProducers(); track producer.id) {
+          <div class="relative w-72 shrink-0">
           <a
             [routerLink]="['/producers', producer.slug]"
-            class="block w-72 shrink-0 overflow-hidden rounded-2xl border border-grey-200 bg-white shadow-sm"
+            class="block w-full overflow-hidden rounded-2xl border border-grey-200 bg-white shadow-sm"
           >
             <img
               [src]="producer.photoUrl"
@@ -224,6 +225,10 @@
               </div>
             </div>
           </a>
+          <div class="absolute top-2 right-2 z-10">
+            <app-favorite-button targetType="producer_profile" [targetId]="producer.id" />
+          </div>
+          </div>
         }
       </div>
 
@@ -250,6 +255,7 @@
     <!-- desktop : grid fixe, pas de scroll (les 3 cartes tiennent toujours sur une rangee) -->
     <div class="hidden gap-4 lg:grid lg:grid-cols-3">
       @for (producer of featuredProducers(); track producer.id) {
+        <div class="relative">
         <a
           [routerLink]="['/producers', producer.slug]"
           class="block overflow-hidden rounded-2xl border border-grey-200 bg-white shadow-sm hover:shadow-md"
@@ -284,6 +290,10 @@
             </div>
           </div>
         </a>
+        <div class="absolute top-2 right-2 z-10">
+          <app-favorite-button targetType="producer_profile" [targetId]="producer.id" />
+        </div>
+        </div>
       }
     </div>
 

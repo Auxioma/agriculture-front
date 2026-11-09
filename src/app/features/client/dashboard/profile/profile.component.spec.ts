@@ -10,7 +10,14 @@ import { ProfileService } from './profile.service';
 const prefs: Preferences = {
   locale: 'fr',
   currency: 'EUR',
-  notificationSettings: { producerReply: true, newMessage: true, requestExpiring: false },
+  notifications: {
+    producer_replied: true,
+    new_message: true,
+    quote_received: true,
+    request_expiring_soon: false,
+    favorite_producer_available: true,
+    review_reminder: true,
+  },
 };
 
 describe('ProfileComponent', () => {
@@ -78,6 +85,19 @@ describe('ProfileComponent', () => {
     c.savePreferences({ currency: 'GBP' });
     expect(profileMock.updatePreferences).toHaveBeenCalledWith({ currency: 'GBP' });
     expect(c.preferences()?.currency).toBe('GBP');
+  });
+
+  it("envoie un seul interrupteur de notification, avec le nom du back, et garde les autres", () => {
+    profileMock.updatePreferences.mockReturnValue(
+      of({ ...prefs, notifications: { ...prefs.notifications, new_message: false } }),
+    );
+    const { componentInstance: c } = create();
+    c.setNotifications({ new_message: false });
+    expect(profileMock.updatePreferences).toHaveBeenCalledWith({
+      notifications: { new_message: false },
+    });
+    expect(c.preferences()?.notifications.new_message).toBe(false);
+    expect(c.preferences()?.notifications.producer_replied).toBe(true);
   });
 
   it("revient à l'état précédent (rollback) si l'API échoue", () => {

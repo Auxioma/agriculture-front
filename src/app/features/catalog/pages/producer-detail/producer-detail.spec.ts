@@ -121,6 +121,117 @@ describe('ProducerDetailComponent', () => {
     );
   });
 
+  it('montre ce que le producteur a renseigné pour chaque produit', async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          {
+            id: 'a',
+            name: 'Tomates',
+            variety: 'Cœur de bœuf',
+            description: 'Cultivées en plein champ',
+            seasonStartMonth: 6,
+            seasonEndMonth: 9,
+            quantity: '50.000',
+            unit: { code: 'kg', label: 'Kilogramme' },
+            price: '3.50',
+            currencyCode: 'EUR',
+            labels: [{ code: 'bio', name: 'Bio' }],
+            photos: [{ url: 'http://localhost/tomates.jpg', alt: 'Cœurs de bœuf' }],
+          },
+        ],
+      }),
+    );
+
+    const section = ctx.host.querySelector('#disponibilites') as HTMLElement;
+    const text = textOf(section);
+    expect(text).toContain('Tomates · Cœur de bœuf — Disponible de juin à septembre');
+    expect(text).toContain('50 kg · 3,50 €/kg');
+    expect(text).toContain('Cultivées en plein champ');
+    // * Les labels de produit sont déclarés : la fiche le dit, ils ne passent pas pour des badges vérifiés.
+    expect(text).toContain('Bio');
+    expect(text).toContain('déclarés par le producteur');
+    const photo = section.querySelector('img') as HTMLImageElement;
+    expect(photo.getAttribute('src')).toBe('http://localhost/tomates.jpg');
+    expect(photo.getAttribute('alt')).toBe('Cœurs de bœuf');
+  });
+
+  it('montre une ligne par variété quand le producteur a plusieurs variétés du même produit', async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          { id: 'l1', productId: 'pommes', name: 'Pommes', variety: 'Gala', seasonStartMonth: 9, seasonEndMonth: 12 },
+          { id: 'l2', productId: 'pommes', name: 'Pommes', variety: 'Golden', seasonStartMonth: 10, seasonEndMonth: 1 },
+        ],
+      }),
+    );
+
+    // * Les pastilles du haut disent la variété (sinon « Pommes » deux fois), la section en dessous a une carte par ligne.
+    const chips = Array.from(ctx.host.querySelectorAll('ul.flex-wrap li.rounded-full')).map((li) => textOf(li));
+    expect(chips).toEqual(['Pommes · Gala', 'Pommes · Golden']);
+    const cards = Array.from(ctx.host.querySelectorAll('#disponibilites > ul > li')).map((li) => textOf(li));
+    expect(cards).toEqual([
+      "Pommes · Gala — Disponible de septembre à décembre",
+      "Pommes · Golden — Disponible d'octobre à janvier",
+    ]);
+  });
+
+  // * Favoris : un cœur par produit du catalogue (productId), pas pour une ligne sans produit rattaché
+  it('met un cœur « Ajouter aux favoris » sur les produits du catalogue seulement', async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          { id: 'l1', productId: 'pommes', name: 'Pommes', seasonStartMonth: 9, seasonEndMonth: 12 },
+          { id: 'l2', name: 'Miel', seasonStartMonth: 1, seasonEndMonth: 12 },
+        ],
+      }),
+    );
+
+    const cards = ctx.host.querySelectorAll('#disponibilites > ul > li');
+    expect(cards[0].querySelector('app-favorite-button button')?.getAttribute('aria-label')).toBe('Ajouter aux favoris');
+    expect(cards[1].querySelector('app-favorite-button')).toBeNull();
+  });
+
+  it("n'affiche ni volume, ni prix, ni labels, ni photos quand le producteur ne les a pas renseignés", async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [
+          { id: 'a', name: 'Miel', seasonStartMonth: 1, seasonEndMonth: 12, quantity: null, price: null, labels: [], photos: [] },
+        ],
+      }),
+    );
+
+    const section = ctx.host.querySelector('#disponibilites') as HTMLElement;
+    expect(textOf(section)).toBe("Produits & disponibilités Miel — Disponible toute l'année");
+    expect(section.querySelector('img')).toBeNull();
+    expect(textOf(section)).not.toContain('déclarés par le producteur');
+  });
+
+  it("une photo sans texte alternatif prend le nom du produit", async () => {
+    const ctx = await setup();
+
+    respond(
+      ctx,
+      makeProducerDetail({
+        products: [{ id: 'a', name: 'Pommes', seasonStartMonth: null, seasonEndMonth: null, photos: [{ url: 'http://localhost/p.jpg', alt: null }] }],
+      }),
+    );
+
+    expect((ctx.host.querySelector('#disponibilites img') as HTMLImageElement).getAttribute('alt')).toBe('Pommes');
+  });
+
   it('masque les sections sans donnée au lieu de les afficher vides', async () => {
     const ctx = await setup();
 
@@ -219,6 +330,87 @@ describe('ProducerDetailComponent', () => {
 
     expect(textOf(ctx.host)).toContain('Troisième avis');
     expect(textOf(ctx.host)).toContain('Réduire les avis');
+  });
+
+  // * Les avis arrivent par pages : le nombre annoncé (count) est celui de TOUS les avis, pas de ceux déjà reçus
+  describe("« Voir plus d'avis »", () => {
+    const threeOfFour = () =>
+      ({
+        averageRating: 4.5,
+        count: 4,
+        reviews: [
+          makeReview({ id: 'r1', comment: 'Premier avis' }),
+          makeReview({ id: 'r2', comment: 'Deuxième avis' }),
+          makeReview({ id: 'r3', comment: 'Troisième avis' }),
+        ],
+      }) satisfies ProducerReviews;
+    const button = (host: HTMLElement, label: string) =>
+      Array.from(host.querySelectorAll('button')).find((b) => textOf(b) === label);
+
+    async function openAllReviews() {
+      const ctx = await setup();
+      respond(ctx, makeProducerDetail(), threeOfFour());
+      button(ctx.host, 'Voir tous les avis')!.click();
+      ctx.harness.detectChanges();
+
+      return ctx;
+    }
+
+    it('dit combien sont affichés et en propose davantage, quand il y en a plus que reçus', async () => {
+      const ctx = await openAllReviews();
+
+      expect(textOf(ctx.host)).toContain('Avis clients (4)');
+      expect(textOf(ctx.host)).toContain('3 sur 4');
+      expect(button(ctx.host, 'Voir plus')).toBeDefined();
+    });
+
+    it("charge la page suivante et la met à la suite, puis n'en propose plus", async () => {
+      const ctx = await openAllReviews();
+
+      button(ctx.host, 'Voir plus')!.click();
+      ctx.http
+        .expectOne(`${apiUrl}/producers/p1/reviews?page=2`)
+        .flush({ averageRating: 4.5, count: 4, reviews: [makeReview({ id: 'r4', comment: 'Quatrième avis' })] });
+      ctx.harness.detectChanges();
+
+      expect(textOf(ctx.host)).toContain('Quatrième avis');
+      expect(button(ctx.host, 'Voir plus')).toBeUndefined();
+    });
+
+    it("ne répète pas un avis déjà affiché quand les pages ont bougé", async () => {
+      const ctx = await openAllReviews();
+
+      button(ctx.host, 'Voir plus')!.click();
+      ctx.http.expectOne(`${apiUrl}/producers/p1/reviews?page=2`).flush({
+        averageRating: 4.5,
+        count: 4,
+        reviews: [makeReview({ id: 'r3', comment: 'Troisième avis' }), makeReview({ id: 'r4', comment: 'Quatrième avis' })],
+      });
+      ctx.harness.detectChanges();
+
+      expect(textOf(ctx.host).split('Troisième avis').length - 1).toBe(1);
+      expect(textOf(ctx.host)).toContain('Quatrième avis');
+    });
+
+    it('dit que la suite ne se charge pas, en gardant les avis déjà affichés', async () => {
+      const ctx = await openAllReviews();
+
+      button(ctx.host, 'Voir plus')!.click();
+      ctx.http.expectOne(`${apiUrl}/producers/p1/reviews?page=2`).flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+      ctx.harness.detectChanges();
+
+      expect(textOf(ctx.host)).toContain('Impossible de charger la suite');
+      expect(textOf(ctx.host)).toContain('Troisième avis');
+    });
+
+    it("n'en propose pas quand tous les avis sont reçus", async () => {
+      const ctx = await setup();
+      respond(ctx, makeProducerDetail(), makeReviews([makeReview({ id: 'r1' }), makeReview({ id: 'r2' }), makeReview({ id: 'r3' })]));
+      button(ctx.host, 'Voir tous les avis')!.click();
+      ctx.harness.detectChanges();
+
+      expect(button(ctx.host, 'Voir plus')).toBeUndefined();
+    });
   });
 
   it("affiche la réponse du producteur sous l'avis", async () => {

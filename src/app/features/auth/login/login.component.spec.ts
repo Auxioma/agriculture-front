@@ -100,8 +100,8 @@ describe('LoginComponent', () => {
       });
       expect(authServiceMock.fetchCurrentUser).toHaveBeenCalled();
       expect(routerNavigateSpy).toHaveBeenCalledWith('/client');
-      expect(component.isSubmitting).toBe(false);
-      expect(component.errorMessage).toBeNull();
+      expect(component.isSubmitting()).toBe(false);
+      expect(component.errorMessage()).toBeNull();
     });
 
     it('devrait envoyer un producteur directement sur son espace /producer', () => {
@@ -128,9 +128,22 @@ describe('LoginComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe('Email ou mot de passe incorrect.');
+      expect(component.errorMessage()).toBe('Email ou mot de passe incorrect.');
       expect(routerNavigateSpy).not.toHaveBeenCalled();
-      expect(component.isSubmitting).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
+    });
+
+    // sans zone.js rien ne relance l'affichage tout seul : le message doit venir d'un signal (pas de detectChanges() ici)
+    it("devrait afficher l'erreur 401 dans la page dès la réponse du serveur, sans autre interaction", async () => {
+      authServiceMock.login.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 401 })),
+      );
+
+      component.onSubmit();
+      await fixture.whenStable();
+
+      const errorEl: HTMLElement = fixture.nativeElement.querySelector('.form-error');
+      expect(errorEl?.textContent).toContain('Email ou mot de passe incorrect.');
     });
 
     it('devrait afficher un message générique pour toute autre erreur', () => {
@@ -140,7 +153,7 @@ describe('LoginComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe('Une erreur est survenue, réessayez.');
+      expect(component.errorMessage()).toBe('Une erreur est survenue, réessayez.');
     });
 
     it('devrait afficher un message dédié si login réussit mais fetchCurrentUser échoue', () => {
@@ -151,11 +164,11 @@ describe('LoginComponent', () => {
 
       component.onSubmit();
 
-      expect(component.errorMessage).toBe(
+      expect(component.errorMessage()).toBe(
         'Connexion réussie, mais impossible de récupérer votre profil.',
       );
       expect(routerNavigateSpy).not.toHaveBeenCalled();
-      expect(component.isSubmitting).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
     });
 
     it('devrait passer isSubmitting à true pendant la requête, puis à false une fois terminée', () => {
@@ -174,11 +187,11 @@ describe('LoginComponent', () => {
       );
 
       component.onSubmit();
-      expect(component.isSubmitting).toBe(true);
+      expect(component.isSubmitting()).toBe(true);
 
       vi.advanceTimersByTime(10); // avance le temps simulé de 10ms, sans attente réelle
 
-      expect(component.isSubmitting).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
 
       vi.useRealTimers(); // remet les vrais timers pour ne pas affecter les tests suivants
     });
@@ -202,7 +215,7 @@ describe('LoginComponent', () => {
     });
 
     it("devrait afficher le message d'erreur dans le DOM", async () => {
-      component.errorMessage = 'Email ou mot de passe incorrect.';
+      component.errorMessage.set('Email ou mot de passe incorrect.');
 
       const cdr = fixture.debugElement.injector.get(ChangeDetectorRef);
       cdr.markForCheck();

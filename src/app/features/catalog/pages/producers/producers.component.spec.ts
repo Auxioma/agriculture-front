@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { environment } from '../../../../../environments/environment';
 import { ProducerSummary } from '../../models/producer-summary.model';
@@ -28,7 +28,7 @@ describe('ProducersComponent', () => {
   const producersUrl = `${apiUrl}/producers`;
 
   /** Ouvre /producers et répond à la seule requête de démarrage (labels des filtres) */
-  async function setup() {
+  async function setup(url = '/producers') {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: 'producers', component: ProducersComponent }]),
@@ -37,7 +37,7 @@ describe('ProducersComponent', () => {
       ],
     });
     const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/producers', ProducersComponent);
+    await harness.navigateByUrl(url, ProducersComponent);
     const http = TestBed.inject(HttpTestingController);
 
     http
@@ -250,5 +250,122 @@ describe('ProducersComponent', () => {
     showResults(ctx, await nextSearch(ctx), []);
 
     expect(TestBed.inject(Title).getTitle()).toBe('Producteurs – TrouveMoi Agri');
+  });
+
+  // * Page de résultats de la recherche (cahier : « recherche produit / localisation ») : /producers?q=&near=&categoryId=
+  describe('recherche', () => {
+    const input = (ctx: Context, id: string) => ctx.host.querySelector<HTMLInputElement>(`#${id}`)!;
+
+    it("envoie le texte de l'adresse au back dans q, et le rappelle dans le champ et au-dessus des résultats", async () => {
+      const ctx = await setup('/producers?q=tomates%20lyon');
+
+      const req = await nextSearch(ctx);
+
+      expect(req.request.params.get('q')).toBe('tomates lyon');
+      expect(input(ctx, 'producers-q').value).toBe('tomates lyon');
+      expect(textOf(ctx.host)).toContain('Résultats pour « tomates lyon »');
+      showResults(ctx, req, []);
+    });
+
+    it("n'affiche pas « Résultats » ni q sans recherche", async () => {
+      const ctx = await setup();
+
+      const req = await nextSearch(ctx);
+
+      expect(req.request.params.has('q')).toBe(false);
+      expect(textOf(ctx.host)).not.toContain('Résultats pour');
+      showResults(ctx, req, []);
+    });
+
+    it("reprend la localisation de l'adresse dans le champ des filtres", async () => {
+      const ctx = await setup('/producers?q=miel&near=Avignon');
+      ctx.harness.detectChanges();
+
+      expect(input(ctx, 'producers-near').value).toBe('Avignon');
+      expect(input(ctx, 'location').value).toBe('Avignon');
+      expect(textOf(ctx.host)).toContain('Résultats pour « miel » près de Avignon');
+    });
+
+    it("filtre sur la catégorie de l'adresse, et ignore une valeur qui n'est pas un identifiant", async () => {
+      const id = '0f3c9f0e-7c5a-4f6e-9d8b-2a1b3c4d5e6f';
+      const withCategory = await setup(`/producers?categoryId=${id}`);
+      const req = await nextSearch(withCategory);
+      expect(req.request.params.get('categoryId')).toBe(id);
+      showResults(withCategory, req, []);
+
+      TestBed.resetTestingModule();
+      const invalid = await setup('/producers?categoryId=pas-un-uuid');
+      const other = await nextSearch(invalid);
+      expect(other.request.params.has('categoryId')).toBe(false);
+      showResults(invalid, other, []);
+    });
+
+    it("le formulaire change l'adresse (q et near) sans perdre le reste, et vide ce qui est effacé", async () => {
+      const ctx = await setup('/producers?q=miel&categoryId=0f3c9f0e-7c5a-4f6e-9d8b-2a1b3c4d5e6f');
+      showResults(ctx, await nextSearch(ctx), []);
+
+      input(ctx, 'producers-q').value = '  pommes  ';
+      input(ctx, 'producers-near').value = '';
+      ctx.host.querySelector('form[role=search]')!.dispatchEvent(new Event('submit'));
+      await ctx.harness.fixture.whenStable();
+
+      const url = new URL(
+        ctx.harness.routeNativeElement ? 'http://x' + TestBed.inject(Router).url : '',
+      );
+      expect(url.searchParams.get('q')).toBe('pommes');
+      expect(url.searchParams.has('near')).toBe(false);
+      expect(url.searchParams.get('categoryId')).toBe('0f3c9f0e-7c5a-4f6e-9d8b-2a1b3c4d5e6f');
+    });
+  });
+
+  // * Recherche sauvegardée : le bouton n'apparaît que s'il y a une recherche à retenir
+  describe('enregistrer la recherche', () => {
+    it("propose « Enregistrer cette recherche » quand l'adresse porte une recherche", async () => {
+      const ctx = await setup('/producers?q=tomates');
+      showResults(ctx, await nextSearch(ctx), []);
+
+      expect(textOf(ctx.host)).toContain('Enregistrer cette recherche');
+    });
+
+    it('ne le propose pas sans recherche', async () => {
+      const ctx = await setup();
+      showResults(ctx, await nextSearch(ctx), []);
+
+      expect(textOf(ctx.host)).not.toContain('Enregistrer cette recherche');
+    });
+  });
+
+  // * Favoris : un cœur par carte, posé à côté du lien de la fiche (un bouton ne se met pas dans un lien)
+  describe('favoris', () => {
+    it('met un cœur « Ajouter aux favoris » sur chaque carte, hors du lien vers la fiche', async () => {
+      const ctx = await setup();
+      showResults(ctx, await nextSearch(ctx), makeProducers(2));
+
+      const hearts = ctx.host.querySelectorAll('app-favorite-button');
+
+      expect(hearts.length).toBe(2);
+      expect(hearts[0].querySelector('button')?.getAttribute('aria-label')).toBe(
+        'Ajouter aux favoris',
+      );
+      expect(hearts[0].closest('a')).toBeNull();
+      expect(hearts[0].closest('li')?.querySelector('a')?.getAttribute('href')).toBe(
+        '/producers/ferme-1',
+      );
+    });
+
+    it('filtre sur le produit de l’adresse (celui d’un favori), et ignore une valeur qui n’est pas un identifiant', async () => {
+      const id = '7b1f1f6e-1b5a-4c6e-8d8b-2a1b3c4d5e6f';
+      const ctx = await setup(`/producers?productId=${id}`);
+      const req = await nextSearch(ctx);
+      expect(req.request.params.get('productId')).toBe(id);
+      expect(textOf(ctx.host)).toContain('Producteurs qui proposent ce produit.');
+      showResults(ctx, req, []);
+
+      TestBed.resetTestingModule();
+      const invalid = await setup('/producers?productId=nimporte-quoi');
+      const other = await nextSearch(invalid);
+      expect(other.request.params.has('productId')).toBe(false);
+      showResults(invalid, other, []);
+    });
   });
 });

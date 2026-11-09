@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DetailComponent } from './detail.component';
 import { RequestDetail, RequestsService } from '../requests.service';
@@ -252,5 +252,19 @@ describe('DetailComponent', () => {
 
     expect(text()).toContain('Vous avez répondu à cette demande');
     expect(text()).not.toContain('Débloquer la demande');
+  });
+
+  // en attendant les donnees : un squelette a la place d'une zone vide, qui s'efface quand elles arrivent
+  it('montre un squelette en attendant les données, puis le contenu', async () => {
+    const data = new Subject<ReturnType<typeof detail>>();
+    await create(data);
+    const skeleton = () => compiled.querySelector('app-page-skeleton');
+    expect(skeleton()).toBeTruthy();
+    expect(skeleton()!.textContent).toContain('Chargement');
+
+    data.next(detail());
+    fixture.detectChanges();
+
+    expect(skeleton()).toBeNull();
   });
 });
