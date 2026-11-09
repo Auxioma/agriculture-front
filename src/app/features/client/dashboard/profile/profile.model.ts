@@ -6,7 +6,9 @@ export type NotificationType =
   | 'producer_replied'
   | 'new_message'
   | 'quote_received'
-  | 'request_expiring_soon';
+  | 'request_expiring_soon'
+  | 'favorite_producer_available'
+  | 'review_reminder';
 
 export type NotificationSettings = Record<NotificationType, boolean>;
 

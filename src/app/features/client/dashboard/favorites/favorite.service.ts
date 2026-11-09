@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { Favorite, FavoriteType } from './favorite.model';
+import { getAllPages } from '../../../../core/http/paged';
 
 @Injectable({ providedIn: 'root' })
 export class FavoriteService {
@@ -21,7 +22,7 @@ export class FavoriteService {
   }
 
   load(): Observable<Favorite[]> {
-    return this.http.get<Favorite[]>(this.url).pipe(tap((list) => this._favorites.set(list)));
+    return getAllPages<Favorite>(this.http, this.url).pipe(tap((list) => this._favorites.set(list)));
   }
 
   add(targetType: FavoriteType, targetId: string): Observable<{ id: string }> {

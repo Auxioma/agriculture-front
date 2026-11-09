@@ -1,10 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { catchError, of } from 'rxjs';
 import { requestQuantity, shortDate } from '../../request-format';
 import { ReceivedRequest, RequestsService } from '../requests.service';
 import { PageSkeletonComponent } from '../../../../core/layout/page-skeleton/page-skeleton.component';
+import { LoadMoreComponent } from '../../../../core/layout/load-more/load-more.component';
+import { PagedList } from '../../../../core/http/paged-list';
 
 type StatusFilter = 'all' | 'new' | 'treated';
 
@@ -21,12 +21,16 @@ const FILTERS: { id: StatusFilter; label: string }[] = [
 @Component({
   selector: 'app-producer-received',
   standalone: true,
-  imports: [RouterLink, PageSkeletonComponent],
+  imports: [RouterLink, PageSkeletonComponent, LoadMoreComponent],
   templateUrl: './received.component.html',
 })
 export class ReceivedComponent {
+  private service = inject(RequestsService);
+
+  // par pages (« Voir plus ») : le filtre par statut ne trie que les demandes deja chargees
+  readonly list = new PagedList((page) => this.service.getReceivedPage(page), (r) => r.requestId);
   // undefined = chargement, null = erreur (back injoignable, compte sans profil producteur...)
-  requests = toSignal(inject(RequestsService).getReceived().pipe(catchError(() => of(null))));
+  requests = this.list.items;
 
   readonly filters = FILTERS;
   filter = signal<StatusFilter>('all');

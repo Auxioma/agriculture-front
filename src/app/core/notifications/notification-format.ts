@@ -9,6 +9,8 @@ const ICONS = {
   check: 'M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3',
   alert: 'M12 9v4 M12 17h.01 M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z',
   bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0',
+  heart: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
+  star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
 };
 
 // types ecrits par le back (NotificationService::notify) ; ceux qui ne sont pas ici prennent la cloche
@@ -20,6 +22,8 @@ const ICON_OF_TYPE: Record<string, keyof typeof ICONS> = {
   support_reply: 'message',
   request_expiring_soon: 'clock',
   subscription_renewing_soon: 'clock',
+  favorite_producer_available: 'heart',
+  review_reminder: 'star',
   request_sent: 'check',
   profile_validated: 'check',
   payment_failed: 'alert',
@@ -51,12 +55,14 @@ const PRODUCER_DESTINATION: Record<string, string> = {
 export const producerDestination = (type: string | null): string | null => (type && PRODUCER_DESTINATION[type]) || null;
 
 // idem pour le client : la section de son espace, et l'element precis quand le back a donne son identifiant (requestId pour une reponse,
-// un devis ou une demande qui expire ; conversationId pour un message). "Demande envoyee" ne mene qu'a la liste de ses demandes.
+// un devis, un avis a laisser ou une demande qui expire ; conversationId pour un message). "Demande envoyee" ne mene qu'a la liste de ses
+// demandes. L'avis se laisse sur la page de la demande (formulaire d'avis).
 const CLIENT_DESTINATION: Record<string, string> = {
   request_sent: '/client/requests',
   request_expiring_soon: '/client/requests',
   producer_replied: '/client/requests',
   quote_received: '/client/requests',
+  review_reminder: '/client/requests',
   new_message: '/client/messages',
 };
 
@@ -66,6 +72,12 @@ const idIn = (data: unknown, key: string): string | null => {
 };
 
 export function clientDestination(type: string | null, data: unknown): string | null {
+  // un producteur favori qui propose du nouveau : sa fiche (le back donne son adresse, producerSlug) ; sans, la liste des producteurs
+  if (type === 'favorite_producer_available') {
+    const slug = idIn(data, 'producerSlug');
+    return slug ? `/producers/${slug}` : '/producers';
+  }
+
   const section = type ? CLIENT_DESTINATION[type] : undefined;
   if (!section) return null;
 

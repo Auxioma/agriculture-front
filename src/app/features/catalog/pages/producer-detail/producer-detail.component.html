@@ -321,6 +321,15 @@
               {{ showAllReviews() ? 'Réduire les avis' : 'Voir tous les avis' }}
             </button>
           }
+          @if (showAllReviews()) {
+            <app-load-more
+              [shown]="allReviews().length"
+              [total]="reviews()?.count ?? null"
+              [loading]="loadingMoreReviews()"
+              [failed]="moreReviewsFailed()"
+              (more)="loadMoreReviews()"
+            />
+          }
         }
       </section>
     }

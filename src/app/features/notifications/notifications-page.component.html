@@ -14,7 +14,7 @@
         <div role="group" aria-label="Filtrer les notifications" class="flex gap-2">
           <button type="button" [attr.aria-pressed]="filter() === 'all'" (click)="filter.set('all')" [class]="chip(filter() === 'all')">Toutes</button>
           <button type="button" [attr.aria-pressed]="filter() === 'unread'" (click)="filter.set('unread')" [class]="chip(filter() === 'unread')">
-            Non lues ({{ unread() }})
+            Non lues ({{ unreadLabel() }})
           </button>
         </div>
         @if (unread() > 0) {
@@ -48,12 +48,11 @@
             </li>
           }
         </ul>
-        @if (total() >= limit) {
-          <p class="mt-4 text-xs text-grey-700">Les {{ limit }} dernières notifications.</p>
-        }
       } @else {
         <p class="py-8 text-sm text-grey-700">{{ filter() === 'unread' ? 'Vous avez tout lu.' : 'Aucune notification pour le moment.' }}</p>
       }
+
+      <app-load-more [shown]="loaded()" [total]="serverTotal()" [loading]="loadingMore()" [failed]="moreFailed()" (more)="loadMore()" />
     }
   }
 </section>

@@ -2,16 +2,20 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { ProducerConversation, Thread } from './messages.model';
+import { getAllPages } from '../../../core/http/paged';
 
 // la liste vient de la route du producteur ; lire un fil, ecrire, joindre et signaler passent par les routes
 // communes aux deux roles (ConversationController), le client s'en sert aussi
+// cent par requete, le plafond du back : ces listes sont paginees (vingt par defaut), l'ecran les veut entieres pour filtrer ou chercher
+const PAGE_SIZE = 100;
+
 @Injectable({ providedIn: 'root' })
 export class MessagesService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiURL;
 
   list() {
-    return this.http.get<ProducerConversation[]>(`${this.apiUrl}/producer/conversations`);
+    return getAllPages<ProducerConversation>(this.http, `${this.apiUrl}/producer/conversations`, { pageSize: PAGE_SIZE });
   }
 
   thread(id: string) {

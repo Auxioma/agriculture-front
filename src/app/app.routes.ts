@@ -260,4 +260,10 @@ export const routes: Routes = [
         (m) => m.ProducerDetailComponent,
       ),
   },
+  // toujours la dernière : toute adresse inconnue, au lieu d'une page vide
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
 ];

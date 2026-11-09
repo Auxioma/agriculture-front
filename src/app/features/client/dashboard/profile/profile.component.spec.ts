@@ -15,6 +15,8 @@ const prefs: Preferences = {
     new_message: true,
     quote_received: true,
     request_expiring_soon: false,
+    favorite_producer_available: true,
+    review_reminder: true,
   },
 };
 

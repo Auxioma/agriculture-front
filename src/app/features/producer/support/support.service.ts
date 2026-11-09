@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { getAllPages } from '../../../core/http/paged';
 
 // open, in_progress, resolved ou closed : poses par l'equipe depuis l'admin (Tickets)
 export interface SupportTicket {
@@ -16,7 +17,7 @@ export class SupportService {
   private apiUrl = environment.apiURL;
 
   getTickets() {
-    return this.http.get<SupportTicket[]>(`${this.apiUrl}/support/tickets`);
+    return getAllPages<SupportTicket>(this.http, `${this.apiUrl}/support/tickets`);
   }
 
   // le message devient le premier message du ticket

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { SavedSearch, SavedSearchCriteria } from './saved-search.model';
+import { getAllPages } from '../../../../core/http/paged';
 
 /**
  * Recherches sauvegardées (GET/POST /api/saved-searches, DELETE /api/saved-searches/{id}).
@@ -15,7 +16,7 @@ export class SavedSearchService {
   private readonly url = `${environment.apiURL}/saved-searches`;
 
   list(): Observable<SavedSearch[]> {
-    return this.http.get<SavedSearch[]>(this.url);
+    return getAllPages<SavedSearch>(this.http, this.url);
   }
 
   create(name: string, criteria: SavedSearchCriteria): Observable<SavedSearch> {

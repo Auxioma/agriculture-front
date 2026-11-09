@@ -42,6 +42,19 @@ describe('NotificationsService', () => {
     expect(result).toEqual(list);
   });
 
+  it("lit une page de l'historique avec son total", () => {
+    let result: unknown;
+    service.page(2, 20).subscribe((page) => (result = page));
+
+    const req = http.expectOne((r) => r.method === 'GET' && r.url === `${api}/notifications`);
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('pageSize')).toBe('20');
+    const list = [{ id: 'n21', type: 'new_message', title: 'Titre', body: null, readAt: null, createdAt: '2026-10-26T09:00:00+00:00' }];
+    req.flush(list, { headers: { 'X-Total-Count': '45' } });
+
+    expect(result).toEqual({ items: list, total: 45 });
+  });
+
   it('marque une notification lue', () => {
     service.markAsRead('n1').subscribe();
 

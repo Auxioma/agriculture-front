@@ -332,6 +332,87 @@ describe('ProducerDetailComponent', () => {
     expect(textOf(ctx.host)).toContain('Réduire les avis');
   });
 
+  // * Les avis arrivent par pages : le nombre annoncé (count) est celui de TOUS les avis, pas de ceux déjà reçus
+  describe("« Voir plus d'avis »", () => {
+    const threeOfFour = () =>
+      ({
+        averageRating: 4.5,
+        count: 4,
+        reviews: [
+          makeReview({ id: 'r1', comment: 'Premier avis' }),
+          makeReview({ id: 'r2', comment: 'Deuxième avis' }),
+          makeReview({ id: 'r3', comment: 'Troisième avis' }),
+        ],
+      }) satisfies ProducerReviews;
+    const button = (host: HTMLElement, label: string) =>
+      Array.from(host.querySelectorAll('button')).find((b) => textOf(b) === label);
+
+    async function openAllReviews() {
+      const ctx = await setup();
+      respond(ctx, makeProducerDetail(), threeOfFour());
+      button(ctx.host, 'Voir tous les avis')!.click();
+      ctx.harness.detectChanges();
+
+      return ctx;
+    }
+
+    it('dit combien sont affichés et en propose davantage, quand il y en a plus que reçus', async () => {
+      const ctx = await openAllReviews();
+
+      expect(textOf(ctx.host)).toContain('Avis clients (4)');
+      expect(textOf(ctx.host)).toContain('3 sur 4');
+      expect(button(ctx.host, 'Voir plus')).toBeDefined();
+    });
+
+    it("charge la page suivante et la met à la suite, puis n'en propose plus", async () => {
+      const ctx = await openAllReviews();
+
+      button(ctx.host, 'Voir plus')!.click();
+      ctx.http
+        .expectOne(`${apiUrl}/producers/p1/reviews?page=2`)
+        .flush({ averageRating: 4.5, count: 4, reviews: [makeReview({ id: 'r4', comment: 'Quatrième avis' })] });
+      ctx.harness.detectChanges();
+
+      expect(textOf(ctx.host)).toContain('Quatrième avis');
+      expect(button(ctx.host, 'Voir plus')).toBeUndefined();
+    });
+
+    it("ne répète pas un avis déjà affiché quand les pages ont bougé", async () => {
+      const ctx = await openAllReviews();
+
+      button(ctx.host, 'Voir plus')!.click();
+      ctx.http.expectOne(`${apiUrl}/producers/p1/reviews?page=2`).flush({
+        averageRating: 4.5,
+        count: 4,
+        reviews: [makeReview({ id: 'r3', comment: 'Troisième avis' }), makeReview({ id: 'r4', comment: 'Quatrième avis' })],
+      });
+      ctx.harness.detectChanges();
+
+      expect(textOf(ctx.host).split('Troisième avis').length - 1).toBe(1);
+      expect(textOf(ctx.host)).toContain('Quatrième avis');
+    });
+
+    it('dit que la suite ne se charge pas, en gardant les avis déjà affichés', async () => {
+      const ctx = await openAllReviews();
+
+      button(ctx.host, 'Voir plus')!.click();
+      ctx.http.expectOne(`${apiUrl}/producers/p1/reviews?page=2`).flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+      ctx.harness.detectChanges();
+
+      expect(textOf(ctx.host)).toContain('Impossible de charger la suite');
+      expect(textOf(ctx.host)).toContain('Troisième avis');
+    });
+
+    it("n'en propose pas quand tous les avis sont reçus", async () => {
+      const ctx = await setup();
+      respond(ctx, makeProducerDetail(), makeReviews([makeReview({ id: 'r1' }), makeReview({ id: 'r2' }), makeReview({ id: 'r3' })]));
+      button(ctx.host, 'Voir tous les avis')!.click();
+      ctx.harness.detectChanges();
+
+      expect(button(ctx.host, 'Voir plus')).toBeUndefined();
+    });
+  });
+
   it("affiche la réponse du producteur sous l'avis", async () => {
     const ctx = await setup();
 

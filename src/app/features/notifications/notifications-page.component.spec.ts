@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError, Subject } from 'rxjs';
+import { Observable, map, of, throwError, Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthService } from '../../core/auth/auth.service';
 import { AppNotification, NotificationsService } from '../../core/notifications/notifications.service';
@@ -32,7 +32,7 @@ const LIST = [
 describe('NotificationsPageComponent', () => {
   let fixture: ComponentFixture<NotificationsPageComponent>;
   let compiled: HTMLElement;
-  let service: Record<'latest' | 'markAsRead' | 'markAllAsRead' | 'announceChange', ReturnType<typeof vi.fn>>;
+  let service: Record<'page' | 'markAsRead' | 'markAllAsRead' | 'announceChange', ReturnType<typeof vi.fn>>;
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -42,8 +42,9 @@ describe('NotificationsPageComponent', () => {
   afterEach(() => vi.useRealTimers());
 
   // roles : ceux de l'utilisateur connecte ; null = personne
-  async function create(list$: Observable<AppNotification[]> = of(LIST), roles: string[] | null = ['ROLE_ADMIN']): Promise<void> {
-    service = { latest: vi.fn(() => list$), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)), announceChange: vi.fn() };
+  // total : celui que le back annonce pour toutes les pages (null = liste entiere recue)
+  async function create(list$: Observable<AppNotification[]> = of(LIST), roles: string[] | null = ['ROLE_ADMIN'], total: number | null = null): Promise<void> {
+    service = { page: vi.fn(() => list$.pipe(map((items) => ({ items, total })))), markAsRead: vi.fn(() => of(null)), markAllAsRead: vi.fn(() => of(null)), announceChange: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [NotificationsPageComponent],
       providers: [
@@ -81,10 +82,10 @@ describe('NotificationsPageComponent', () => {
     expect(compiled.querySelector('h1')?.textContent?.trim()).toBe('Notifications');
   });
 
-  it('demande les cent dernières, le plafond du back', async () => {
+  it('demande la première page, vingt par vingt', async () => {
     await create();
 
-    expect(service.latest).toHaveBeenCalledWith(100);
+    expect(service.page).toHaveBeenCalledWith(1, 20);
   });
 
   it('compte les non lues sur le filtre', async () => {
@@ -125,13 +126,51 @@ describe('NotificationsPageComponent', () => {
     expect(button('Toutes')).toBeUndefined();
   });
 
-  it('dit que ce sont les cent dernières quand il y en a cent, pas avant', async () => {
-    await create(of(Array.from({ length: 100 }, (_, i) => note(`n${i}`))));
-    expect(text(compiled)).toContain('Les 100 dernières notifications.');
+  describe('pages', () => {
+    const more = () => [...compiled.querySelectorAll('app-load-more button')].find((b) => text(b) === 'Voir plus') as HTMLElement | undefined;
 
-    TestBed.resetTestingModule();
-    await create();
-    expect(text(compiled)).not.toContain('dernières notifications');
+    it('propose « Voir plus » quand le back annonce plus de notifications que chargées, pas sinon', async () => {
+      await create(of(LIST), ['ROLE_ADMIN'], 45);
+      expect(more()).toBeDefined();
+      expect(text(compiled)).toContain('4 sur 45');
+
+      TestBed.resetTestingModule();
+      await create(of(LIST), ['ROLE_ADMIN'], 4);
+      expect(more()).toBeUndefined();
+
+      TestBed.resetTestingModule();
+      await create();
+      expect(more()).toBeUndefined();
+    });
+
+    it('charge la page suivante et la met à la suite, sans répéter une notification déjà affichée', async () => {
+      await create(of(LIST), ['ROLE_ADMIN'], 6);
+      service.page.mockReturnValue(of({ items: [note('n4'), note('n5'), note('n6')], total: 6 }));
+
+      click(more()!);
+
+      expect(service.page).toHaveBeenLastCalledWith(2, 20);
+      expect(rows().map((li) => text(li))).toEqual(expect.arrayContaining([expect.stringContaining('Titre n5'), expect.stringContaining('Titre n6')]));
+      expect(rows().length).toBe(6);
+      expect(more()).toBeUndefined();
+    });
+
+    it('dit que la suite ne se charge pas, en gardant la liste et le bouton', async () => {
+      await create(of(LIST), ['ROLE_ADMIN'], 45);
+      service.page.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+      click(more()!);
+
+      expect(text(compiled.querySelector('app-load-more [role=alert]'))).toContain('Impossible de charger la suite');
+      expect(rows().length).toBe(4);
+      expect(more()).toBeDefined();
+    });
+
+    it('compte les non lues « 2+ » tant que des pages restent à charger', async () => {
+      await create(of(LIST), ['ROLE_ADMIN'], 45);
+
+      expect(text(button('Non lues'))).toBe('Non lues (2+)');
+    });
   });
 
   describe('marquer comme lu', () => {

@@ -6,13 +6,16 @@ import {
   computed,
   effect,
   inject,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, filter, map, of, startWith, switchMap } from 'rxjs';
-import { ProducerDetail } from '../../models/producer-detail.model';
+import { hasMore } from '../../../../core/http/paged';
+import { LoadMoreComponent } from '../../../../core/layout/load-more/load-more.component';
+import { ProducerDetail, ProducerReview, ProducerReviews } from '../../models/producer-detail.model';
 import { CatalogService } from '../../services/catalog.service';
 import { ProducerDetailService } from '../../services/producer-detail.service';
 import {
@@ -38,7 +41,7 @@ const REVIEWS_PREVIEW_COUNT = 2;
 
 @Component({
   selector: 'app-producer-detail',
-  imports: [RouterLink, NgOptimizedImage, FavoriteButtonComponent],
+  imports: [RouterLink, NgOptimizedImage, FavoriteButtonComponent, LoadMoreComponent],
   templateUrl: './producer-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -155,13 +158,31 @@ export class ProducerDetailComponent {
     );
   });
 
+  // Les avis arrivent par pages : la première avec la fiche, les suivantes à la demande (« Voir plus d'avis »). Un autre producteur
+  // (même composant, autre adresse) repart de zéro.
+  private readonly moreReviews = linkedSignal<ProducerReviews | null | undefined, ProducerReview[]>({
+    source: this.reviews,
+    computation: () => [],
+  });
+  private readonly reviewPagesLoaded = linkedSignal<ProducerReviews | null | undefined, number>({
+    source: this.reviews,
+    computation: () => 1,
+  });
+  readonly loadingMoreReviews = signal(false);
+  readonly moreReviewsFailed = signal(false);
+  readonly allReviews = computed(() => [...(this.reviews()?.reviews ?? []), ...this.moreReviews()]);
+  /** Il reste des avis à charger : le nombre annoncé pour tous les avis dépasse ceux déjà chargés */
+  readonly reviewsRemaining = computed(() =>
+    hasMore(this.allReviews().length, this.reviews()?.count ?? null),
+  );
+
   readonly showAllReviews = signal(false);
   readonly visibleReviews = computed(() => {
-    const all = this.reviews()?.reviews ?? [];
+    const all = this.allReviews();
     return this.showAllReviews() ? all : all.slice(0, REVIEWS_PREVIEW_COUNT);
   });
   readonly hasMoreReviews = computed(
-    () => (this.reviews()?.reviews.length ?? 0) > REVIEWS_PREVIEW_COUNT,
+    () => this.allReviews().length > REVIEWS_PREVIEW_COUNT || this.reviewsRemaining(),
   );
 
   // * Fonctions pures exposées au template
@@ -204,6 +225,26 @@ export class ProducerDetailComponent {
 
   toggleReviews(): void {
     this.showAllReviews.update((value) => !value);
+  }
+
+  loadMoreReviews(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id || this.loadingMoreReviews()) return;
+    this.loadingMoreReviews.set(true);
+    this.moreReviewsFailed.set(false);
+    this.api.getReviews(id, this.reviewPagesLoaded() + 1).subscribe({
+      next: (page) => {
+        // un avis publié entre-temps décale les pages : ceux déjà affichés ne se répètent pas
+        const known = new Set(this.allReviews().map((review) => review.id));
+        this.moreReviews.update((list) => [...list, ...page.reviews.filter((r) => !known.has(r.id))]);
+        this.reviewPagesLoaded.update((n) => n + 1);
+        this.loadingMoreReviews.set(false);
+      },
+      error: () => {
+        this.moreReviewsFailed.set(true);
+        this.loadingMoreReviews.set(false);
+      },
+    });
   }
 
   /** Défilement vers « Produits & disponibilités » (un lien #ancre rechargerait la page d'accueil, à cause de <base href>) */

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { getAllPages } from '../../../core/http/paged';
 
 export type BillingCycle = 'monthly' | 'yearly';
 
@@ -89,7 +90,7 @@ export class SubscriptionService {
   }
 
   getInvoices() {
-    return this.http.get<Invoice[]>(`${this.apiUrl}/subscription/invoices`);
+    return getAllPages<Invoice>(this.http, `${this.apiUrl}/subscription/invoices`);
   }
 
   // page de paiement Stripe : on y envoie le navigateur

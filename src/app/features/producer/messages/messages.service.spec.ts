@@ -22,9 +22,19 @@ describe('MessagesService', () => {
     let rows: unknown;
     service.list().subscribe((value) => (rows = value));
 
-    http.expectOne(`${api}/producer/conversations`).flush([{ id: 'c1' }]);
+    http.expectOne(`${api}/producer/conversations?pageSize=100`).flush([{ id: 'c1' }]);
 
     expect(rows).toEqual([{ id: 'c1' }]);
+  });
+
+  it("va chercher la page suivante tant que le total annoncé n'est pas atteint", () => {
+    let rows: unknown;
+    service.list().subscribe((value) => (rows = value));
+
+    http.expectOne(`${api}/producer/conversations?pageSize=100`).flush([{ id: 'c1' }], { headers: { 'X-Total-Count': '2' } });
+    http.expectOne(`${api}/producer/conversations?pageSize=100&page=2`).flush([{ id: 'c2' }], { headers: { 'X-Total-Count': '2' } });
+
+    expect(rows).toEqual([{ id: 'c1' }, { id: 'c2' }]);
   });
 
   it('lit un fil sur la route commune aux deux rôles', () => {

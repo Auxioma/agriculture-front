@@ -40,6 +40,8 @@ export class NotificationsSectionComponent {
     { key: 'new_message', label: 'Nouveau message' },
     { key: 'quote_received', label: 'Devis reçu' },
     { key: 'request_expiring_soon', label: 'Demande expirant bientôt' },
+    { key: 'favorite_producer_available', label: 'Producteur favori avec nouvelle disponibilité' },
+    { key: 'review_reminder', label: 'Avis à laisser' },
   ];
 
   toggle(key: keyof NotificationSettings): void {

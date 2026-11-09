@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { getPage } from '../http/paged';
 
 // GET /api/notifications (type, title et body sont nullables en base, le back ne les force pas)
 export interface AppNotification {
@@ -32,6 +33,11 @@ export class NotificationsService {
   // les plus recentes d'abord ; sans limit le back renvoie tout l'historique
   latest(limit: number) {
     return this.http.get<AppNotification[]>(`${this.apiUrl}/notifications`, { params: { limit } });
+  }
+
+  // une page de l'historique, les plus recentes d'abord, avec le total de toutes les pages (page « Notifications »)
+  page(page: number, pageSize: number) {
+    return getPage<AppNotification>(this.http, `${this.apiUrl}/notifications`, { page, pageSize });
   }
 
   markAsRead(id: string) {

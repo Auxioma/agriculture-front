@@ -79,6 +79,17 @@ describe('clientDestination', () => {
     expect(clientDestination('request_expiring_soon', { requestId: 'r-3' })).toBe('/client/requests/r-3');
   });
 
+  it('mène un avis à laisser à la demande, où se trouve le formulaire d’avis', () => {
+    expect(clientDestination('review_reminder', { requestId: 'r-4', conversationId: 'c-4' })).toBe('/client/requests/r-4');
+    expect(clientDestination('review_reminder', null)).toBe('/client/requests');
+  });
+
+  it('mène un producteur favori qui propose du nouveau à sa fiche, sinon à la liste des producteurs', () => {
+    expect(clientDestination('favorite_producer_available', { producerSlug: 'ferme-du-soleil', producerId: 'p-1' })).toBe('/producers/ferme-du-soleil');
+    expect(clientDestination('favorite_producer_available', null)).toBe('/producers');
+    expect(clientDestination('favorite_producer_available', [])).toBe('/producers');
+  });
+
   it('mène un nouveau message à sa conversation, sinon à la messagerie', () => {
     expect(clientDestination('new_message', { conversationId: 'c-9' })).toBe('/client/messages/c-9');
     expect(clientDestination('new_message', null)).toBe('/client/messages');
@@ -127,6 +138,15 @@ describe('iconOf', () => {
     expect(iconOf('subscription_renewing_soon')).toBe(iconOf('request_expiring_soon'));
     expect(iconOf('request_sent')).toBe(iconOf('profile_validated'));
     expect(iconOf('profile_rejected')).toBe(iconOf('payment_failed'));
+  });
+
+  it('donne un cœur à un producteur favori qui propose du nouveau et une étoile à un avis à laisser', () => {
+    const heart = iconOf('favorite_producer_available');
+    const star = iconOf('review_reminder');
+
+    expect(heart).not.toBe(bell);
+    expect(star).not.toBe(bell);
+    expect(heart).not.toBe(star);
   });
 
   it('prend la cloche pour un type inconnu ou absent', () => {
