@@ -26,6 +26,9 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'client', renderMode: RenderMode.Client },
   { path: 'client/**', renderMode: RenderMode.Client },
   { path: 'requests/**', renderMode: RenderMode.Client },
+  // pages publiques a parametre : rendu serveur a la demande (pas de liste a pre-rendre)
+  { path: 'categories/:slug', renderMode: RenderMode.Server },
+  { path: 'producers/:id', renderMode: RenderMode.Server },
   {
     path: '**',
     renderMode: RenderMode.Prerender,
