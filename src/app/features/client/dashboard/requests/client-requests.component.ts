@@ -6,7 +6,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { ClientRequestItem, RequestStatus } from './client-request.model';
 import { ClientRequestsService } from './client-requests.service';
 import { PageHeaderComponent } from '../../ui/page-header.component';
@@ -33,7 +32,7 @@ const STATUS_UI: Record<RequestStatus, { label: string; filter: Filter; badge: s
 
 @Component({
   selector: 'app-client-requests',
-  imports: [RouterLink, PageHeaderComponent, FilterTabsComponent],
+  imports: [PageHeaderComponent, FilterTabsComponent],
   templateUrl: './client-requests.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
